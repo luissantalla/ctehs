@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTE DB HS2 · Recogida y Evacuación de Residuos</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface2: #eef1f6;
+  --surface3: #e4e9f0;
+  --border: #d0d8e4;
+  --border2: #b8c5d6;
+  --accent: #c07a0a;
+  --accent2: #e8960e;
+  --blue: #2570c8;
+  --blue2: #3d8ef0;
+  --green: #15a07a;
+  --green2: #1bbf8f;
+  --red: #d94040;
+  --purple: #7055c8;
+  --orange: #c85a20;
+  --text: #3a4a5c;
+  --text2: #5a6f85;
+  --text3: #8da0b5;
+  --bright: #1a2535;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --cond: 'Barlow Condensed', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+/* ── HEADER ── */
+header{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 40px;
+  display:flex;align-items:center;gap:16px;
+  height:54px;position:sticky;top:0;z-index:100;
+}
+.hbadge{background:var(--accent);color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;letter-spacing:1.5px;}
+.htitle{font-family:var(--cond);font-size:20px;font-weight:700;color:var(--bright);letter-spacing:.5px;}
+.hsubt{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto;letter-spacing:.5px;}
+.hsubt span{color:var(--accent);margin-left:8px;}
+
+/* ── NAV ── */
+nav{
+  background:var(--surface);
+  border-bottom:2px solid var(--border);
+  padding:0 40px;
+  display:flex;gap:0;
+  overflow-x:auto;
+}
+.ntab{
+  padding:12px 22px;
+  font-family:var(--cond);font-size:14px;font-weight:600;
+  color:var(--text2);cursor:pointer;letter-spacing:.8px;text-transform:uppercase;
+  border-bottom:3px solid transparent;margin-bottom:-2px;
+  transition:color .15s,border-color .15s;white-space:nowrap;
+}
+.ntab:hover{color:var(--text);}
+.ntab.active{color:var(--accent2);border-bottom-color:var(--accent);}
+
+/* ── LAYOUT ── */
+main{max-width:1140px;margin:0 auto;padding:32px 40px 80px;}
+.section{display:none;}
+.section.active{display:block;}
+
+.section-head{margin-bottom:28px;}
+.section-head h2{font-family:var(--cond);font-size:30px;font-weight:800;color:var(--bright);letter-spacing:.3px;margin-bottom:4px;}
+.section-head p{font-size:13px;color:var(--text2);line-height:1.6;max-width:680px;}
+.sref{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(232,160,26,.1);padding:3px 10px;margin-top:8px;letter-spacing:.5px;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px;}
+.card:last-child{margin-bottom:0;}
+.ctitle{
+  font-family:var(--mono);font-size:10px;font-weight:700;
+  color:var(--accent);letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.ctitle::before{content:'';display:block;width:3px;height:12px;background:var(--accent);}
+
+/* ── RADIO OPTIONS ── */
+.rg{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.ro{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
+  background:var(--bg);border:1px solid var(--border);
+  cursor:pointer;transition:border-color .12s,background .12s;
+}
+.ro:hover{border-color:var(--border2);background:var(--surface2);}
+.ro.sel{border-color:var(--accent);background:rgba(232,160,26,.07);}
+.ro input[type=radio]{accent-color:var(--accent);margin-top:2px;flex-shrink:0;cursor:pointer;}
+.rl{font-size:13px;color:var(--bright);font-weight:500;line-height:1.3;}
+.rd{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
+
+/* ── CHECKBOX OPTIONS ── */
+.co{
+  display:flex;align-items:flex-start;gap:10px;padding:9px 12px;
+  background:var(--bg);border:1px solid var(--border);
+  cursor:pointer;transition:border-color .12s,background .12s;margin-bottom:5px;
+}
+.co:hover{border-color:var(--border2);}
+.co.sel{border-color:var(--green);background:rgba(21,160,122,.05);}
+.co input[type=checkbox]{accent-color:var(--green);margin-top:2px;flex-shrink:0;cursor:pointer;width:14px;height:14px;}
+
+/* ── FIELD ── */
+.field{margin-bottom:16px;}
+.flabel{display:block;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.field input[type=number],.field input[type=text],.field select{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  color:var(--bright);padding:9px 12px;font-family:var(--sans);font-size:13px;
+  appearance:none;
+  -moz-appearance:textfield;
+}
+.field input[type=number]::-webkit-outer-spin-button,
+.field input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);}
+.fhint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.4;}
+.field .input-row{display:flex;gap:0;}
+.field .input-row input{flex:1;}
+.field .input-unit{
+  background:var(--surface2);border:1px solid var(--border);border-left:none;
+  font-family:var(--mono);font-size:11px;color:var(--text3);
+  padding:9px 10px;white-space:nowrap;display:flex;align-items:center;
+}
+
+/* ── DERIVED VALUE ── */
+.derived{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 14px;background:rgba(34,201,150,.07);
+  border:1px solid rgba(34,201,150,.2);
+  font-family:var(--mono);font-size:12px;color:var(--green2);
+  margin-top:4px;
+}
+.derived::before{content:'→';color:var(--green);}
+
+/* ── RESULT STAT BOXES ── */
+.stat-row{display:grid;gap:10px;margin-bottom:16px;}
+.stat-row-4{grid-template-columns:repeat(4,1fr);}
+.stat-row-3{grid-template-columns:repeat(3,1fr);}
+.stat-row-2{grid-template-columns:repeat(2,1fr);}
+.stat{
+  padding:14px 16px;background:var(--surface);
+  border:1px solid var(--border);border-top:3px solid var(--border2);
+}
+.stat.ok{border-top-color:var(--green);}
+.stat.warn{border-top-color:var(--accent);}
+.stat.info{border-top-color:var(--blue2);}
+.stat.err{border-top-color:var(--red);}
+.stat-lbl{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px;}
+.stat-val{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--bright);line-height:1;}
+.stat-val .unit{font-size:13px;font-weight:400;color:var(--text2);margin-left:3px;}
+.stat-note{font-size:11px;color:var(--text2);margin-top:5px;line-height:1.4;}
+
+/* ── REFERENCE TABLE ── */
+.reftable{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono);}
+.reftable th{
+  background:var(--surface2);padding:8px 12px;color:var(--accent);
+  font-weight:700;text-align:left;border:1px solid var(--border);font-size:11px;letter-spacing:.5px;
+}
+.reftable td{padding:8px 12px;border:1px solid var(--border);color:var(--text);}
+.reftable tr:hover td{background:var(--surface2);}
+.reftable .hl td{background:rgba(232,160,26,.08);color:var(--accent2);font-weight:700;}
+.reftable .tdname{color:var(--bright);font-weight:500;}
+.reftable .tdnum{color:var(--green2);font-weight:700;text-align:right;}
+.reftable .tdinfo{color:var(--text3);font-size:10px;}
+
+/* ── INFO / WARN BOX ── */
+.infobox{
+  padding:10px 14px;background:rgba(61,142,240,.07);
+  border-left:3px solid var(--blue);font-size:11px;color:var(--text);
+  line-height:1.6;margin-bottom:14px;
+}
+.warnbox{
+  padding:10px 14px;background:rgba(232,160,26,.06);
+  border-left:3px solid var(--accent);font-size:11px;color:var(--text2);
+  line-height:1.6;margin-top:12px;
+}
+.okbox{
+  padding:10px 14px;background:rgba(21,160,122,.06);
+  border-left:3px solid var(--green);font-size:11px;color:var(--text);
+  line-height:1.6;margin-bottom:14px;
+}
+
+/* ── NO RESULT ── */
+.nores{
+  padding:48px 24px;text-align:center;color:var(--text3);font-size:12px;
+  border:1px dashed var(--border);font-family:var(--mono);
+}
+.nores-icon{font-size:28px;margin-bottom:10px;opacity:.3;}
+
+/* ── BUTTONS ── */
+.btn{
+  padding:10px 22px;font-family:var(--cond);font-size:13px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .15s;
+}
+.btn-prim{background:var(--accent);color:#000;}
+.btn-prim:hover{background:var(--accent2);}
+.btn-sec{background:transparent;color:var(--blue2);border:1px solid var(--blue);padding:9px 20px;}
+.btn-sec:hover{background:rgba(61,142,240,.1);}
+.btn-rtf{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 20px;
+  font-family:var(--cond);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;background:transparent;color:var(--green2);border:1px solid var(--green);transition:all .15s;
+}
+.btn-rtf:hover{background:rgba(21,160,122,.07);}
+.btn-print{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 22px;
+  font-family:var(--cond);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;background:var(--accent);color:#000;border:none;transition:all .15s;
+}
+.btn-print:hover{background:var(--accent2);}
+.sum-actions{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;align-items:center;}
+
+/* ── TWO COL ── */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.wizard{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start;}
+
+/* ── FRACCION ROW ── */
+.frac-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;background:var(--bg);border:1px solid var(--border);margin-bottom:6px;
+}
+.frac-color{width:4px;height:32px;flex-shrink:0;}
+.frac-name{font-size:13px;font-weight:500;color:var(--bright);flex:1;}
+.frac-dot{font-family:var(--mono);font-size:11px;color:var(--text2);min-width:110px;}
+.frac-vol{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--green2);min-width:80px;text-align:right;}
+.frac-pct{font-family:var(--mono);font-size:10px;color:var(--text3);min-width:46px;text-align:right;}
+
+/* ── CONTENEDOR ROW ── */
+.cont-row{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 14px;background:var(--bg);border:1px solid var(--border);margin-bottom:6px;
+}
+.cont-color{width:4px;height:36px;flex-shrink:0;}
+.cont-info{flex:1;}
+.cont-name{font-size:13px;font-weight:500;color:var(--bright);}
+.cont-vol{font-family:var(--mono);font-size:11px;color:var(--text2);}
+.cont-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--accent);line-height:1;min-width:36px;text-align:right;}
+.cont-tipo{font-family:var(--mono);font-size:11px;color:var(--text2);}
+.cont-huella{font-family:var(--mono);font-size:11px;color:var(--blue2);min-width:80px;text-align:right;}
+
+/* ── SUMMARY ── */
+.summary-header{
+  display:flex;justify-content:space-between;align-items:flex-end;
+  padding:20px 24px;background:var(--surface);
+  border:1px solid var(--border);border-bottom:3px solid var(--accent);
+  margin-bottom:20px;
+}
+.summary-header h2{font-family:var(--cond);font-size:28px;font-weight:800;color:var(--bright);letter-spacing:.3px;}
+.summary-header .smeta{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:right;line-height:1.8;}
+.sum-section{border:1px solid var(--border);background:var(--surface);margin-bottom:14px;overflow:hidden;}
+.sum-sec-head{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
+}
+.sum-sec-title{font-family:var(--cond);font-size:16px;font-weight:700;color:var(--bright);}
+.sum-sec-badge{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 10px;margin-left:auto;}
+.sbadge-ok{background:rgba(15,140,100,.1);color:var(--green);border:1px solid rgba(15,140,100,.25);}
+.sbadge-info{background:rgba(37,112,200,.1);color:var(--blue2);border:1px solid rgba(37,112,200,.25);}
+.sum-body{padding:14px 16px;}
+.sum-dtable{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px;}
+.sum-dtable td{padding:6px 12px;border:1px solid var(--border);vertical-align:top;}
+.sum-dtable td:first-child{
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+  background:var(--surface2);width:200px;text-transform:uppercase;letter-spacing:.5px;font-weight:700;
+}
+.sum-dtable td:last-child{color:var(--bright);}
+.sum-footer{
+  text-align:center;padding:14px;font-family:var(--mono);font-size:10px;
+  color:var(--text3);border-top:1px solid var(--border);margin-top:20px;letter-spacing:.5px;
+}
+.sum-notice{
+  padding:12px 16px;background:rgba(37,112,200,.05);
+  border-left:3px solid var(--blue2);font-size:11px;color:var(--text2);
+  line-height:1.6;margin-top:20px;font-family:var(--mono);
+}
+
+/* ── ESPACIO BOX ── */
+.espacio-box{
+  display:flex;align-items:center;gap:20px;
+  padding:18px 22px;background:var(--surface2);
+  border:1px solid var(--border2);margin-bottom:16px;
+  border-left:4px solid var(--green);
+}
+.eb-num{font-family:var(--mono);font-size:52px;font-weight:700;color:var(--green);line-height:1;}
+.eb-unit{font-family:var(--mono);font-size:18px;font-weight:400;color:var(--text2);margin-left:2px;}
+.eb-info h3{font-family:var(--cond);font-size:17px;font-weight:700;color:var(--bright);}
+.eb-info p{font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:3px;}
+.eb-info small{font-family:var(--mono);font-size:10px;color:var(--text3);display:block;margin-top:4px;}
+
+/* ── REQ TABLE ── */
+.req-item{
+  display:flex;gap:10px;padding:9px 12px;
+  background:var(--bg);border:1px solid var(--border);margin-bottom:5px;align-items:flex-start;
+}
+.req-check{color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px;}
+.req-text strong{font-size:12px;color:var(--bright);display:block;margin-bottom:1px;}
+.req-text p{font-size:11px;color:var(--text2);line-height:1.4;}
+
+@media(max-width:820px){
+  header{padding:0 20px;}
+  nav{padding:0 20px;}
+  main{padding:20px;}
+  .wizard{grid-template-columns:1fr;}
+  .twocol{grid-template-columns:1fr;}
+  .stat-row-4{grid-template-columns:repeat(2,1fr);}
+  .stat-row-3{grid-template-columns:repeat(2,1fr);}
+}
+
+@media print {
+  header,nav,.sum-actions,.section:not(#resumen){display:none!important;}
+  #resumen{display:block!important;}
+  body{background:#fff!important;}
+  .sum-section{break-inside:avoid;border:1px solid #bbb!important;}
+  .summary-header{border:2px solid #333!important;}
+  main{padding:10px 20px!important;max-width:100%!important;}
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbadge">CTE</div>
+  <div class="htitle">DB HS2 — Recogida y Evacuación de Residuos</div>
+  <div class="hsubt">Calculadora normativa<span>v2025-r2</span></div>
+</header>
+
+<nav>
+  <div class="ntab active" onclick="showSec('datos',this)">⊞ Datos del edificio</div>
+  <div class="ntab" onclick="showSec('volumenes',this);calcular()">⊟ Volúmenes</div>
+  <div class="ntab" onclick="showSec('contenedores',this);calcular()">⊡ Contenedores</div>
+  <div class="ntab" onclick="showSec('espacio',this);calcular()">▭ Espacio de reserva</div>
+  <div class="ntab" onclick="showSec('referencia',this)">⊞ Referencia normativa</div>
+  <div class="ntab" onclick="showSec('resumen',this);buildSummary()">⎙ Resumen / Exportar</div>
+</nav>
+
+<main>
+
+<!-- ═══════════ DATOS ═══════════ -->
+<section class="section active" id="datos">
+  <div class="section-head">
+    <h2>Datos del edificio</h2>
+    <p>Define el tipo de uso, número de viviendas y personas, fracciones de residuo a considerar y el sistema de recogida municipal. Los valores de dotación se toman de las Tablas 2.1 y 2.2 del CTE DB-HS2.</p>
+    <span class="sref">HS2 § 2.1 · Tabla 2.1 · Tabla 2.2 · Anejo F</span>
+  </div>
+
+  <div class="wizard">
+    <!-- IZQUIERDA: tipo de uso -->
+    <div>
+      <div class="card">
+        <div class="ctitle">1 — Tipo de uso del edificio</div>
+        <div class="rg" id="rg-uso">
+          <label class="ro sel" onclick="setUso('vivienda_unifamiliar',this)">
+            <input type="radio" name="uso" checked>
+            <div><div class="rl">Vivienda unifamiliar</div><div class="rd">Una sola unidad residencial. Sin almacén colectivo de contenedores.</div></div>
+          </label>
+          <label class="ro" onclick="setUso('edificio_viviendas',this)">
+            <input type="radio" name="uso">
+            <div><div class="rl">Edificio de viviendas</div><div class="rd">Dos o más viviendas. Requiere almacén colectivo de contenedores.</div></div>
+          </label>
+          <label class="ro" onclick="setUso('otros_usos',this)">
+            <input type="radio" name="uso">
+            <div><div class="rl">Otros usos (oficinas, comercio…)</div><div class="rd">Edificio no residencial. Dotación por m² según Tabla 2.2.</div></div>
+          </label>
+          <label class="ro" onclick="setUso('mixto',this)">
+            <input type="radio" name="uso">
+            <div><div class="rl">Uso mixto (residencial + otro)</div><div class="rd">Combinación de viviendas y otros usos en el mismo edificio.</div></div>
+          </label>
+        </div>
+      </div>
+
+      <div class="card" id="card-sistema">
+        <div class="ctitle">2 — Sistema de recogida municipal</div>
+        <div class="field">
+          <label class="flabel">Frecuencia de recogida</label>
+          <select onchange="calcular();" id="sel-recogida">
+            <option value="1">Recogida cada 2-3 días (estándar)</option>
+            <option value="0.71">Recogida diaria o cada 2 días</option>
+            <option value="2">Recogida semanal o inferior</option>
+          </select>
+          <div class="fhint">⚠ El CTE DB-HS2 basa las dotaciones en 1 semana de acumulación (Art. 2.1.1) y no contempla ajuste por frecuencia. Este factor es una estimación técnica complementaria, no un valor normativo.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DERECHA: parámetros numéricos -->
+    <div>
+      <!-- VIVIENDAS -->
+      <div class="card" id="card-vivienda">
+        <div class="ctitle">Parámetros residenciales</div>
+        <div class="infobox">Dotación según <strong>Tabla 2.1</strong>. El número de personas se toma del Anejo F del CTE: <strong>2,5 p/vivienda</strong> por defecto. El resultado es la capacidad mínima de almacenamiento semanal.</div>
+        <div class="twocol">
+          <div class="field">
+            <label class="flabel">Número de viviendas</label>
+            <div class="input-row">
+              <input type="number" id="num-viv" value="1" min="1" step="1" oninput="calcular()">
+              <span class="input-unit">viv.</span>
+            </div>
+          </div>
+          <div class="field">
+            <label class="flabel">Personas por vivienda</label>
+            <div class="input-row">
+              <input type="number" id="pers-viv" value="2.5" min="1" max="10" step="0.1" oninput="calcular()">
+              <span class="input-unit">p/viv.</span>
+            </div>
+            <div class="fhint">CTE Anejo F: valor por defecto 2,5</div>
+          </div>
+        </div>
+        <div class="derived" id="derived-pers">→ calculando…</div>
+      </div>
+
+      <!-- OTROS USOS -->
+      <div class="card" id="card-otros" style="display:none;">
+        <div class="ctitle">Parámetros otros usos</div>
+        <div class="infobox">Dotación según <strong>Tabla 2.2</strong> del CTE DB-HS2. La capacidad se calcula en función de la superficie útil del uso.</div>
+        <div class="field">
+          <label class="flabel">Tipo de uso</label>
+          <select id="sel-otro-uso" onchange="renderFracciones();calcular()">
+            <option value="oficinas">Oficinas</option>
+            <option value="comercio">Comercio / local comercial</option>
+            <option value="hotel">Hotel / hostal / pensión</option>
+            <option value="restaurante">Restaurante / bar / cafetería</option>
+            <option value="sanitario">Sanitario / asistencial</option>
+            <option value="educativo">Educativo</option>
+            <option value="industrial">Industrial / almacén</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="flabel">Superficie útil total</label>
+          <div class="input-row">
+            <input type="number" id="sup-otros" value="500" min="10" step="10" oninput="calcular()">
+            <span class="input-unit">m²</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FRACCIONES -->
+      <div class="card">
+        <div class="ctitle">3 — Fracciones de residuo</div>
+        <div class="okbox">Las dotaciones corresponden a los valores normativos CTE. Desmarca las fracciones que no apliquen en tu municipio (p.ej. si no hay recogida de orgánica separada).</div>
+        <div id="lista-fracciones">
+          <!-- generado por JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ VOLÚMENES ═══════════ -->
+<section class="section" id="volumenes">
+  <div class="section-head">
+    <h2>Volúmenes de residuo</h2>
+    <p>Capacidad de almacenamiento semanal calculada para cada fracción de residuo según la dotación unitaria de la normativa.</p>
+    <span class="sref">HS2 § 2.1.1 · Tabla 2.1 / 2.2</span>
+  </div>
+  <div id="vol-content">
+    <div class="nores"><div class="nores-icon">⊟</div>Introduce los datos en la pestaña anterior y vuelve aquí.</div>
+  </div>
+</section>
+
+<!-- ═══════════ CONTENEDORES ═══════════ -->
+<section class="section" id="contenedores">
+  <div class="section-head">
+    <h2>Dimensionado de contenedores</h2>
+    <p>Número y tipo de contenedores necesarios por fracción, con huella en planta para el dimensionado del almacén.</p>
+    <span class="sref">HS2 § 2.1.2 · Art. 2.2</span>
+  </div>
+  <div id="cont-content">
+    <div class="nores"><div class="nores-icon">⊡</div>Calcula primero los volúmenes.</div>
+  </div>
+</section>
+
+<!-- ═══════════ ESPACIO DE RESERVA ═══════════ -->
+<section class="section" id="espacio">
+  <div class="section-head">
+    <h2>Espacio de reserva para almacén</h2>
+    <p>Superficie mínima del local destinado al almacenamiento de contenedores y condiciones constructivas exigidas por el CTE. <strong>Nota:</strong> la superficie calculada se obtiene mediante Σhuellas×1,35+1,0 m², criterio técnico habitual. El CTE Art. 2.2.1 no prescribe una fórmula específica.</p>
+    <span class="sref">HS2 § 2.2 · Art. 2.2.2</span>
+  </div>
+  <div id="esp-content">
+    <div class="nores"><div class="nores-icon">▭</div>Calcula primero los volúmenes.</div>
+  </div>
+</section>
+
+<!-- ═══════════ REFERENCIA NORMATIVA ═══════════ -->
+<section class="section" id="referencia">
+  <div class="section-head">
+    <h2>Referencia normativa</h2>
+    <p>Tablas de dotación y requisitos del CTE DB-HS Sección HS 2.</p>
+    <span class="sref">Real Decreto 314/2006 · CTE DB-HS2</span>
+  </div>
+
+  <div class="twocol">
+    <div>
+      <div class="card">
+        <div class="ctitle">Tabla 2.1 · Viviendas (l/persona·semana)</div>
+        <table class="reftable">
+          <thead><tr><th>Fracción</th><th>Dotación</th><th>Ref.</th></tr></thead>
+          <tbody>
+            <tr><td class="tdname">Papel / cartón</td><td class="tdnum">10</td><td class="tdinfo">T.2.1</td></tr>
+            <tr><td class="tdname">Envases ligeros</td><td class="tdnum">7,5</td><td class="tdinfo">T.2.1</td></tr>
+            <tr><td class="tdname">Materia orgánica</td><td class="tdnum">3</td><td class="tdinfo">T.2.1</td></tr>
+            <tr><td class="tdname">Vidrio</td><td class="tdnum">3</td><td class="tdinfo">T.2.1</td></tr>
+            <tr><td class="tdname">Fracción resto</td><td class="tdnum">30</td><td class="tdinfo">T.2.1</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="ctitle">Requisitos del almacén (Art. 2.2.2)</div>
+        <table class="reftable">
+          <thead><tr><th>Requisito</th><th>Valor mínimo</th></tr></thead>
+          <tbody>
+            <tr><td class="tdname">Superficie</td><td>≥ calculada, mín. 3,00 m²</td></tr>
+            <tr><td class="tdname">Altura libre</td><td>≥ 2,10 m</td></tr>
+            <tr><td class="tdname">Dimensión mínima planta</td><td>≥ 1,50 m en todo punto</td></tr>
+            <tr><td class="tdname">Puerta de acceso</td><td>Anchura ≥ 0,80 m</td></tr>
+            <tr><td class="tdname">Ventilación</td><td>Sección libre ≥ 0,10 m²</td></tr>
+            <tr><td class="tdname">Iluminación artificial</td><td>≥ 100 lux a 0,85 m</td></tr>
+            <tr><td class="tdname">Punto de agua + sumidero</td><td>Sifónico, agua fría</td></tr>
+            <tr><td class="tdname">Paredes</td><td>Lavables, hasta 2,00 m alt.</td></tr>
+            <tr><td class="tdname">Separación fuentes calor</td><td>≥ 25 cm (calderas, acumuladores)</td></tr>
+            <tr><td class="tdname">Suelo</td><td>Continuo, impermeable, antideslizante</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="ctitle">Tabla 2.2 · Otros usos (l/m²·semana)</div>
+        <table class="reftable">
+          <thead><tr><th>Uso</th><th>Papel</th><th>Envases</th><th>Orgánica</th><th>Vidrio</th><th>Resto</th></tr></thead>
+          <tbody>
+            <tr><td class="tdname">Oficinas</td><td>0,39</td><td>0,06</td><td>0,06</td><td>0,12</td><td>0,24</td></tr>
+            <tr><td class="tdname">Comercio</td><td>0,30</td><td>0,40</td><td>0,40</td><td>0,20</td><td>0,50</td></tr>
+            <tr><td class="tdname">Hotel</td><td>0,24</td><td>0,12</td><td>0,36</td><td>0,18</td><td>0,42</td></tr>
+            <tr><td class="tdname">Restaurante</td><td>0,10</td><td>0,25</td><td>2,00</td><td>0,50</td><td>0,75</td></tr>
+            <tr><td class="tdname">Sanitario</td><td>0,30</td><td>0,12</td><td>0,12</td><td>0,06</td><td>0,36</td></tr>
+            <tr><td class="tdname">Educativo</td><td>0,40</td><td>0,06</td><td>0,02</td><td>0,04</td><td>0,24</td></tr>
+            <tr><td class="tdname">Industrial</td><td>0,18</td><td>0,08</td><td>0,02</td><td>0,02</td><td>0,30</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="ctitle">Contenedores estándar de referencia</div>
+        <table class="reftable">
+          <thead><tr><th>Tipo</th><th>Cap. (l)</th><th>Ø/lado (m)</th><th>Alt. (m)</th><th>Huella (m²)</th></tr></thead>
+          <tbody>
+            <tr><td>Cubo 30L</td><td class="tdnum">30</td><td>0,40</td><td>0,45</td><td>0,160</td></tr>
+            <tr><td>Bidón 120L</td><td class="tdnum">120</td><td>0,50</td><td>0,93</td><td>0,250</td></tr>
+            <tr><td>Contenedor 240L</td><td class="tdnum">240</td><td>0,58</td><td>1,07</td><td>0,336</td></tr>
+            <tr><td>Contenedor 360L</td><td class="tdnum">360</td><td>0,74</td><td>1,10</td><td>0,548</td></tr>
+            <tr><td>Contenedor 800L</td><td class="tdnum">800</td><td>1,16</td><td>1,34</td><td>1,346</td></tr>
+            <tr><td>Contenedor 1000L</td><td class="tdnum">1000</td><td>1,20</td><td>1,40</td><td>1,440</td></tr>
+            <tr><td>Contenedor 2500L</td><td class="tdnum">2500</td><td>1,80</td><td>1,70</td><td>3,240</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px;">
+    <div class="ctitle">Notas metodológicas (v2025-r1)</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+      <strong style="color:var(--accent);">Separación fuentes de calor:</strong> El Art. 2.2.2 CTE HS2 establece ≥ 25 cm (no 30 cm).<br>
+      <strong style="color:var(--accent);">Superficie del almacén:</strong> La fórmula Σhuellas×1,35+1,0 m² es una estimación técnica habitual. El CTE Art. 2.2.1 no prescribe fórmula específica.<br>
+      <strong style="color:var(--accent);">Factor de recogida:</strong> El CTE basa las dotaciones en 1 semana de acumulación (Art. 2.1.1). El ajuste por frecuencia es un complemento técnico, no normativo.<br>
+      <strong style="color:var(--accent);">Huella de contenedores:</strong> Calculada como lado²  (sección cuadrada equivalente en planta), más representativa que la fórmula circular.<br>
+      <strong style="color:var(--accent);">Número y tipo de contenedores:</strong> El CTE no prescribe tipo ni número. El criterio «Auto» selecciona el contenedor más pequeño con ≤ 5 unidades por fracción. El usuario puede seleccionar manualmente cualquier tipo en la pestaña Contenedores, siempre que la capacidad total cubra el volumen calculado.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ RESUMEN ═══════════ -->
+<section class="section" id="resumen">
+  <div id="resumen-content">
+    <div class="nores"><div class="nores-icon">⎙</div>Introduce los datos y pulsa «Resumen / Exportar».</div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ══════════ DATOS BASE ══════════
+const FRACCIONES = {
+  papel:    { nombre:'Papel / cartón',   dotViv:10,  color:'#2570c8', activo:true },
+  envases:  { nombre:'Envases ligeros',  dotViv:7.5, color:'#c85a20', activo:true },
+  organica: { nombre:'Materia orgánica', dotViv:3,   color:'#7a5200', activo:true },
+  vidrio:   { nombre:'Vidrio',           dotViv:3,   color:'#15a07a', activo:true },
+  resto:    { nombre:'Fracción resto',   dotViv:30,  color:'#5a6f85', activo:true },
+};
+
+const DOT_OTROS = {
+  oficinas:    {papel:0.39,envases:0.06,organica:0.06,vidrio:0.12,resto:0.24},
+  comercio:    {papel:0.30,envases:0.40,organica:0.40,vidrio:0.20,resto:0.50},
+  hotel:       {papel:0.24,envases:0.12,organica:0.36,vidrio:0.18,resto:0.42},
+  restaurante: {papel:0.10,envases:0.25,organica:2.00,vidrio:0.50,resto:0.75},
+  sanitario:   {papel:0.30,envases:0.12,organica:0.12,vidrio:0.06,resto:0.36},
+  educativo:   {papel:0.40,envases:0.06,organica:0.02,vidrio:0.04,resto:0.24},
+  industrial:  {papel:0.18,envases:0.08,organica:0.02,vidrio:0.02,resto:0.30},
+};
+
+const CONTENEDORES = [
+  {cap:30,   diam:0.40,h:0.45,tipo:'Cubo 30L'},
+  {cap:120,  diam:0.50,h:0.93,tipo:'Bidón 120L'},
+  {cap:240,  diam:0.58,h:1.07,tipo:'Contenedor 240L'},
+  {cap:360,  diam:0.74,h:1.10,tipo:'Contenedor 360L'},
+  {cap:800,  diam:1.16,h:1.34,tipo:'Contenedor 800L'},
+  {cap:1000, diam:1.20,h:1.40,tipo:'Contenedor 1000L'},
+  {cap:2500, diam:1.80,h:1.70,tipo:'Contenedor 2500L'},
+];
+
+const USO_LABELS = {
+  vivienda_unifamiliar:'Vivienda unifamiliar',
+  edificio_viviendas:'Edificio de viviendas',
+  otros_usos:'Otros usos',
+  mixto:'Uso mixto',
+};
+
+let S = { uso:'vivienda_unifamiliar', resultado:null, anchoAlmacen:1.50, contOverrides:{} };
+
+// ══════════ INIT ══════════
+document.addEventListener('DOMContentLoaded', ()=>{
+  renderFracciones();
+  calcular();
+});
+
+// ══════════ NAV ══════════
+function showSec(id, tab){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  if(tab) tab.classList.add('active');
+}
+
+// ══════════ USO ══════════
+function setUso(uso, label){
+  S.uso = uso;
+  document.querySelectorAll('#rg-uso .ro').forEach(r=>r.classList.remove('sel'));
+  label.classList.add('sel');
+
+  const cardViv = document.getElementById('card-vivienda');
+  const cardOtros = document.getElementById('card-otros');
+
+  if(uso==='vivienda_unifamiliar'){
+    cardViv.style.display='';
+    cardOtros.style.display='none';
+    document.getElementById('num-viv').value=1;
+  } else if(uso==='edificio_viviendas'){
+    cardViv.style.display='';
+    cardOtros.style.display='none';
+    if(parseInt(document.getElementById('num-viv').value)<2)
+      document.getElementById('num-viv').value=4;
+  } else if(uso==='otros_usos'){
+    cardViv.style.display='none';
+    cardOtros.style.display='';
+  } else { // mixto
+    cardViv.style.display='';
+    cardOtros.style.display='';
+    if(parseInt(document.getElementById('num-viv').value)<1)
+      document.getElementById('num-viv').value=2;
+  }
+  renderFracciones();
+  calcular();
+}
+
+// ══════════ FRACCIONES ══════════
+function renderFracciones(){
+  const cont = document.getElementById('lista-fracciones');
+  const uso = S.uso;
+  const tipoOtro = document.getElementById('sel-otro-uso').value;
+  let html = '';
+  for(const [key,f] of Object.entries(FRACCIONES)){
+    let dotDesc;
+    if(uso==='vivienda_unifamiliar'||uso==='edificio_viviendas'){
+      dotDesc = `Tabla 2.1: ${f.dotViv} l/persona·sem`;
+    } else if(uso==='otros_usos'){
+      const dotOtro = DOT_OTROS[tipoOtro]?.[key]||0;
+      dotDesc = `Tabla 2.2: ${dotOtro} l/m²·sem`;
+    } else { // mixto
+      const dotOtro = DOT_OTROS[tipoOtro]?.[key]||0;
+      dotDesc = `T.2.1: ${f.dotViv} l/p·sem + T.2.2: ${dotOtro} l/m²·sem`;
+    }
+    html += `<label class="co ${f.activo?'sel':''}" id="co-${key}" onclick="toggleFrac('${key}',this)">
+      <input type="checkbox" id="chk-${key}" ${f.activo?'checked':''}>
+      <div style="flex:1;display:flex;align-items:center;gap:10px;">
+        <span style="width:4px;height:28px;background:${f.color};flex-shrink:0;display:block;"></span>
+        <div>
+          <div class="rl">${f.nombre}</div>
+          <div class="rd">${dotDesc} &nbsp;|&nbsp; incluir en el cálculo</div>
+        </div>
+      </div>
+    </label>`;
+  }
+  cont.innerHTML = html;
+}
+
+function toggleFrac(key, label){
+  FRACCIONES[key].activo = !FRACCIONES[key].activo;
+  label.classList.toggle('sel', FRACCIONES[key].activo);
+  document.getElementById('chk-'+key).checked = FRACCIONES[key].activo;
+  calcular();
+}
+
+// ══════════ CÁLCULO ══════════
+function calcular(){
+  const uso = S.uso;
+  const nViv = parseFloat(document.getElementById('num-viv').value)||1;
+  const pViv = parseFloat(document.getElementById('pers-viv').value)||2.5;
+  const supOtros = parseFloat(document.getElementById('sup-otros').value)||500;
+  const tipoOtro = document.getElementById('sel-otro-uso').value;
+  const factorRecogida = parseFloat(document.getElementById('sel-recogida').value)||1;
+
+  const totalPersonas = (uso!=='otros_usos') ? nViv*pViv : 0;
+
+  // Actualizar derived
+  if(uso!=='otros_usos'){
+    document.getElementById('derived-pers').textContent =
+      `${Math.round(totalPersonas)} personas totales · ${nViv} viv. × ${pViv} p/viv.`;
+  }
+
+  // Volúmenes
+  const vols = {}, conts = {};
+  let volTotal = 0;
+
+  // Validación: edificio_viviendas requiere ≥ 2 viviendas
+  if(uso==='edificio_viviendas' && nViv < 2){
+    const inp = document.getElementById('num-viv');
+    inp.style.borderColor = 'var(--red)';
+    inp.title = 'Debe haber al menos 2 viviendas en un edificio de viviendas';
+    // Bloquear cálculo si el modo es edificio y hay < 2 viviendas
+    const errDiv = document.getElementById('vol-content');
+    if(errDiv) errDiv.innerHTML = '<div class="warnbox">⚠ <strong>Error:</strong> El modo «Edificio de viviendas» requiere al menos 2 viviendas. Corrija el número o seleccione «Vivienda unifamiliar».</div>';
+    return;
+  } else {
+    document.getElementById('num-viv').style.borderColor = '';
+    document.getElementById('num-viv').title = '';
+  }
+
+  for(const [key,f] of Object.entries(FRACCIONES)){
+    if(!f.activo){ vols[key]=0; continue; }
+    let v = 0;
+    if(uso==='vivienda_unifamiliar'||uso==='edificio_viviendas'){
+      v = f.dotViv * totalPersonas * factorRecogida;
+    } else if(uso==='otros_usos'){
+      v = (DOT_OTROS[tipoOtro]?.[key]||0) * supOtros * factorRecogida;
+    } else { // mixto
+      v = f.dotViv*totalPersonas*factorRecogida + (DOT_OTROS[tipoOtro]?.[key]||0)*supOtros*factorRecogida;
+    }
+    vols[key] = Math.round(v*10)/10;
+    volTotal += v;
+  }
+  volTotal = Math.round(volTotal*10)/10;
+
+  // Contenedores
+  // Criterio auto: contenedor más pequeño que requiera ≤ 5 unidades (operativo).
+  // El CTE no fija tipo ni número de contenedores (Art. 2.1.2).
+  let supHuellas = 0;
+  for(const [key,f] of Object.entries(FRACCIONES)){
+    if(!f.activo||!vols[key]){ conts[key]=null; continue; }
+    const vol = vols[key];
+    let elegido;
+    const override = S.contOverrides[key];
+    if(override){
+      elegido = CONTENEDORES.find(c=>c.cap===override) || CONTENEDORES[CONTENEDORES.length-1];
+    } else {
+      elegido = CONTENEDORES[CONTENEDORES.length-1];
+      for(const tc of CONTENEDORES){
+        if(tc.cap >= vol/5){ elegido=tc; break; }
+      }
+    }
+    const num = Math.ceil(vol/elegido.cap);
+    // Huella rectangular (diam = lado equivalente en planta)
+    const huella = elegido.diam * elegido.diam;
+    conts[key] = { vol, cont:elegido, num, huella:Math.round(huella*1000)/1000, huellaTotal:Math.round(huella*num*100)/100 };
+    supHuellas += huella*num;
+  }
+
+  // Superficie almacén
+  // Factor 1,35 de circulación + 1,0 m² de acceso (estimación técnica; CTE Art.2.2.1 no prescribe fórmula)
+  let supCalc = Math.round((supHuellas*1.35+1.0)*100)/100;
+  const supAdopt = Math.max(supCalc, 3.0);
+  const ancho = S.anchoAlmacen;
+  const largo = Math.round((supAdopt/ancho)*100)/100;
+
+  S.resultado = { uso, nViv, pViv, supOtros, tipoOtro, totalPersonas, factorRecogida,
+    vols, conts, volTotal, supCalc, supAdopt, ancho, largo, tieneAlmacen:(uso!=='vivienda_unifamiliar') };
+
+  renderVolumenes();
+  renderContenedores();
+  renderEspacio();
+}
+
+// ══════════ RENDER VOLÚMENES ══════════
+function renderVolumenes(){
+  const r = S.resultado;
+  if(!r){ return; }
+  const c = document.getElementById('vol-content');
+
+  let html = `<div class="stat-row stat-row-3">
+    <div class="stat info">
+      <div class="stat-lbl">Volumen total semanal</div>
+      <div class="stat-val">${r.volTotal.toLocaleString('es-ES',{maximumFractionDigits:1})}<span class="unit">l/sem</span></div>
+      <div class="stat-note">Suma de todas las fracciones activas</div>
+    </div>`;
+
+  if(r.uso!=='otros_usos'){
+    html += `<div class="stat ok">
+      <div class="stat-lbl">Total personas</div>
+      <div class="stat-val">${Math.round(r.totalPersonas)}<span class="unit">p.</span></div>
+      <div class="stat-note">${r.nViv} viv. × ${r.pViv} p/viv.</div>
+    </div>`;
+  }
+  if(r.uso!=='vivienda_unifamiliar'&&r.uso!=='edificio_viviendas'){
+    html += `<div class="stat ok">
+      <div class="stat-lbl">Superficie otros usos</div>
+      <div class="stat-val">${r.supOtros.toLocaleString('es-ES')}<span class="unit">m²</span></div>
+      <div class="stat-note">${USO_LABELS[r.uso]||r.uso}</div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  // Barras por fracción
+  html += `<div class="card"><div class="ctitle">Desglose por fracción</div>`;
+  for(const [key,f] of Object.entries(FRACCIONES)){
+    const vol = r.vols[key]||0;
+    const pct = r.volTotal>0 ? (vol/r.volTotal*100).toFixed(1) : '0';
+    const barW = r.volTotal>0 ? Math.round(vol/r.volTotal*100) : 0;
+    const dot = (r.uso==='vivienda_unifamiliar'||r.uso==='edificio_viviendas')
+      ? `${f.dotViv} l/p·sem`
+      : r.uso==='mixto'
+        ? `${f.dotViv} l/p·sem + ${(DOT_OTROS[r.tipoOtro]?.[key]||0)} l/m²·sem`
+        : `${(DOT_OTROS[r.tipoOtro]?.[key]||0)} l/m²·sem`;
+    html += `<div class="frac-row">
+      <div class="frac-color" style="background:${f.color};"></div>
+      <div class="frac-name">${f.nombre}</div>
+      <div class="frac-dot">${dot}</div>
+      <div style="flex:1;background:var(--bg);border:1px solid var(--border);height:6px;margin:0 10px;">
+        <div style="width:${barW}%;height:100%;background:${f.color};opacity:0.6;"></div>
+      </div>
+      <div class="frac-vol">${f.activo&&vol>0 ? vol.toLocaleString('es-ES',{maximumFractionDigits:1})+' l' : '—'}</div>
+      <div class="frac-pct">${f.activo&&vol>0 ? pct+'%' : ''}</div>
+    </div>`;
+  }
+  html += `</div>`;
+
+  if(!r.tieneAlmacen){
+    // Mostrar capacidades de cubos individuales recomendadas para vivienda unifamiliar
+    let fracList = '';
+    for(const [key,f] of Object.entries(FRACCIONES)){
+      const vol = r.vols[key]||0;
+      if(f.activo && vol>0) fracList += `<li style="margin:2px 0;">${f.nombre}: <strong>${vol.toLocaleString('es-ES',{maximumFractionDigits:1})} l/sem</strong></li>`;
+    }
+    html += `<div class="warnbox">⚠ <strong>Vivienda unifamiliar:</strong> El CTE DB-HS2 no exige almacén colectivo (Art. 2.1.2). Los residuos se almacenan en cubos individuales en el interior de la vivienda. Capacidades mínimas recomendadas:<ul style="margin-top:6px;margin-left:20px;">${fracList}</ul></div>`;
+  }
+
+  c.innerHTML = html;
+}
+
+// ══════════ SET CONTAINER OVERRIDE ══════════
+function setContOverride(key, val){
+  if(val==='auto') delete S.contOverrides[key];
+  else S.contOverrides[key] = parseInt(val);
+  calcular();
+}
+function setAllContOverride(val){
+  if(val==='auto'){
+    S.contOverrides = {};
+  } else {
+    for(const key of Object.keys(FRACCIONES)){
+      if(FRACCIONES[key].activo) S.contOverrides[key] = parseInt(val);
+    }
+  }
+  calcular();
+}
+
+// ══════════ RENDER CONTENEDORES ══════════
+function renderContenedores(){
+  const r = S.resultado;
+  if(!r){ return; }
+  const c = document.getElementById('cont-content');
+
+  // Build options HTML for selects
+  const optsCont = `<option value="auto">Auto (≤5 uds.)</option>`
+    + CONTENEDORES.map(tc=>`<option value="${tc.cap}">${tc.tipo}</option>`).join('');
+
+  // Global control bar
+  let html = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
+    <span style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;">Tipo global:</span>
+    <select onchange="setAllContOverride(this.value)" style="background:var(--bg);border:1px solid var(--border);color:var(--bright);padding:6px 10px;font-family:var(--sans);font-size:12px;cursor:pointer;">
+      ${optsCont}
+    </select>
+    <span style="font-size:11px;color:var(--text3);">Aplica el mismo contenedor a todas las fracciones activas. Cada fracción se puede ajustar individualmente.</span>
+  </div>`;
+
+  html += `<div class="card"><div class="ctitle">Contenedores necesarios por fracción</div>`;
+
+  let hayDatos = false;
+  for(const [key,info] of Object.entries(r.conts)){
+    if(!info) continue;
+    hayDatos = true;
+    const f = FRACCIONES[key];
+    const curCap = S.contOverrides[key] || 'auto';
+    const isOverride = !!S.contOverrides[key];
+    html += `<div class="cont-row" style="flex-wrap:wrap;gap:8px;">
+      <div class="cont-color" style="background:${f.color};height:44px;"></div>
+      <div class="cont-info" style="min-width:130px;">
+        <div class="cont-name">${f.nombre}</div>
+        <div class="cont-vol">${info.vol.toLocaleString('es-ES',{maximumFractionDigits:1})} l/sem</div>
+      </div>
+      <select onchange="setContOverride('${key}',this.value)"
+        style="background:var(--bg);border:1px solid ${isOverride?'var(--accent)':'var(--border)'};color:var(--bright);
+               padding:5px 8px;font-family:var(--sans);font-size:12px;cursor:pointer;align-self:center;">
+        ${CONTENEDORES.map(tc=>`<option value="${tc.cap}" ${tc.cap===curCap?'selected':''}>${tc.tipo}</option>`).join('')}
+        <option value="auto" ${curCap==='auto'?'selected':''}>Auto (≤5 uds.)</option>
+      </select>
+      <div style="text-align:right;min-width:54px;align-self:center;">
+        <div class="cont-num">${info.num}</div>
+        <div class="cont-tipo">ud${info.num>1?'s.':''}</div>
+      </div>
+      <div class="cont-huella" style="align-self:center;">${info.huellaTotal.toFixed(2).replace('.',',')} m²</div>
+    </div>`;
+  }
+  if(!hayDatos) html += `<div class="nores" style="border:none;"><div class="nores-icon">⊡</div>No hay fracciones activas.</div>`;
+
+  html += `</div>
+  <div class="warnbox" style="margin-top:0;">⚠ El <strong>CTE DB-HS2 Art. 2.1.2</strong> solo exige cubrir el <strong>volumen semanal calculado</strong>. El tipo de contenedor no está prescrito normativamente: puedes usar cualquier combinación siempre que la capacidad total por fracción ≥ volumen calculado.</div>`;
+  c.innerHTML = html;
+}
+
+// ══════════ RECALC LARGO (sin recalcular todo) ══════════
+function recalcLargo(inp){
+  const r = S.resultado;
+  if(!r) return;
+  const raw = parseFloat(inp.value);
+  const warn = document.getElementById('ancho-warn');
+  if(!raw || raw < 1.50){
+    if(warn) warn.style.display = '';
+    inp.style.borderColor = 'var(--red)';
+    return;
+  }
+  if(warn) warn.style.display = 'none';
+  inp.style.borderColor = '';
+  S.anchoAlmacen = raw;
+  r.ancho = raw;
+  r.largo = Math.round((r.supAdopt / raw)*100)/100;
+  const statLargo = document.getElementById('stat-largo');
+  const statNote  = document.getElementById('stat-largo-note');
+  if(statLargo) statLargo.innerHTML = r.largo.toFixed(2).replace('.',',')+'<span class="unit">m</span>';
+  if(statNote)  statNote.textContent = `Con anchura de ${raw.toFixed(2).replace('.',',')} m`;
+}
+
+// ══════════ RENDER ESPACIO ══════════
+function renderEspacio(){
+  const r = S.resultado;
+  if(!r){ return; }
+  const c = document.getElementById('esp-content');
+
+  if(!r.tieneAlmacen){
+    c.innerHTML = `<div class="warnbox">⚠ <strong>Vivienda unifamiliar:</strong> El CTE DB-HS2 no exige espacio de almacenamiento colectivo. Se prevén cubos individuales en el interior de la vivienda.</div>`;
+    return;
+  }
+
+  const cumple = r.supAdopt >= 3.0;
+
+  let html = `
+  <div class="espacio-box">
+    <div>
+      <div class="eb-num">${r.supAdopt.toFixed(2).replace('.',',')}<span class="eb-unit">m²</span></div>
+    </div>
+    <div class="eb-info">
+      <h3>Superficie mínima a adoptar</h3>
+      <p>Superficie calculada: ${r.supCalc.toFixed(2).replace('.',',')} m² &nbsp;·&nbsp; Mínimo CTE: 3,00 m²</p>
+      <small>${cumple?'✔ Superficie calculada mayor que el mínimo normativo':'⚠ Se adopta el mínimo normativo de 3,00 m²'}</small>
+    </div>
+  </div>
+
+  <div class="stat-row stat-row-3">
+    <div class="stat ok">
+      <div class="stat-lbl">Longitud orientativa</div>
+      <div class="stat-val" id="stat-largo">${r.largo.toFixed(2).replace('.',',')}<span class="unit">m</span></div>
+      <div class="stat-note" id="stat-largo-note">Con anchura de ${r.ancho.toFixed(2).replace('.',',')} m</div>
+    </div>
+    <div class="stat warn">
+      <div class="stat-lbl">Anchura del local</div>
+      <div style="display:flex;align-items:center;gap:0;margin-top:4px;">
+        <input type="number" id="inp-ancho"
+          value="${r.ancho.toFixed(2)}" min="1.50" max="10" step="0.05"
+          style="width:80px;background:var(--bg);border:1px solid var(--border);color:var(--bright);
+                 padding:4px 8px;font-family:var(--mono);font-size:22px;font-weight:700;
+                 -moz-appearance:textfield;text-align:right;"
+          oninput="recalcLargo(this)">
+        <span style="font-family:var(--mono);font-size:13px;color:var(--text2);padding:0 6px;">m</span>
+      </div>
+      <div class="stat-note" id="ancho-warn" style="color:var(--red);display:none;">Mín. 1,50 m (CTE)</div>
+      <div class="stat-note" style="color:var(--text3);">Mín. normativo: 1,50 m</div>
+    </div>
+    <div class="stat info">
+      <div class="stat-lbl">Altura libre mínima</div>
+      <div class="stat-val">2,10<span class="unit">m</span></div>
+      <div class="stat-note">Según Art. 2.2.2 HS2</div>
+    </div>
+  </div>
+
+  <div class="card"><div class="ctitle">Condiciones constructivas exigidas (Art. 2.2.2)</div>`;
+
+  const reqs = [
+    ['Puerta de acceso','Anchura ≥ 0,80 m. Apertura hacia el exterior o corredera.'],
+    ['Ventilación al exterior','Ventana o rejilla con sección libre ≥ 0,10 m².'],
+    ['Iluminación artificial','Nivel mínimo 100 lux a 0,85 m del suelo.'],
+    ['Punto de agua y sumidero','Toma de agua fría y sumidero sifónico en el suelo.'],
+    ['Revestimiento de paredes','Material lavable y resistente al rozamiento hasta 2,00 m de altura.'],
+    ['Revestimiento de suelo','Continuo, impermeable, antideslizante y de fácil limpieza.'],
+    ['Separación fuentes de calor','Distancia ≥ 25 cm de calderas, acumuladores, etc. (Art. 2.2.2 CTE HS2).'],
+  ];
+  for(const [t,d] of reqs){
+    html += `<div class="req-item"><span class="req-check">✔</span><div class="req-text"><strong>${t}</strong><p>${d}</p></div></div>`;
+  }
+  html += `</div>`;
+  c.innerHTML = html;
+}
+
+// ══════════ BUILD SUMMARY ══════════
+function buildSummary(){
+  calcular();
+  const r = S.resultado;
+  if(!r){ return; }
+
+  const c = document.getElementById('resumen-content');
+
+  let metaLinea = USO_LABELS[r.uso]||r.uso;
+
+  let html = `
+  <div class="summary-header">
+    <div>
+      <h2>Justificación CTE DB-HS2</h2>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:4px;">Recogida y evacuación de residuos · Sección HS 2</div>
+    </div>
+    <div class="smeta">
+      ${metaLinea}<br>
+      CTE DB-HS · RD 314/2006
+    </div>
+  </div>
+
+  <div class="sum-actions">
+    <button class="btn-print" onclick="window.print()">⎙ Imprimir / Guardar PDF</button>
+    <button class="btn-rtf" onclick="exportRTF()">⬇ Exportar RTF</button>
+  </div>
+
+  <!-- DATOS GENERALES -->
+  <div class="sum-section">
+    <div class="sum-sec-head">
+      <div class="sum-sec-title">Datos del edificio</div>
+      <span class="sum-sec-badge sbadge-info">HS2 § 2.1</span>
+    </div>
+    <div class="sum-body">
+      <table class="sum-dtable">
+        <tr><td>Tipo de uso</td><td>${USO_LABELS[r.uso]||r.uso}</td></tr>
+        ${r.uso!=='otros_usos'?`<tr><td>Número de viviendas</td><td>${r.nViv}</td></tr>
+        <tr><td>Personas por vivienda</td><td>${r.pViv} (CTE Anejo F)</td></tr>
+        <tr><td>Total personas</td><td><strong>${Math.round(r.totalPersonas)}</strong></td></tr>`:''}
+        ${r.uso!=='vivienda_unifamiliar'&&r.uso!=='edificio_viviendas'?`<tr><td>Tipo de uso no residencial</td><td>${r.tipoOtro}</td></tr>
+        <tr><td>Superficie útil</td><td>${r.supOtros} m²</td></tr>`:''}
+        <tr><td>Factor recogida</td><td>${r.factorRecogida} (base: 1 semana)</td></tr>
+        <tr><td>Normativa aplicada</td><td>CTE DB-HS Sección HS 2 · Real Decreto 314/2006</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- VOLÚMENES -->
+  <div class="sum-section">
+    <div class="sum-sec-head">
+      <div class="sum-sec-title">Capacidad de almacenamiento — Tabla ${r.uso!=='otros_usos'?'2.1':'2.2'}</div>
+      <span class="sum-sec-badge sbadge-ok">CALCULADO</span>
+    </div>
+    <div class="sum-body">
+      <table class="reftable" style="margin-bottom:0;">
+        <thead><tr><th>Fracción</th><th>Dotación CTE</th><th>Volumen (l/sem)</th><th>% s/total</th></tr></thead>
+        <tbody>`;
+
+  for(const [key,f] of Object.entries(FRACCIONES)){
+    const vol = r.vols[key]||0;
+    const pct = r.volTotal>0?(vol/r.volTotal*100).toFixed(1):'0';
+    const dot = (r.uso==='vivienda_unifamiliar'||r.uso==='edificio_viviendas')
+      ? f.dotViv+' l/p·sem'
+      : r.uso==='mixto'
+        ? f.dotViv+' l/p·sem + '+(DOT_OTROS[r.tipoOtro]?.[key]||0)+' l/m²·sem'
+        : (DOT_OTROS[r.tipoOtro]?.[key]||0)+' l/m²·sem';
+    html += `<tr>
+      <td style="display:flex;align-items:center;gap:7px;"><span style="width:8px;height:8px;border-radius:50%;background:${f.color};display:inline-block;flex-shrink:0;"></span>${f.nombre}</td>
+      <td>${dot}</td>
+      <td style="font-weight:700;color:var(--green2);font-family:var(--mono);">${f.activo&&vol>0?vol.toLocaleString('es-ES',{maximumFractionDigits:1})+' l':'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2);">${f.activo&&vol>0?pct+'%':'—'}</td>
+    </tr>`;
+  }
+  html += `<tr style="background:rgba(232,160,26,.06);">
+    <td colspan="2" style="font-weight:700;font-family:var(--mono);font-size:11px;color:var(--accent);letter-spacing:.5px;">TOTAL</td>
+    <td style="font-weight:700;color:var(--accent);font-family:var(--mono);">${r.volTotal.toLocaleString('es-ES',{maximumFractionDigits:1})} l/sem</td>
+    <td style="font-weight:700;font-family:var(--mono);">100%</td>
+  </tr>`;
+  html += `</tbody></table></div></div>`;
+
+  // CONTENEDORES
+  html += `<div class="sum-section">
+    <div class="sum-sec-head">
+      <div class="sum-sec-title">Dimensionado de contenedores</div>
+      <span class="sum-sec-badge sbadge-info">HS2 § 2.1.2</span>
+    </div>
+    <div class="sum-body">
+      <table class="reftable" style="margin-bottom:0;">
+        <thead><tr><th>Fracción</th><th>Volumen (l)</th><th>Tipo contenedor</th><th>Nº cont.</th><th>Huella (m²)</th></tr></thead>
+        <tbody>`;
+
+  for(const [key,info] of Object.entries(r.conts)){
+    if(!info) continue;
+    const f = FRACCIONES[key];
+    html += `<tr>
+      <td style="display:flex;align-items:center;gap:7px;"><span style="width:8px;height:8px;border-radius:50%;background:${f.color};display:inline-block;flex-shrink:0;"></span>${f.nombre}</td>
+      <td style="font-family:var(--mono);">${info.vol.toLocaleString('es-ES',{maximumFractionDigits:1})}</td>
+      <td>${info.cont.tipo} (${info.cont.cap} L)</td>
+      <td style="font-weight:700;color:var(--accent);font-family:var(--mono);font-size:16px;">${info.num}</td>
+      <td style="font-family:var(--mono);">${info.huellaTotal.toFixed(2).replace('.',',')} m²</td>
+    </tr>`;
+  }
+  html += `</tbody></table></div></div>`;
+
+  // ESPACIO
+  html += `<div class="sum-section">
+    <div class="sum-sec-head">
+      <div class="sum-sec-title">Espacio de reserva para almacén de contenedores</div>
+      <span class="sum-sec-badge sbadge-ok">HS2 § 2.2</span>
+    </div>
+    <div class="sum-body">`;
+
+  if(r.tieneAlmacen){
+    html += `<table class="sum-dtable" style="margin-bottom:12px;">
+      <tr><td>Superficie calculada</td><td style="font-family:var(--mono);">${r.supCalc.toFixed(2).replace('.',',')} m²</td></tr>
+      <tr><td>Mínimo normativo CTE</td><td style="font-family:var(--mono);">3,00 m²</td></tr>
+      <tr><td>Superficie a adoptar</td><td style="font-weight:700;font-family:var(--mono);color:var(--green2);">${r.supAdopt.toFixed(2).replace('.',',')} m²</td></tr>
+      <tr><td>Altura libre mínima</td><td style="font-family:var(--mono);">2,10 m</td></tr>
+      <tr><td>Dimensión mínima en planta</td><td style="font-family:var(--mono);">≥ 1,50 m en todo punto</td></tr>
+      <tr><td>Longitud orientativa (con anchura ${r.ancho.toFixed(2).replace('.',',')} m)</td><td style="font-family:var(--mono);">${r.largo.toFixed(2).replace('.',',')} m</td></tr>
+    </table>
+    <div style="font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Condiciones constructivas (Art. 2.2.2)</div>
+    <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+      — Puerta anchura ≥ 0,80 m &nbsp;·&nbsp; — Ventilación sección libre ≥ 0,10 m² &nbsp;·&nbsp; — Iluminación ≥ 100 lux a 0,85 m<br>
+      — Punto de agua fría y sumidero sifónico &nbsp;·&nbsp; — Paredes lavables hasta 2,00 m &nbsp;·&nbsp; — Suelo continuo impermeable antideslizante
+    </div>`;
+  } else {
+    html += `<div class="warnbox">Vivienda unifamiliar: no se exige almacén colectivo. Cubos individuales en el interior de la vivienda.</div>`;
+  }
+
+  html += `</div></div>`;
+
+  // CONCLUSIÓN
+  html += `<div class="sum-section">
+    <div class="sum-sec-head"><div class="sum-sec-title">Conclusión</div></div>
+    <div class="sum-body" style="font-size:12px;color:var(--text);line-height:1.8;">
+      El presente cálculo justifica el cumplimiento de la Sección HS 2 del CTE DB-HS (Recogida y evacuación de residuos). La capacidad de almacenamiento semanal calculada es de <strong>${r.volTotal.toLocaleString('es-ES',{maximumFractionDigits:1})} litros</strong>
+      ${r.tieneAlmacen?`, con un espacio de reserva de <strong>${r.supAdopt.toFixed(2).replace('.',',')} m²</strong> de superficie útil y altura libre ≥ 2,10 m`:''}. La documentación gráfica del proyecto recogerá la ubicación y dimensiones del espacio previsto, conforme a los valores calculados.
+    </div>
+  </div>
+
+  <div class="sum-notice">
+    CTE DB-HS · Documento Básico de Salubridad · Sección HS 2 · Real Decreto 314/2006, de 17 de marzo, y modificaciones posteriores.
+  </div>
+  <div class="sum-footer">CALCULADORA CTE DB-HS2 · Recogida y Evacuación de Residuos · v2025-r1</div>`;
+
+  c.innerHTML = html;
+}
+
+// ══════════ EXPORT RTF ══════════
+function exportRTF(){
+  const r = S.resultado;
+  if(!r){ alert('Calcula primero los datos.'); return; }
+
+  function e(str){
+    if(!str) return '';
+    const cp = {'á':0xE1,'é':0xE9,'í':0xED,'ó':0xF3,'ú':0xFA,'Á':0xC1,'É':0xC9,'Í':0xCD,'Ó':0xD3,'Ú':0xDA,'ñ':0xF1,'Ñ':0xD1,'ü':0xFC,'Ü':0xDC,'¿':0xBF,'¡':0xA1,'·':0xB7,'º':0xBA,'ª':0xAA,'²':0xB2,'³':0xB3,'ç':0xE7,'Ç':0xC7,'à':0xE0,'è':0xE8,'ò':0xF2,'ù':0xF9,'«':0xAB,'»':0xBB};
+    let o='';
+    for(let i=0;i<str.length;i++){
+      const c=str[i],code=str.charCodeAt(i);
+      if(code<128){
+        if(c==='\\')o+='\\\\';
+        else if(c==='{')o+='\\{';
+        else if(c==='}')o+='\\}';
+        else o+=c;
+      } else if(cp[c]){
+        o+="\\'"+cp[c].toString(16).padStart(2,'0');
+      } else {
+        o+="\\u"+code+"?";
+      }
+    }
+    return o;
+  }
+
+  function row4(a,b,c,d,bold){
+    const b0=bold?'\\b ':'', b1=bold?'\\b0':'';
+    return `{\\trowd\\trgaph108\\trleft-108\\cellx3000\\cellx5500\\cellx7500\\cellx9300\n`+
+      `{\\pard\\intbl\\f1\\fs17 ${b0}${e(String(a))}${b1}\\cell}{\\pard\\intbl\\f1\\fs17 ${e(String(b))}\\cell}{\\pard\\intbl\\f1\\fs17\\b\\cf1 ${e(String(c))}\\b0\\cell}{\\pard\\intbl\\f1\\fs17 ${e(String(d))}\\cell}\\row}\n`;
+  }
+  function row2(a,b){
+    return `{\\trowd\\trgaph108\\trleft-108\\cellx3500\\cellx9300\n{\\pard\\intbl\\f1\\fs17\\cf4 ${e(a)}\\cell}{\\pard\\intbl\\f1\\fs17\\b\\cf2 ${e(b)}\\b0\\cell}\\row}\n`;
+  }
+  function rowCont(nombre, vol, tipo, num, huella){
+    return `{\\trowd\\trgaph108\\trleft-108\\cellx2800\\cellx4400\\cellx6800\\cellx8000\\cellx9300\n`+
+      `{\\pard\\intbl\\f1\\fs17 ${e(nombre)}\\cell}{\\pard\\intbl\\f1\\fs17 ${e(vol)}\\cell}{\\pard\\intbl\\f1\\fs17 ${e(tipo)}\\cell}{\\pard\\intbl\\f1\\fs17\\b\\cf1 ${e(String(num))}\\b0\\cell}{\\pard\\intbl\\f1\\fs17 ${e(huella)}\\cell}\\row}\n`;
+  }
+
+  let rtf = '{\\rtf1\\ansi\\ansicpg1252\\deff0\n';
+  rtf += '{\\fonttbl{\\f0\\fmodern\\fcharset0 Courier New;}{\\f1\\fswiss\\fcharset0 Arial;}{\\f2\\froman\\fcharset0 Times New Roman;}}\n';
+  rtf += '{\\colortbl;\\red199\\green123\\blue26;\\red26\\green74\\blue122;\\red21\\green160\\blue122;\\red90\\green111\\blue133;\\red26\\green24\\blue20;}\n';
+  rtf += '\\paperw11906\\paperh16838\\margl1417\\margr1417\\margt1134\\margb1134\n';
+
+  // Cabecera
+  rtf += `{\\pard\\f0\\fs10\\cf4 CTE DB-HS2 \\u8212? RECOGIDA Y EVACUACI${e('Ó')}N DE RESIDUOS\\par}\n`;
+  rtf += `{\\pard\\f2\\fs32\\b\\cf5\\sb200\\sa60 Justificaci${e('ó')}n CTE DB-HS2\\par}\n`;
+  rtf += `{\\pard\\f1\\fs19\\cf2\\sb0\\sa40 Secci${e('ó')}n HS 2 ${e('·')} Recogida y evacuaci${e('ó')}n de residuos\\par}\n`;
+  rtf += `{\\pard\\f1\\fs16\\cf4\\sb40\\sa200 ${e(USO_LABELS[r.uso]||r.uso)} ${e('·')} CTE DB-HS ${e('·')} RD 314/2006\\par}\n`;
+
+  // Datos
+  rtf += `{\\pard\\f0\\fs20\\b\\cf1\\sb200\\sa60 1. DATOS DEL EDIFICIO\\par}\n`;
+  rtf += row2('Tipo de uso', USO_LABELS[r.uso]||r.uso);
+  if(r.uso!=='otros_usos'){
+    rtf += row2('N\u00famero de viviendas', String(r.nViv));
+    rtf += row2('Personas por vivienda', String(r.pViv) + ' (CTE Anejo F)');
+    rtf += row2('Total personas', String(Math.round(r.totalPersonas)));
+  }
+  if(r.uso!=='vivienda_unifamiliar'&&r.uso!=='edificio_viviendas'){
+    rtf += row2('Tipo de uso no residencial', r.tipoOtro);
+    rtf += row2('Superficie \u00fatil', r.supOtros + ' m\u00b2');
+  }
+  rtf += row2('Normativa', 'CTE DB-HS Secci\u00f3n HS 2 \u00b7 RD 314/2006');
+  rtf += '{\\pard\\par}\n';
+
+  // Volúmenes
+  rtf += `{\\pard\\f0\\fs20\\b\\cf1\\sb200\\sa60 2. CAPACIDAD DE ALMACENAMIENTO (${r.uso==='vivienda_unifamiliar'||r.uso==='edificio_viviendas'?'Tabla 2.1':r.uso==='otros_usos'?'Tabla 2.2':'Tablas 2.1 y 2.2'})\\par}\n`;
+  // Cabecera tabla
+  rtf += `{\\trowd\\trgaph108\\trleft-108\\cellx3000\\cellx5500\\cellx7500\\cellx9300\n{\\pard\\intbl\\f0\\fs15\\b\\cf1 FRACCI${e('Ó')}N\\cell}{\\pard\\intbl\\f0\\fs15\\b\\cf1 DOTACI${e('Ó')}N CTE\\cell}{\\pard\\intbl\\f0\\fs15\\b\\cf1 VOLUMEN (l/sem)\\cell}{\\pard\\intbl\\f0\\fs15\\b\\cf1 %\\cell}\\row}\n`;
+
+  for(const [key,f] of Object.entries(FRACCIONES)){
+    const vol = r.vols[key]||0;
+    const pct = r.volTotal>0?(vol/r.volTotal*100).toFixed(1)+'%':'—';
+    const dot = (r.uso==='vivienda_unifamiliar'||r.uso==='edificio_viviendas')
+      ? f.dotViv+' l/p\u00b7sem'
+      : r.uso==='mixto'
+        ? f.dotViv+' l/p\u00b7sem + '+(DOT_OTROS[r.tipoOtro]?.[key]||0)+' l/m\u00b2\u00b7sem'
+        : (DOT_OTROS[r.tipoOtro]?.[key]||0)+' l/m\u00b2\u00b7sem';
+    rtf += row4(f.nombre, dot, f.activo&&vol>0?vol.toFixed(1).replace('.',','):'—', f.activo&&vol>0?pct:'—');
+  }
+  rtf += `{\\trowd\\trgaph108\\trleft-108\\cellx3000\\cellx5500\\cellx7500\\cellx9300\n{\\pard\\intbl\\f0\\fs17\\b\\cf1 TOTAL\\cell}{\\pard\\intbl\\f0\\fs15 \\cell}{\\pard\\intbl\\f0\\fs17\\b\\cf1 ${e(r.volTotal.toFixed(1).replace('.',','))} l/sem\\cell}{\\pard\\intbl\\f0\\fs17\\b 100%\\cell}\\row}\n`;
+  rtf += '{\\pard\\par}\n';
+
+  // Contenedores
+  rtf += `{\\pard\\f0\\fs20\\b\\cf1\\sb200\\sa60 3. DIMENSIONADO DE CONTENEDORES\\par}\n`;
+  rtf += `{\\trowd\\trgaph108\\trleft-108\\cellx2800\\cellx4400\\cellx6800\\cellx8000\\cellx9300\n{\\pard\\intbl\\f0\\fs15\\b\\cf1 FRACCI${e('Ó')}N\\cell}{\\pard\\intbl\\f0\\fs15\\b\\cf1 VOL.(l)\\cell}{\\pard\\intbl\\f0\\fs15\\b\\cf1 TIPO CONTENEDOR\\cell}{\\pard\\intbl\\f0\\fs15\\b\\cf1 N${e('º')}\\cell}{\\pard\\intbl\\f0\\fs15\\b\\cf1 HUELLA(m${e('²')})\\cell}\\row}\n`;
+
+  for(const [key,info] of Object.entries(r.conts)){
+    if(!info) continue;
+    const f = FRACCIONES[key];
+    rtf += rowCont(f.nombre, info.vol.toFixed(1).replace('.',','), info.cont.tipo+' ('+info.cont.cap+' L)', info.num, info.huellaTotal.toFixed(2).replace('.',','));
+  }
+  rtf += '{\\pard\\par}\n';
+
+  // Espacio
+  rtf += `{\\pard\\f0\\fs20\\b\\cf1\\sb200\\sa60 4. ESPACIO DE RESERVA PARA ALMAC${e('É')}N\\par}\n`;
+  if(r.tieneAlmacen){
+    rtf += row2('Superficie calculada', r.supCalc.toFixed(2).replace('.',',')+' m\u00b2');
+    rtf += row2('M\u00ednimo normativo CTE', '3,00 m\u00b2');
+    rtf += row2('SUPERFICIE A ADOPTAR', r.supAdopt.toFixed(2).replace('.',',')+' m\u00b2');
+    rtf += row2('Altura libre m\u00ednima', '2,10 m');
+    rtf += row2('Dimensi\u00f3n m\u00ednima en planta', '\u2265 1,50 m en todo punto');
+    rtf += row2('Longitud orientativa (anchura '+r.ancho.toFixed(2).replace('.',',')+' m)', r.largo.toFixed(2).replace('.',',')+' m');
+    rtf += '{\\pard\\par}\n';
+    rtf += `{\\pard\\f1\\fs18\\cf4\\sb100\\sa40 Condiciones constructivas Art. 2.2.2 CTE HS2:\\par}\n`;
+    const conds = [
+      'Puerta de acceso con anchura \u2265 0,80 m.',
+      'Ventilaci\u00f3n al exterior con secci\u00f3n libre \u2265 0,10 m\u00b2.',
+      'Iluminaci\u00f3n artificial \u2265 100 lux a 0,85 m del suelo.',
+      'Punto de agua fr\u00eda y sumidero sif\u00f3nico.',
+      'Paredes con revestimiento lavable hasta 2,00 m de altura.',
+      'Suelo continuo, impermeable y antideslizante.',
+      'Separaci\u00f3n \u2265 25 cm de fuentes de calor (Art. 2.2.2).',
+    ];
+    for(const cond of conds){
+      rtf += `{\\pard\\f1\\fs17\\cf2\\li360\\sb20\\sa20 \u2014 ${e(cond)}\\par}\n`;
+    }
+  } else {
+    rtf += `{\\pard\\f1\\fs17\\cf1\\sb60\\sa40 ${e('Vivienda unifamiliar: no se exige almac\u00e9n colectivo seg\u00fan CTE DB-HS2.')}\\par}\n`;
+  }
+  rtf += '{\\pard\\par}\n';
+
+  // Conclusión
+  const concl = `El presente c\u00e1lculo justifica el cumplimiento de la Secci\u00f3n HS 2 del CTE DB-HS. La capacidad de almacenamiento semanal calculada es de ${r.volTotal.toFixed(1).replace('.',',')} litros`
+    +(r.tieneAlmacen?`, con un espacio de reserva de ${r.supAdopt.toFixed(2).replace('.',',')} m\u00b2 de superficie \u00fatil`:'')
+    +'. La documentaci\u00f3n gr\u00e1fica del proyecto recoger\u00e1 la ubicaci\u00f3n y dimensiones del espacio previsto.';
+  rtf += `{\\pard\\f0\\fs20\\b\\cf1\\sb200\\sa60 5. CONCLUSI${e('Ó')}N\\par}\n`;
+  rtf += `{\\pard\\f1\\fs17\\cf5\\sb60\\sa40 ${e(concl)}\\par}\n`;
+  rtf += `{\\pard\\f0\\fs14\\cf4\\sb300\\sa40 CTE DB-HS2 ${e('·')} Recogida y evacuaci${e('ó')}n de residuos ${e('·')} RD 314/2006 ${e('·')} v2024\\par}\n`;
+  rtf += '}';
+
+  const blob = new Blob([rtf],{type:'application/rtf;charset=windows-1252'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'Justificacion_HS2.rtf';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+</script>
+</body>
+</html>

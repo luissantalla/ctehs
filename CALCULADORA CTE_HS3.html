@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTE HS3 v3 — Calculadora de Ventilación</title>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --db:#0f2a47;--dm:#1a4a7a;--dl:#2563eb;--lb:#dbeafe;--llb:#eff6ff;
+  --dg:#064e3b;--mg:#065f46;--lg:#d1fae5;--llg:#f0fdf4;
+  --or:#7c2d12;--lo:#fed7aa;--pu:#3b0764;--lp:#ede9fe;
+  --re:#dc2626;--ye:#854d0e;--ly:#fef9c3;--gy:#475569;--lgy:#f8fafc;
+  --bdr:#e2e8f0;--inp:#fffce8;--teal:#0f766e;--lteal:#ccfbf1;
+  --font:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',monospace;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);background:#eef2f7;color:#1e293b;font-size:13px;line-height:1.45;}
+#hdr{background:var(--db);color:#fff;padding:10px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 2px 12px rgba(0,0,0,.4);position:sticky;top:0;z-index:200;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+#hdr h1{font-size:15px;font-weight:700;letter-spacing:-.2px;}
+#hdr h1 span{color:#60a5fa;}
+#hdr p{font-size:10px;color:#93c5fd;margin-top:1px;font-family:var(--mono);}
+.hdr-mid{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.hig label{display:block;font-size:9px;color:#7dd3fc;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.hig input,.hig select{background:#1a3a5c;border:1px solid #2d5f8a;color:#fff;border-radius:7px;padding:6px 10px;font-size:12px;outline:none;font-family:var(--font);}
+.hig input:focus,.hig select:focus{border-color:#60a5fa;box-shadow:0 0 0 2px rgba(96,165,250,.3);}
+.hig input[type=number]{width:62px;font-weight:700;text-align:center;}
+.hig select option{background:#1a3a5c;}
+.hig select{min-width:200px;}
+.hdr-acts{display:flex;gap:7px;align-items:center;}
+.btn{padding:7px 14px;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;font-family:var(--font);}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn-xl{background:#16a34a;color:#fff;}
+.btn-pr{background:#d97706;color:#fff;}
+.btn-add{background:var(--dl);color:#fff;}
+.btn-ed{background:#dbeafe;color:#1e3a8a;padding:3px 8px;border-radius:5px;font-size:11px;}
+.btn-de{background:#fee2e2;color:#b91c1c;padding:3px 8px;border-radius:5px;font-size:11px;}
+#tabnav{background:#fff;padding:6px 20px 0;display:flex;gap:3px;border-bottom:2px solid var(--bdr);box-shadow:0 1px 4px rgba(0,0,0,.06);overflow-x:auto;}
+.tbtn{padding:8px 16px;border:none;background:transparent;border-radius:8px 8px 0 0;font-weight:600;font-size:12.5px;cursor:pointer;color:#64748b;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap;font-family:var(--font);}
+.tbtn:hover{color:var(--db);background:#f1f5f9;}
+.tbtn.on{color:var(--db);border-bottom-color:var(--dl);background:#f8fafc;font-weight:700;}
+#wrap{max-width:1440px;margin:0 auto;padding:18px;}
+.sec{display:none;}.sec.on{display:block;}
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);padding:18px;margin-bottom:14px;page-break-inside:avoid;break-inside:avoid;}
+.card.allow{page-break-inside:auto;break-inside:auto;}
+.chd{color:#fff;padding:12px 16px;border-radius:9px;margin-bottom:14px;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.chd.bl{background:var(--db);}.chd.gr{background:var(--dg);}.chd.te{background:var(--teal);}.chd.in{background:#312e81;}.chd.or{background:#92400e;}
+.chd h2{font-size:14px;font-weight:700;margin-bottom:2px;}.chd p{font-size:10px;opacity:.75;line-height:1.4;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-bottom:12px;}
+.ecard{border-radius:10px;border:2px solid;padding:13px;page-break-inside:avoid;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.eA{background:var(--lb);border-color:#93c5fd;color:#1e3a8a;}
+.eB{background:var(--lg);border-color:#6ee7b7;color:var(--dg);}
+.eC{background:var(--lo);border-color:#fdba74;color:var(--or);}
+.ecard h3{font-size:14px;font-weight:800;margin-bottom:9px;}
+.kvr{display:flex;justify-content:space-between;font-size:11.5px;padding:2px 0;border-bottom:1px solid rgba(0,0,0,.07);}
+.kvr:last-of-type{border:none;}
+.kvr.hl{font-weight:700;padding-top:6px;margin-top:4px;border-top:1px solid rgba(0,0,0,.12);}
+.bstatus{text-align:center;padding:5px;border-radius:6px;font-weight:700;font-size:11px;margin-top:8px;}
+.sok{background:#16a34a;color:#fff;}.swarn{background:#dc2626;color:#fff;}.sna{background:#94a3b8;color:#fff;}.sinfo{background:#2563eb;color:#fff;}
+.twrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{border-collapse:collapse;width:100%;font-size:11.5px;}
+th,td{border:1px solid #cbd5e1;padding:4px 7px;}
+th{text-align:center;font-weight:600;font-size:11px;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.thbl{background:var(--db);color:#fff;}.thgr{background:var(--dg);color:#fff;}.thmd{background:var(--dl);color:#fff;}.thte{background:var(--teal);color:#fff;}.thor{background:#b45309;color:#fff;}.thin{background:#4338ca;color:#fff;}
+tr:nth-child(even) td{background:#f8fafc;}tr:hover td{background:#eff6ff;}
+td.num{text-align:center;}td.lft{text-align:left;}td.bld{font-weight:700;}
+td.cud{background:#d1fae5;color:#065f46;font-weight:700;text-align:center;}
+td.caf{background:#dbeafe;color:#1e3a8a;text-align:center;}
+td.cac{background:#fed7aa;color:#7c2d12;text-align:center;}
+td.cin{background:#ede9fe;color:#4338ca;text-align:center;font-weight:700;}
+td.cri{background:#fef3c7;color:#92400e;text-align:center;font-weight:700;}
+td.hv{background:var(--db)!important;color:#fff;font-weight:700;}td.hv.num{color:#fff;}
+td.adopt{background:#14532d!important;color:#fff!important;font-weight:800;text-align:center;}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;border:1.5px solid currentColor;}
+.bgA{background:var(--lb);color:#1e3a8a;border-color:#93c5fd;}
+.bgB{background:var(--lg);color:var(--dg);border-color:#6ee7b7;}
+.bgC{background:var(--lo);color:var(--or);border-color:#fdba74;}
+.mbox{background:var(--lgy);border:1px solid var(--bdr);border-radius:9px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;page-break-inside:avoid;break-inside:avoid;}
+.mbox.hbl{background:var(--lb);border-color:#93c5fd;}.mbox.hgr{background:var(--llg);border-color:#86efac;}.mbox.hor{background:var(--lo);border-color:#fdba74;}.mbox.hte{background:var(--lteal);border-color:#5eead4;}.mbox.hin{background:#ede9fe;border-color:#c4b5fd;}
+.mlbl{font-size:11.5px;color:var(--gy);}.mval{font-size:17px;font-weight:800;color:var(--db);font-family:var(--mono);}
+.mval.gr{color:var(--mg);}.mval.te{color:var(--teal);}.mval.in{color:#4338ca;}.mval.big{font-size:24px;}
+.gstat{text-align:center;padding:14px;border-radius:11px;border:2px solid;margin-bottom:14px;page-break-inside:avoid;break-inside:avoid;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.gstat.ok{background:var(--llg);border-color:#4ade80;}.gstat.warn{background:#fef2f2;border-color:#f87171;}
+.gstat .ic{font-size:32px;line-height:1;}.gstat h2{font-size:16px;font-weight:800;margin-top:5px;}
+.gstat.ok h2{color:#15803d;}.gstat.warn h2{color:#dc2626;}
+.nota{background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:9px 13px;font-size:11px;color:#78350f;margin-top:11px;page-break-inside:avoid;break-inside:avoid;}
+.nota strong{color:#92400e;}
+.nota-bl{background:#eff6ff;border:1px solid #93c5fd;border-radius:8px;padding:9px 13px;font-size:11px;color:#1e3a8a;margin-top:11px;}
+.nota-bl strong{color:#1e40af;}
+.nota-gr{background:var(--llg);border:1px solid #86efac;border-radius:8px;padding:9px 13px;font-size:11px;color:#065f46;margin-top:11px;}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.vi{padding:7px 11px;border-radius:7px;font-size:11px;display:flex;gap:6px;align-items:flex-start;line-height:1.35;}
+.vok{background:var(--llg);color:#15803d;}.vwarn{background:var(--ly);color:#78350f;}.verr{background:#fee2e2;color:#b91c1c;}
+.ifield label{display:block;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.ifield select,.ifield input[type=text],.ifield input[type=number]{width:100%;border:2px solid var(--bdr);border-radius:8px;padding:8px 11px;background:var(--inp);font-size:13px;outline:none;transition:border-color .15s;font-family:var(--font);}
+.ifield select:focus,.ifield input:focus{border-color:var(--dl);}
+.rejilla-box{background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:12px;margin-top:8px;}
+.rejilla-box label{font-size:10px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:3px;}
+.rejilla-box input{width:100%;border:1.5px solid #6ee7b7;border-radius:7px;padding:6px 9px;background:#fff;font-size:13px;font-weight:700;font-family:var(--mono);outline:none;}
+.rejilla-box input:focus{border-color:var(--teal);}
+.rejilla-result{background:#fff;border-radius:7px;padding:8px 10px;text-align:center;border:1.5px solid #6ee7b7;margin-top:6px;}
+.rejilla-result .rv{font-size:18px;font-weight:800;font-family:var(--mono);color:var(--teal);}
+.rejilla-result .rl{font-size:10px;color:#64748b;text-transform:uppercase;}
+.rej-warn{background:#fef9c3;border:1.5px solid #fcd34d;color:#78350f;font-size:10px;font-weight:700;padding:4px 8px;border-radius:5px;margin-top:4px;display:none;}
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:center;justify-content:center;padding:14px;}
+#modal.open{display:flex;}
+.mbox2{background:#fff;border-radius:14px;width:100%;max-width:760px;max-height:93vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.45);}
+.mhdr{background:var(--db);color:#fff;padding:13px 18px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
+.mhdr h3{font-size:14px;font-weight:700;}
+.mcls{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;}
+.mbody{padding:18px;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px;}
+.mgrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-bottom:14px;}
+.mftr{padding:0 18px 18px;display:flex;justify-content:flex-end;gap:9px;}
+.btn-sv{background:var(--dl);color:#fff;}
+.metodos-box{background:#f0fdf4;border:1.5px solid #6ee7b7;border-radius:10px;padding:12px;margin-top:10px;}
+.metodos-box h4{font-size:11px;font-weight:700;color:#064e3b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px;}
+.met-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(0,128,0,.1);font-size:11.5px;}
+.met-row:last-child{border:none;}
+.met-val{font-family:var(--mono);font-weight:700;}
+.met-adopt{background:#14532d;color:#fff;border-radius:4px;padding:1px 6px;font-size:10px;font-weight:700;margin-left:6px;}
+.spt{display:none;background:var(--db);color:#fff;padding:9px 14px;border-radius:8px;margin-bottom:14px;font-size:13px;font-weight:700;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.pftr{display:none;margin-top:18px;padding:9px;background:var(--db);color:#fff;border-radius:7px;font-size:10px;text-align:center;font-family:var(--mono);}
+.etag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;border:1.5px solid;}
+.etA{background:var(--lb);color:#1e3a8a;border-color:#93c5fd;}
+.etB{background:var(--lg);color:var(--dg);border-color:#6ee7b7;}
+.etC{background:var(--lo);color:var(--or);border-color:#fdba74;}
+.ubadge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700;background:#e0e7ff;color:#3730a3;}
+.viv-badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;background:#fef3c7;color:#78350f;border:1px solid #fcd34d;}
+.metsel{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.metsel-btn{padding:5px 10px;border:2px solid var(--bdr);border-radius:7px;background:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .12s;color:#374151;}
+.metsel-btn:hover{border-color:var(--dl);}
+.metsel-btn.act{border-color:var(--teal);background:var(--lteal);color:var(--teal);}
+@media print{
+  *{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important;}
+  @page{margin:12mm;size:A4;}
+  body{background:#fff;font-size:10.5px;}
+  #hdr{position:static;padding:8px 14px;}
+  .hdr-mid,.hdr-acts{display:none!important;}
+  #hdr p{display:block;}
+  #tabnav{display:none!important;}
+  #wrap{padding:10px;max-width:100%;}
+  .sec{display:block!important;}
+  #sec-cau,#sec-rej,#sec-res{page-break-before:always;}
+  .spt{display:block!important;}
+  .card{box-shadow:none;border:1px solid #e2e8f0;page-break-inside:avoid;break-inside:avoid;}
+  .card.allow{page-break-inside:auto;break-inside:auto;}
+  .g4{grid-template-columns:repeat(4,1fr);}
+  .g2{grid-template-columns:1fr 1fr;}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  thead{display:table-header-group;}
+  tr{page-break-inside:avoid;break-inside:avoid;}
+  .no-print{display:none!important;}
+  .ecard,.nota,.mbox,.gstat,.vi{page-break-inside:avoid;break-inside:avoid;}
+  .btn-add,.btn-ed,.btn-de{display:none!important;}
+  th,td{font-size:9px;padding:3px 5px;}
+  h2,h3{page-break-after:avoid;}
+  .pftr{display:block!important;}
+}
+</style>
+</head>
+<body>
+<div id="hdr">
+  <div>
+    <h1>🌬️ Calculadora <span>CTE</span> — DB HS3 · Calidad del Aire Interior <span style="font-size:11px;background:#1a4a7a;padding:2px 7px;border-radius:4px;margin-left:6px">v3.0</span></h1>
+    <p>Ventilación híbrida y mecánica · HS3 Tabla 2.1 + RITE IT 1.1.4.2 (Métodos A/B/C) · Rejillas y conductos · CTE 2022 · <span style="color:#86efac;font-weight:700">Bug Mét.C y garaje corregidos</span></p>
+  </div>
+  <div class="hdr-mid">
+    <div class="hig">
+      <label>Nombre del edificio / proyecto</label>
+      <input type="text" id="inp-edf" value="Edificio de Ejemplo" oninput="S.edf=this.value;RA()">
+    </div>
+    <div class="hig">
+      <label>Localización (zona climática)</label>
+      <select id="inp-zona" onchange="S.zona=this.value;RA()">
+        <option value="A3">Sevilla / Huelva / Cádiz (A3)</option>
+        <option value="A4">Almería / Murcia (A4)</option>
+        <option value="B3">Valencia / Málaga / Barcelona (B3)</option>
+        <option value="B4">Islas Canarias (B4)</option>
+        <option value="C1">Bilbao / La Coruña (C1)</option>
+        <option value="C2" selected>Madrid / Zaragoza / Valladolid (C2)</option>
+        <option value="C3">Granada / Albacete (C3)</option>
+        <option value="C4">Badajoz (C4)</option>
+        <option value="D1">Burgos / Salamanca (D1)</option>
+        <option value="D2">Ávila / Segovia (D2)</option>
+        <option value="D3">Soria / Teruel (D3)</option>
+        <option value="E1">Vitoria / León (E1)</option>
+      </select>
+    </div>
+    <div class="hig">
+      <label>Plantas s/rasante</label>
+      <input type="number" id="inp-np" value="3" min="1" max="30" oninput="S.np=Math.max(1,parseInt(this.value)||1);RA()">
+    </div>
+    <div class="hig">
+      <label>Altura libre (m)</label>
+      <input type="number" id="inp-hlibre" value="2.5" min="2.2" max="6" step="0.05" oninput="S.hlibre=parseFloat(this.value)||2.5;RA()">
+    </div>
+    <div class="hig">
+      <label>CO₂ exterior (ppm)</label>
+      <input type="number" id="inp-ce" value="420" min="350" max="500" step="5" oninput="S.ce=parseInt(this.value)||420;RA()">
+    </div>
+  </div>
+  <div class="hdr-acts">
+    <button class="btn btn-xl" onclick="exportXLSX()">📥 Excel</button>
+    <button class="btn btn-pr no-print" onclick="window.print()">🖨️ PDF / Imprimir</button>
+  </div>
+</div>
+
+<div id="tabnav">
+  <button class="tbtn on" data-t="dat">🏗 Datos / Locales</button>
+  <button class="tbtn" data-t="cau">💨 Caudales HS3+RITE</button>
+  <button class="tbtn" data-t="rej">⬛ Rejillas y Conductos</button>
+  <button class="tbtn" data-t="res">✅ Resumen CTE</button>
+</div>
+
+<div id="wrap">
+  <section id="sec-dat" class="sec on"><div class="spt">🏗 DATOS / LOCALES — CTE DB HS3</div><div id="cdatos"></div></section>
+  <section id="sec-cau" class="sec"><div class="spt">💨 CAUDALES VENTILACIÓN — HS3 + RITE IT 1.1.4.2</div><div id="ccau"></div></section>
+  <section id="sec-rej" class="sec"><div class="spt">⬛ REJILLAS Y CONDUCTOS</div><div id="crej"></div></section>
+  <section id="sec-res" class="sec"><div class="spt">✅ RESUMEN CUMPLIMIENTO CTE DB HS3</div><div id="cres"></div></section>
+</div>
+
+<div id="modal">
+  <div class="mbox2">
+    <div class="mhdr"><h3 id="modal-title">Editar local</h3><button class="mcls" onclick="CM()">×</button></div>
+    <div id="mbody"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   CONSTANTES CTE DB HS3 + RITE IT 1.1.4.2
+   ══════════════════════════════════════════════════════ */
+
+/* ── Tabla 2.1 CTE DB HS3 (2022) ─────────────────────
+   Para VIVIENDA: caudales por LOCAL (no por ocupante)
+   qv_local = admisión fija por local (l/s)
+   qe_local = extracción fija por local (l/s)
+   Para NO-RESIDENCIAL: caudales RITE por persona + superficie
+   ──────────────────────────────────────────────────── */
+const TIPOS_USO = {
+  /* VIVIENDA — caudales FIJOS por local según HS3 Tabla 2.1 */
+  'viv_dormitorio': {lb:'Dormitorio',              grupo:'Vivienda', esViv:true,  esExt:false, qhs3:5,   qe_hs3:0,   ida:null, label_q:'5 l/s por dormitorio (Tabla 2.1)'},
+  'viv_salon':      {lb:'Salón / Comedor / Estancia',grupo:'Vivienda',esViv:true,  esExt:false, qhs3:3,   qe_hs3:0,   ida:null, label_q:'3 l/s por local (Tabla 2.1)'},
+  'viv_cocina':     {lb:'Cocina (vivienda)',         grupo:'Vivienda', esViv:true,  esExt:true,  qhs3:0,   qe_hs3:50,  ida:null, label_q:'50 l/s extracción (Tabla 2.1)'},
+  'viv_bano':       {lb:'Baño completo (vivienda)',  grupo:'Vivienda', esViv:true,  esExt:true,  qhs3:0,   qe_hs3:15,  ida:null, label_q:'15 l/s extracción (Tabla 2.1)'},
+  'viv_aseo':       {lb:'Aseo sin ducha (vivienda)', grupo:'Vivienda', esViv:true,  esExt:true,  qhs3:0,   qe_hs3:6,   ida:null, label_q:'6 l/s extracción (Tabla 2.1)'},
+  'viv_lavadero':   {lb:'Lavadero / Tendedero',      grupo:'Vivienda', esViv:true,  esExt:true,  qhs3:0,   qe_hs3:10,  ida:null, label_q:'10 l/s extracción (Tabla 2.1)'},
+  'viv_trastero':   {lb:'Trastero (vivienda)',        grupo:'Vivienda', esViv:true,  esExt:true,  qhs3:null,qe_hs3:null,ida:null, label_q:'0.7 l/s·m² extracción (Tabla 2.1)', porM2_ext:0.7},
+  'viv_garaje_priv':{lb:'Garaje privado vivienda',   grupo:'Vivienda', esViv:true,  esExt:true,  qhs3:null,qe_hs3:null,ida:null, label_q:'120 m³/h por plaza (HS3)', porPlaza:120},
+  /* NO RESIDENCIAL — caudales RITE IT 1.1.4.2 (Métodos A/B/C) + HS3 mínimo */
+  /* IDA 1 = 20 l/s·p | IDA 2 = 12.5 l/s·p | IDA 3 = 8 l/s·p | IDA 4 = 5 l/s·p */
+  'adm_oficina':    {lb:'Oficina',                   grupo:'Administrativo',esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:2, ren_h:3, label_q:'RITE IDA2 + HS3 Tabla 2.1'},
+  'adm_sala_reun':  {lb:'Sala de reuniones',          grupo:'Administrativo',esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:2, ren_h:4, label_q:'RITE IDA2 + HS3 Tabla 2.1'},
+  'adm_bano':       {lb:'Baño / Aseo (admin.)',       grupo:'Administrativo',esViv:false,esExt:true, qhs3:0,qe_hs3:15,         ida:null,ren_h:null,label_q:'15 l/s extracción (HS3)'},
+  'adm_aseo_of':    {lb:'Aseo sin ducha (admin.)',    grupo:'Administrativo',esViv:false,esExt:true, qhs3:0,qe_hs3:6,          ida:null,ren_h:null,label_q:'6 l/s extracción (HS3)'},
+  'adm_archivo':    {lb:'Archivo / Almacén',          grupo:'Administrativo',esViv:false,esExt:false,qhs3_m2:0.55,qhs3_oc:null,ida:4, ren_h:1, label_q:'RITE IDA4 + HS3 0.55 l/s·m²'},
+  'com_tienda':     {lb:'Local comercial',            grupo:'Comercial',     esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:3, ren_h:3, label_q:'RITE IDA3 + HS3 Tabla 2.1'},
+  'com_almacen':    {lb:'Almacén comercial',          grupo:'Comercial',     esViv:false,esExt:false,qhs3_m2:0.55,qhs3_oc:null,ida:4, ren_h:1, label_q:'RITE IDA4 + HS3 0.55 l/s·m²'},
+  'com_bano':       {lb:'Baño (comercial)',            grupo:'Comercial',     esViv:false,esExt:true, qhs3:0,qe_hs3:15,         ida:null,ren_h:null,label_q:'15 l/s extracción (HS3)'},
+  'com_vestuario':  {lb:'Vestuario',                  grupo:'Comercial',     esViv:false,esExt:true, qhs3:0,qe_hs3:7.5,        ida:null,ren_h:null,label_q:'7.5 l/s extracción (HS3)'},
+  'pc_sala':        {lb:'Sala de uso público',         grupo:'Pública Concurrencia',esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:3, ren_h:4, label_q:'RITE IDA3 + HS3 Tabla 2.1'},
+  'pc_bano':        {lb:'Baño público',                grupo:'Pública Concurrencia',esViv:false,esExt:true, qhs3:0,qe_hs3:15,  ida:null,ren_h:null,label_q:'15 l/s extracción (HS3)'},
+  'pc_vestuario':   {lb:'Vestuario (públ. concurr.)', grupo:'Pública Concurrencia',esViv:false,esExt:true, qhs3:0,qe_hs3:7.5, ida:null,ren_h:null,label_q:'7.5 l/s extracción (HS3)'},
+  'pc_restaurante': {lb:'Restaurante / Bar',           grupo:'Pública Concurrencia',esViv:false,esExt:false,qhs3_m2:1.25,qhs3_oc:12.5,ida:3,ren_h:8,label_q:'RITE IDA3 + HS3 Tabla 2.1'},
+  'pc_cocina_rest': {lb:'Cocina restaurante/bar',     grupo:'Pública Concurrencia',esViv:false,esExt:true, qhs3:0,qe_hs3:50,  ida:null,ren_h:null,label_q:'50 l/s extracción (HS3)'},
+  'pc_garaje':      {lb:'Garaje (coches)',             grupo:'Pública Concurrencia',esViv:false,esExt:true, porPlaza:120,           ida:null,ren_h:6,  label_q:'120 m³/h por plaza (HS3 Tabla 2.1)', esGaraje:true},
+  'doc_aula':       {lb:'Aula',                        grupo:'Docente',       esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:2, ren_h:6, label_q:'RITE IDA2 + HS3 Tabla 2.1'},
+  'doc_biblioteca': {lb:'Biblioteca / Sala lectura',  grupo:'Docente',       esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:2, ren_h:4, label_q:'RITE IDA2 + HS3 Tabla 2.1'},
+  'doc_gimnasio':   {lb:'Gimnasio / Sala actividad',  grupo:'Docente',       esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:2, ren_h:8, label_q:'RITE IDA2 + HS3 Tabla 2.1'},
+  'doc_comedor':    {lb:'Comedor escolar',              grupo:'Docente',       esViv:false,esExt:false,qhs3_m2:1.25,qhs3_oc:12.5,ida:2,ren_h:6, label_q:'RITE IDA2 + HS3 (como restaurante)'},
+  'doc_sala_prof':  {lb:'Sala de profesores',          grupo:'Docente',       esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:2, ren_h:4, label_q:'RITE IDA2 + HS3 Tabla 2.1'},
+  'doc_bano':       {lb:'Baño (docente)',              grupo:'Docente',       esViv:false,esExt:true, qhs3:0,qe_hs3:15,         ida:null,ren_h:null,label_q:'15 l/s extracción (HS3)'},
+  'doc_vestuario':  {lb:'Vestuario (docente)',         grupo:'Docente',       esViv:false,esExt:true, qhs3:0,qe_hs3:7.5,        ida:null,ren_h:null,label_q:'7.5 l/s extracción (HS3)'},
+  'san_consultorio':{lb:'Consultorio / Clínica',       grupo:'Sanitario',     esViv:false,esExt:false,qhs3_m2:1.0,qhs3_oc:10,  ida:1, ren_h:6, label_q:'RITE IDA1 + HS3 Tabla 2.1'},
+  'san_espera':     {lb:'Sala de espera (sanitario)', grupo:'Sanitario',     esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:2, ren_h:4, label_q:'RITE IDA2 + HS3 Tabla 2.1'},
+  'san_bano':       {lb:'Baño (sanitario)',            grupo:'Sanitario',     esViv:false,esExt:true, qhs3:0,qe_hs3:15,         ida:null,ren_h:null,label_q:'15 l/s extracción (HS3)'},
+  'hot_habitacion': {lb:'Habitación (hotelero)',       grupo:'Hotelero',      esViv:false,esExt:false,qhs3_m2:null,qhs3_oc:6,  ida:2, ren_h:2, label_q:'RITE IDA2 + HS3 6 l/s·oc'},
+  'hot_bano':       {lb:'Baño habitación (hotelero)',  grupo:'Hotelero',      esViv:false,esExt:true, qhs3:0,qe_hs3:15,         ida:null,ren_h:null,label_q:'15 l/s extracción (HS3)'},
+  'hot_salon':      {lb:'Salón/Comedor (hotelero)',    grupo:'Hotelero',      esViv:false,esExt:false,qhs3_m2:0.83,qhs3_oc:8,  ida:3, ren_h:4, label_q:'RITE IDA3 + HS3 Tabla 2.1'},
+};
+
+/* RITE IT 1.1.4.2.2 — Caudales por categoría IDA (Método A) */
+const IDA_LS_P = {1:20, 2:12.5, 3:8, 4:5};
+const IDA_LABEL = {1:'IDA 1 (óptima)', 2:'IDA 2 (buena)', 3:'IDA 3 (media)', 4:'IDA 4 (baja)'};
+
+/* Anejo H HS3 — Factor corrector por zona climática para ventilación híbrida */
+const FACTOR_ZONA_HIBRIDA = {
+  'A3':0.90,'A4':0.85,'B3':0.95,'B4':0.90,
+  'C1':1.05,'C2':1.00,'C3':1.00,'C4':0.95,
+  'D1':1.15,'D2':1.20,'D3':1.20,'E1':1.25
+};
+
+/* Velocidades conductos (m/s) — RITE IT 1.1.4.2 */
+const VEL = {
+  hibrida_principal:4, hibrida_ramal:2,
+  mec_principal:6,     mec_ramal:4,
+  boca_ext:2.5,        boca_adm:2.0
+};
+
+/* Generación CO₂ por persona (ml/s) según actividad — RITE IT 1.1.4.2.3 */
+const GV_CO2 = {sedentario:5.0, oficina:6, ligero:10, moderado:19, intenso:35};
+
+/* ── ESTADO ─────────────────────────────────────────── */
+let S = {
+  edf:'Edificio de Ejemplo', zona:'C2', np:3, hlibre:2.5,
+  ce:420,          // CO₂ exterior ppm
+  tab:'dat', editId:null, ef:null, nxt:20,
+  vent:'mecanica',
+  metodoRITE:'A',  // 'A'|'B'|'C' — método activo para no-residencial
+  gv_co2: GV_CO2.sedentario,
+  locs: locsDefault()
+};
+
+function locsDefault(){
+  return [
+    {id:1, pl:'PB',ti:'viv_salon',    rf:'Salón-Comedor PB', ext:1, viv:'V1', sup:30,  ocup:4,  alt:2.5, rejH:200, qman:null, plazas:0},
+    {id:2, pl:'PB',ti:'viv_dormitorio',rf:'Dormitorio 1 PB', ext:1, viv:'V1', sup:14,  ocup:2,  alt:2.5, rejH:200, qman:null, plazas:0},
+    {id:3, pl:'PB',ti:'viv_dormitorio',rf:'Dormitorio 2 PB', ext:1, viv:'V1', sup:10,  ocup:1,  alt:2.5, rejH:200, qman:null, plazas:0},
+    {id:4, pl:'PB',ti:'viv_cocina',   rf:'Cocina PB',        ext:1, viv:'V1', sup:9,   ocup:2,  alt:2.5, rejH:200, qman:null, plazas:0},
+    {id:5, pl:'PB',ti:'viv_bano',     rf:'Baño PB',          ext:1, viv:'V1', sup:5,   ocup:1,  alt:2.5, rejH:200, qman:null, plazas:0},
+    {id:6, pl:'PB',ti:'viv_aseo',     rf:'Aseo PB',          ext:1, viv:'V1', sup:3,   ocup:1,  alt:2.5, rejH:200, qman:null, plazas:0},
+    {id:7, pl:'P1',ti:'adm_oficina',  rf:'Oficina P1',       ext:2, viv:'',   sup:80,  ocup:10, alt:3.0, rejH:200, qman:null, plazas:0},
+    {id:8, pl:'P1',ti:'adm_bano',     rf:'Baño Oficina P1',  ext:2, viv:'',   sup:6,   ocup:4,  alt:2.5, rejH:200, qman:null, plazas:0},
+    {id:9, pl:'P1',ti:'adm_sala_reun',rf:'Sala Reuniones P1',ext:2, viv:'',   sup:25,  ocup:12, alt:3.0, rejH:200, qman:null, plazas:0},
+  ];
+}
+
+/* ══════════════════════════════════════════════════════
+   CÁLCULO — MÉTODOS HS3 + RITE IT 1.1.4.2
+   ══════════════════════════════════════════════════════ */
+
+function calcLocal(l){
+  const t = TIPOS_USO[l.ti];
+  if(!t) return {qAdopt:0, qe:0, esExt:false, modoUsado:'—', detalle:{}};
+  const sup   = parseFloat(l.sup)||0;
+  const ocup  = parseInt(l.ocup)||0;
+  const alt   = parseFloat(l.alt)||S.hlibre;
+  const vol   = sup * alt;
+  const zona_f = (S.vent==='hibrida') ? (FACTOR_ZONA_HIBRIDA[S.zona]||1.0) : 1.0;
+
+  /* ── VIVIENDA: HS3 Tabla 2.1 fijo, sin RITE ── */
+  if(t.esViv){
+    let qAdopt=0, qe=0, modoUsado=t.label_q;
+    if(t.porM2_ext){
+      // Trastero: 0.7 l/s·m²
+      qe = t.porM2_ext * sup * zona_f;
+      modoUsado = `${t.porM2_ext} l/s·m² × ${sup} m²${zona_f!==1?' × f'+zona_f.toFixed(2):''}`;
+    } else if(t.porPlaza){
+      // Garaje privado vivienda: 120 m³/h·plaza → 33.33 l/s·plaza
+      const plazas = parseInt(l.plazas)||1;
+      qe = (t.porPlaza/3.6) * plazas * zona_f;
+      modoUsado = `120 m³/h × ${plazas} plazas ÷ 3.6`;
+    } else if(t.esExt){
+      qe = (t.qe_hs3||0) * zona_f;
+      modoUsado = `${t.qe_hs3} l/s fijo${zona_f!==1?' × f'+zona_f.toFixed(2):''}`;
+    } else {
+      // Admisión fija por local (dormitorio=5, salón=3)
+      qAdopt = (t.qhs3||0) * zona_f;
+      modoUsado = `${t.qhs3} l/s por local${zona_f!==1?' × f'+zona_f.toFixed(2):''}`;
+    }
+    if(l.qman) { qAdopt = parseFloat(l.qman); qe = t.esExt ? parseFloat(l.qman) : qe; }
+    return {qAdopt: parseFloat(qAdopt.toFixed(2)), qe: parseFloat(qe.toFixed(2)),
+      esExt:t.esExt||false, modoUsado, vol, sup, ocup, alt,
+      detalle:{hs3:t.esExt?qe:qAdopt, metA:null, metB:null, metC:null, adoptado:'hs3'},
+      esViv:true, esGaraje:!!t.porPlaza};
+  }
+
+  /* ── NO RESIDENCIAL: HS3 mínimo + RITE Métodos A/B/C ── */
+  if(t.esExt){
+    // Locales húmedos no-residencial: extracción fija HS3
+    let qe = (t.qe_hs3||0);
+    if(t.porM2_ext) qe = t.porM2_ext * sup;                              // extracción por m²
+    if(t.porPlaza){                                                        // garaje público: 120 m³/h por plaza (HS3 Tabla 2.1)
+      const plazas = parseInt(l.plazas)||1;
+      qe = (t.porPlaza/3.6) * plazas;
+    }
+    if(l.qman) qe = parseFloat(l.qman);
+    const modoGaraje = t.porPlaza ? `${t.porPlaza} m³/h × ${parseInt(l.plazas)||1} plazas ÷ 3.6` : t.label_q;
+    return {qAdopt:0, qe:parseFloat(qe.toFixed(2)), esExt:true, modoUsado:modoGaraje, vol, sup, ocup, alt,
+      detalle:{hs3:qe, metA:null, metB:null, metC:null, adoptado:'hs3'}, esViv:false, esGaraje:!!t.esGaraje};
+  }
+
+  // Admisión no-residencial — calcular los 3 métodos
+  // HS3 mínimo
+  const qhs3_oc  = (t.qhs3_oc||0) * ocup;
+  const qhs3_m2  = (t.qhs3_m2||0) * sup;
+  const qhs3     = Math.max(qhs3_oc, qhs3_m2);
+
+  // RITE Método A: caudal por IDA (l/s·persona)
+  const ida_val  = IDA_LS_P[t.ida] || 8;
+  const qMetA    = ida_val * ocup;
+
+  // RITE Método B: por concentración CO₂ (Gv=S.gv_co2 ml/s·p)
+  // Límites IDA (ppm sobre exterior): IDA1=350, IDA2=500, IDA3=800, IDA4=1200
+  const dCO2     = {1:350, 2:500, 3:800, 4:1200}[t.ida] || 500; // ppm sobre Ce
+  const Ci       = S.ce + dCO2;
+  const Ce       = S.ce;
+  // Q(l/s) = n × Gv(ml/s) / (Ci-Ce) × 1000  [Gv en ml/s, delta en ppm=ml/m³, resultado en l/s]
+  const qMetB    = ocup > 0 ? parseFloat((ocup * S.gv_co2 / (Ci - Ce) * 1000).toFixed(2)) : 0;
+
+  // RITE Método C: renovaciones/hora → Q(l/s) = vol(m³) × ren/h ÷ 3.6
+  const rh       = t.ren_h || 2;
+  const qMetC    = parseFloat((vol * rh / 3.6).toFixed(2));
+
+  // Caudal adoptado según método activo (siempre ≥ HS3 mínimo)
+  let qActivo, adoptado;
+  if(S.metodoRITE==='A'){ qActivo = Math.max(qhs3, qMetA); adoptado = qMetA>=qhs3?'A':'hs3'; }
+  else if(S.metodoRITE==='B'){ qActivo = Math.max(qhs3, qMetB); adoptado = qMetB>=qhs3?'B':'hs3'; }
+  else { qActivo = Math.max(qhs3, qMetC); adoptado = qMetC>=qhs3?'C':'hs3'; }
+
+  if(l.qman){ qActivo = parseFloat(l.qman); adoptado = 'manual'; }
+
+  const modoUsado = `${adoptado==='manual'?'Manual':adoptado==='hs3'?'HS3 mínimo':'RITE Mét.'+adoptado}: ${qActivo.toFixed(1)} l/s`;
+
+  return {
+    qAdopt:parseFloat(qActivo.toFixed(2)), qe:0, esExt:false,
+    modoUsado, vol, sup, ocup, alt,
+    detalle:{hs3:parseFloat(qhs3.toFixed(2)), metA:parseFloat(qMetA.toFixed(2)),
+             metB:parseFloat(qMetB.toFixed(2)), metC:parseFloat(qMetC.toFixed(2)),
+             adoptado, ida:t.ida, dCO2, rh, ida_val, qhs3_oc, qhs3_m2},
+    esViv:false
+  };
+}
+
+function calcSistema(){
+  const locs = S.locs.map(l => ({...l, ...calcLocal(l), tipo: TIPOS_USO[l.ti]||{lb:l.ti,grupo:'—'}}));
+
+  // Agrupar por sistema extracción
+  const exts = [1,2,3].map(n => {
+    const bl = locs.filter(l => l.ext === n);
+    const qAdm  = bl.reduce((s,l) => s + (l.esExt ? 0 : l.qAdopt), 0);
+    const qExt  = bl.reduce((s,l) => s + (l.esExt ? l.qe : 0), 0);
+    // El caudal del sistema es el MAYOR de admisión o extracción (principio de equilibrio)
+    const qSist = Math.max(qAdm, qExt);
+    return {n, bl, qAdm:+qAdm.toFixed(2), qExt:+qExt.toFixed(2), qSist:+qSist.toFixed(2)};
+  }).filter(e => e.bl.length > 0);
+
+  // Verificación equilibrio por vivienda
+  const viviendas = [...new Set(locs.filter(l=>l.viv).map(l=>l.viv))];
+  const vivEquil = viviendas.map(v => {
+    const bl = locs.filter(l=>l.viv===v);
+    const qAdm = bl.reduce((s,l)=>s+(l.esExt?0:l.qAdopt),0);
+    const qExt = bl.reduce((s,l)=>s+(l.esExt?l.qe:0),0);
+    return {viv:v, qAdm:+qAdm.toFixed(2), qExt:+qExt.toFixed(2), dif:+(Math.abs(qAdm-qExt)).toFixed(2)};
+  });
+
+  const qAdm_global = +exts.reduce((s,e)=>s+e.qAdm,0).toFixed(2);
+  const qExt_global = +exts.reduce((s,e)=>s+e.qExt,0).toFixed(2);
+
+  return {locs, exts, viviendas, vivEquil, qAdm_global, qExt_global};
+}
+
+/* ══════════════════════════════════════════════════════
+   DIMENSIONADO REJILLAS Y CONDUCTOS
+   ══════════════════════════════════════════════════════ */
+const REJ_MIN_H = 100, REJ_MIN_W = 100; // mm mínimos comerciales
+
+function calcRejilla(q_ls, vel, alto_mm){
+  if(!q_ls||!vel||!alto_mm) return {w:0, vreal:0, warn:false};
+  const A = (q_ls/1000)/vel;
+  const w = Math.max(REJ_MIN_W, Math.ceil((A/(alto_mm/1000))*1000/5)*5);
+  const vreal = (q_ls/1000)/((alto_mm/1000)*(w/1000));
+  return {w, vreal:+vreal.toFixed(2), warn: w===REJ_MIN_W && (A/(alto_mm/1000)*1000) < REJ_MIN_W};
+}
+function calcRejillaH(q_ls, vel, ancho_mm){
+  if(!q_ls||!vel||!ancho_mm) return {h:0, vreal:0, warn:false};
+  const A = (q_ls/1000)/vel;
+  const h = Math.max(REJ_MIN_H, Math.ceil((A/(ancho_mm/1000))*1000/5)*5);
+  const vreal = (q_ls/1000)/((h/1000)*(ancho_mm/1000));
+  return {h, vreal:+vreal.toFixed(2), warn: h===REJ_MIN_H && (A/(ancho_mm/1000)*1000) < REJ_MIN_H};
+}
+function calcDuctoDiam(q_ls, vel){
+  if(!q_ls||!vel) return 0;
+  const d = Math.sqrt(4*(q_ls/1000)/vel/Math.PI);
+  return Math.ceil(d*1000/5)*5;
+}
+function calcDuctoRect(q_ls, vel, h_mm){
+  if(!q_ls||!vel||!h_mm) return 0;
+  const A = (q_ls/1000)/vel;
+  return Math.max(100, Math.ceil((A/(h_mm/1000))*1000/5)*5);
+}
+function velPrincipal(){ return S.vent==='hibrida' ? VEL.hibrida_principal : VEL.mec_principal; }
+function velRamal(){     return S.vent==='hibrida' ? VEL.hibrida_ramal     : VEL.mec_ramal; }
+function velBocaExt(){   return VEL.boca_ext; }
+function velBocaAdm(){   return VEL.boca_adm; }
+
+/* ══════════════════════════════════════════════════════
+   RENDER — DATOS / LOCALES
+   ══════════════════════════════════════════════════════ */
+function RD(C){
+  const rows = C.locs.map(l => {
+    const q = l.esExt ? l.qe : l.qAdopt;
+    const etag = `<span class="etag et${['A','B','C'][l.ext-1]||'A'}">Sist.${l.ext}</span>`;
+    const vivtag = l.viv ? `<span class="viv-badge">${l.viv}</span>` : '';
+    const det = l.detalle||{};
+    let detHTML = '';
+    if(!l.esViv && !l.esExt && det.metA!==null){
+      const cols = [
+        {k:'hs3',   lb:'HS3', v:det.hs3},
+        {k:'A',     lb:'RITE A', v:det.metA},
+        {k:'B',     lb:'RITE B', v:det.metB},
+        {k:'C',     lb:'RITE C', v:det.metC},
+      ];
+      detHTML = cols.map(c=>`<span style="font-size:9.5px;margin-right:6px;${det.adoptado===c.k?'background:#14532d;color:#fff;padding:1px 5px;border-radius:3px;font-weight:700':'color:#64748b'}">${c.lb}:${(c.v||0).toFixed(1)}</span>`).join('');
+    }
+    return `<tr>
+      <td class="num bld" style="color:#0f2a47">${l.pl}</td>
+      <td class="lft"><span class="ubadge">${l.tipo.grupo||''}</span><br><span style="font-size:10.5px">${l.tipo.lb||l.ti}</span></td>
+      <td class="lft" style="font-weight:600;min-width:110px">${l.rf} ${vivtag}</td>
+      <td class="num">${etag}</td>
+      <td class="num">${l.sup}</td>
+      <td class="num">${l.ocup}</td>
+      <td class="num${l.esExt?' cac':' caf'}" style="font-family:var(--mono);font-weight:700">${q.toFixed(2)}</td>
+      <td class="lft" style="font-size:10px;color:#475569">${l.modoUsado}<br>${detHTML}</td>
+      <td class="num no-print" style="white-space:nowrap">
+        <button class="btn btn-ed" onclick="OM(${l.id})">✎ Editar</button>
+        <button class="btn btn-de" onclick="DL(${l.id})" style="margin-left:3px">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  const extCards = C.exts.map(e=>{
+    const cls=['eA','eB','eC'][e.n-1]||'eA';
+    const deseq = Math.abs(e.qAdm-e.qExt)>2;
+    return `<div class="ecard ${cls}">
+      <h3>Sistema ${e.n}</h3>
+      <div class="kvr"><span>Locales</span><span>${e.bl.length}</span></div>
+      <div class="kvr"><span>↓ Admisión (qv)</span><span>${e.qAdm.toFixed(2)} l/s</span></div>
+      <div class="kvr"><span>↑ Extracción (qe)</span><span>${e.qExt.toFixed(2)} l/s</span></div>
+      <div class="kvr hl"><span>Q diseño sistema</span><span style="font-size:16px;font-weight:800">${e.qSist.toFixed(2)} l/s</span></div>
+      <div class="bstatus ${deseq?'swarn':'sok'}">${deseq?'⚠ Desequilibrio':'✅ Equilibrado'}</div>
+    </div>`;
+  }).join('');
+
+  const metHTML = ['A','B','C'].map(m=>`<button class="metsel-btn ${S.metodoRITE===m?'act':''}" onclick="S.metodoRITE='${m}';RA()" title="${{A:'Caudal por IDA (l/s·persona)',B:'Concentración CO₂ (Método Fanger)',C:'Renovaciones/hora'}[m]}">RITE Mét.${m}</button>`).join('');
+
+  document.getElementById('cdatos').innerHTML = `
+  <div class="card">
+    <div class="chd bl">
+      <h2>DB HS3 — Ventilación ${S.vent==='hibrida'?'Híbrida':'Mecánica'} · Zona ${S.zona} · ${S.np} plantas</h2>
+      <p>HS3 Tabla 2.1 (vivienda) + RITE IT 1.1.4.2 Métodos A/B/C (no-residencial) · Factor zona: ${FACTOR_ZONA_HIBRIDA[S.zona]||1.0} ${S.vent==='hibrida'?'(activo)':'(solo híbrida)'}</p>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <div>
+        <strong>Locales del edificio</strong>
+        <p style="color:#64748b;font-size:11px;margin-top:2px">Pulsa <strong>✎ Editar</strong> para configurar. Asigna vivienda (V1/V2…) y sistema (1/2/3).</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="ifield" style="min-width:200px">
+            <label>Tipo de ventilación</label>
+            <select onchange="S.vent=this.value;RA()" style="border:2px solid var(--bdr);border-radius:8px;padding:7px 10px;background:var(--inp);font-size:12px;width:100%">
+              <option value="mecanica" ${S.vent==='mecanica'?'selected':''}>Mecánica (VMC, fan coil…)</option>
+              <option value="hibrida"  ${S.vent==='hibrida'?'selected':''}>Híbrida (natural + aux.)</option>
+            </select>
+          </div>
+          <button class="btn btn-add no-print" onclick="AL()" style="margin-top:14px">+ Añadir local</button>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:4px">Método RITE para no-residencial</div>
+          <div class="metsel">${metHTML}</div>
+        </div>
+      </div>
+    </div>
+    <div class="twrap"><table>
+      <thead><tr>
+        <th class="thbl">Planta</th>
+        <th class="thbl" style="text-align:left;min-width:150px">Tipo de uso</th>
+        <th class="thbl" style="text-align:left;min-width:120px">Local / Ref.</th>
+        <th class="thbl">Sistema</th>
+        <th class="thbl">m²</th>
+        <th class="thbl">Oc.</th>
+        <th class="thte">Q (l/s)</th>
+        <th class="thbl" style="min-width:200px">Criterio / Comparativa</th>
+        <th class="thbl no-print">Acción</th>
+      </tr></thead>
+      <tbody>${rows}
+        <tr>
+          <td colspan="6" class="hv lft">TOTALES EDIFICIO →</td>
+          <td class="hv num">↓${C.qAdm_global.toFixed(1)} / ↑${C.qExt_global.toFixed(1)}</td>
+          <td class="hv" colspan="2"></td>
+        </tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:11px;margin-bottom:14px">${extCards}</div>
+  ${C.vivEquil.length?`<div class="card"><strong style="display:block;margin-bottom:9px">Equilibrio de caudales por vivienda (§3.1.1 HS3)</strong>
+  <div class="twrap"><table><thead><tr><th class="thbl">Vivienda</th><th class="thbl">Locales</th><th class="thte">↓ Admisión (l/s)</th><th class="thor">↑ Extracción (l/s)</th><th class="thbl">Diferencia</th><th class="thbl">Estado</th></tr></thead><tbody>
+  ${C.vivEquil.map(v=>{const bl=C.locs.filter(l=>l.viv===v.viv);const ok=v.dif<=2;
+  return `<tr><td class="num bld">${v.viv}</td><td class="num">${bl.length}</td><td class="caf num">${v.qAdm.toFixed(2)}</td><td class="cac num">${v.qExt.toFixed(2)}</td><td class="num ${ok?'cud':'cac'}">${v.dif.toFixed(2)}</td><td class="num"><span class="bstatus ${ok?'sok':'swarn'}" style="padding:2px 8px">${ok?'✅ OK':'⚠ Revisar'}</span></td></tr>`;}).join('')}
+  </tbody></table></div>
+  <div class="nota">ℹ️ <strong>HS3 §3.1.1:</strong> El caudal de extracción de cada vivienda debe ser ≥ al de admisión. La diferencia normalmente existe porque las cocinas tienen alta extracción — se compensa con <strong>aberturas de admisión</strong> en fachada (ventanas, aireadores) dimensionadas según art. 4.2 HS3.</div>
+  </div>`:''}`
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER — CAUDALES HS3 + RITE
+   ══════════════════════════════════════════════════════ */
+function RC(C){
+  const metDesc = {A:`IDA caudal/persona (IDA1=20, IDA2=12.5, IDA3=8, IDA4=5 l/s·p)`, B:`CO₂ (Gv=${S.gv_co2} ml/s·p, Ce=${S.ce} ppm, ΔCO₂ por IDA)`, C:`Renovaciones/hora por tipo de uso`};
+
+  const extSecs = C.exts.map(e => {
+    const rows = e.bl.map(l => {
+      const det = l.detalle||{};
+      const q = l.esExt ? l.qe : l.qAdopt;
+      function celda(v, key){
+        if(v===null||v===undefined) return '<td class="num" style="color:#d1d5db;font-size:10px">—</td>';
+        const isAdopt = det.adoptado===key;
+        return `<td class="${isAdopt?'adopt':'num'}" style="font-family:var(--mono)">${(+v).toFixed(1)}</td>`;
+      }
+      return `<tr>
+        <td class="num bld" style="color:#0f2a47">${l.pl}</td>
+        <td class="lft">${l.rf}${l.viv?` <span class="viv-badge">${l.viv}</span>`:''}</td>
+        <td class="num${l.esExt?' cac':' caf'}" style="font-family:var(--mono);font-weight:800">${q.toFixed(2)}</td>
+        ${l.esViv||l.esExt ? `<td colspan="4" class="lft" style="font-size:10px;color:#64748b">${l.modoUsado}</td>` :
+          `${celda(det.hs3,'hs3')}${celda(det.metA,'A')}${celda(det.metB,'B')}${celda(det.metC,'C')}`}
+      </tr>`;
+    }).join('');
+    return `<div class="card">
+      <div class="chd ${['bl','gr','te'][e.n-1]||'bl'}">
+        <h2>Sistema ${e.n} — Caudales detallados</h2>
+        <p>↓ Admisión ${e.qAdm.toFixed(2)} l/s · ↑ Extracción ${e.qExt.toFixed(2)} l/s · Q diseño: ${e.qSist.toFixed(2)} l/s (${(e.qSist*3.6).toFixed(0)} m³/h)</p>
+      </div>
+      <div class="twrap"><table>
+        <thead><tr>
+          <th class="thbl">Planta</th>
+          <th class="thbl" style="text-align:left">Local</th>
+          <th class="thte">Q adopt. (l/s)</th>
+          <th class="thgr" title="HS3 mínimo">HS3</th>
+          <th class="thin" title="RITE Método A">Met.A</th>
+          <th class="thin" title="RITE Método B">Met.B</th>
+          <th class="thin" title="RITE Método C">Met.C</th>
+        </tr></thead>
+        <tbody>${rows}
+          <tr>
+            <td colspan="2" class="hv lft">TOTAL SISTEMA ${e.n} →</td>
+            <td class="hv num">${e.qSist.toFixed(2)}</td>
+            <td class="hv" colspan="4"></td>
+          </tr>
+        </tbody>
+      </table></div>
+      <div style="font-size:10px;color:#64748b;margin-top:6px">🟢 Celda verde oscuro = valor adoptado para diseño. Para no-residencial: siempre ≥ HS3 mínimo.</div>
+    </div>`;
+  }).join('');
+
+  const tablaRef = `<div class="card allow"><strong style="display:block;margin-bottom:9px">Tabla de referencia — HS3 Tabla 2.1 + RITE IT 1.1.4.2</strong>
+  <div class="twrap"><table>
+    <thead><tr>
+      <th class="thbl" style="text-align:left">Uso</th><th class="thbl">Grupo</th>
+      <th class="thgr">HS3 (l/s)</th><th class="thin">IDA</th>
+      <th class="thin">Met.A (l/s·p)</th><th class="thin">Met.B ΔCO₂(ppm)</th><th class="thin">Met.C ren/h</th>
+      <th class="thor">Extr.(l/s)</th>
+    </tr></thead><tbody>
+    ${Object.entries(TIPOS_USO).map(([k,t],i)=>{
+      const bg=i%2?'':'background:#f8fafc;';
+      const hs3v = t.esViv ? (t.qhs3||t.qe_hs3||'—') : t.esExt ? '—' : `${t.qhs3_oc||'—'} l/s·p / ${t.qhs3_m2||'—'} l/s·m²`;
+      const metAv = t.ida ? `${IDA_LS_P[t.ida]} l/s·p` : '—';
+      const dCO2v = t.ida ? `Δ${({1:350,2:500,3:800,4:1200}[t.ida]||500)}` : '—';
+      const metCv = t.ren_h ? `${t.ren_h} ren/h` : '—';
+      const extv  = t.esExt ? (t.qe_hs3 ? `${t.qe_hs3} l/s` : t.porPlaza ? `${t.porPlaza} m³/h·plaza` : t.porM2_ext ? `${t.porM2_ext} l/s·m²` : '—') : '—';
+      return `<tr>
+        <td class="lft" style="${bg}">${t.lb}</td>
+        <td class="lft" style="${bg};font-size:10px">${t.grupo}</td>
+        <td class="num" style="${bg};font-size:10px">${hs3v}</td>
+        <td class="num" style="${bg}">${t.ida?IDA_LABEL[t.ida]:'—'}</td>
+        <td class="num cin" style="${bg}">${metAv}</td>
+        <td class="num cin" style="${bg}">${dCO2v}</td>
+        <td class="num cin" style="${bg}">${metCv}</td>
+        <td class="num cac" style="${bg}">${extv}</td>
+      </tr>`;
+    }).join('')}
+    </tbody>
+  </table></div></div>`;
+
+  document.getElementById('ccau').innerHTML = `
+  <div class="card">
+    <div class="chd te"><h2>Resumen Caudales — HS3 + RITE IT 1.1.4.2 (Método ${S.metodoRITE} activo)</h2>
+      <p>${metDesc[S.metodoRITE]} · Ventilación ${S.vent} · Zona ${S.zona}</p>
+    </div>
+    <div class="g3">
+      <div class="mbox hbl"><span class="mlbl" style="font-weight:700">↓ Q admisión global</span><span class="mval big">${C.qAdm_global.toFixed(2)} l/s</span></div>
+      <div class="mbox hor"><span class="mlbl" style="font-weight:700">↑ Q extracción global</span><span class="mval big" style="color:var(--or)">${C.qExt_global.toFixed(2)} l/s</span></div>
+      <div class="mbox hte"><span class="mlbl" style="font-weight:700">Sistemas activos</span><span class="mval te big">${C.exts.length}</span></div>
+    </div>
+    <div style="background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:9px;padding:11px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:#4338ca;margin-bottom:8px">⚗️ Parámetros RITE Método B (CO₂)</div>
+      <div class="g3">
+        <div class="ifield"><label>CO₂ exterior Ce (ppm)</label>
+          <input type="number" value="${S.ce}" min="350" max="500" step="5" oninput="S.ce=parseInt(this.value)||420;RA()" style="font-family:var(--mono)">
+        </div>
+        <div class="ifield"><label>Generación CO₂ por persona</label>
+          <select onchange="S.gv_co2=parseFloat(this.value);RA()">
+            <option value="5"    ${S.gv_co2===5?'selected':''}>Sedentario RITE (5 ml/s·p)</option>
+            <option value="6"    ${S.gv_co2===6?'selected':''}>Oficina/estudio (6 ml/s·p)</option>
+            <option value="10"   ${S.gv_co2===10?'selected':''}>Trabajo ligero (10 ml/s·p)</option>
+            <option value="19"   ${S.gv_co2===19?'selected':''}>Actividad moderada (19 ml/s·p)</option>
+            <option value="35"   ${S.gv_co2===35?'selected':''}>Actividad intensa (35 ml/s·p)</option>
+          </select>
+        </div>
+        <div style="font-size:10.5px;color:#4338ca;padding:8px 0">
+          <div>IDA 1 → Ci = ${S.ce+350} ppm (Δ350)</div>
+          <div>IDA 2 → Ci = ${S.ce+500} ppm (Δ500)</div>
+          <div>IDA 3 → Ci = ${S.ce+800} ppm (Δ800)</div>
+          <div>IDA 4 → Ci = ${S.ce+1200} ppm (Δ1200)</div>
+        </div>
+      </div>
+    </div>
+    <div class="nota">⚠️ <strong>Criterio de adopción:</strong> Para locales no-residenciales se aplica siempre el <strong>mayor</strong> caudal entre el mínimo HS3 y el método RITE seleccionado. La celda verde oscuro en la tabla indica el valor adoptado. Cambia el método activo con los botones de la pestaña Datos.</div>
+  </div>
+  ${extSecs}${tablaRef}`;
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER — REJILLAS Y CONDUCTOS
+   ══════════════════════════════════════════════════════ */
+function RRej(C){
+  const vBocaE = velBocaExt();
+  const vBocaA = velBocaAdm();
+  const vRamal = velRamal();
+  const vPrinc = velPrincipal();
+
+  const locRows = C.locs.map(l => {
+    const q = l.esExt ? l.qe : l.qAdopt;
+    const vBoca = l.esExt ? vBocaE : vBocaA;
+    const rejH = l.rejH||200;
+    const r = calcRejilla(q, vBoca, rejH);
+    const warnTxt = r.warn ? `<div class="rej-warn" style="display:block">⚠ Tamaño mínimo 100×100 mm aplicado</div>` : '';
+    return `<tr>
+      <td class="num bld">${l.pl}</td>
+      <td class="lft">${l.rf}${l.viv?` <span class="viv-badge">${l.viv}</span>`:''}</td>
+      <td class="num"><span class="etag et${['A','B','C'][l.ext-1]||'A'}">S.${l.ext}</span></td>
+      <td class="num${l.esExt?' cac':' caf'}" style="font-family:var(--mono)">${q.toFixed(2)}</td>
+      <td class="num">${l.esExt?'↑ Ext.':'↓ Adm.'}</td>
+      <td class="num" style="font-family:var(--mono)">${vBoca}</td>
+      <td class="num cud" style="font-family:var(--mono)">${rejH}</td>
+      <td class="num cud" style="font-family:var(--mono)">${r.w}</td>
+      <td class="num" style="font-family:var(--mono);font-size:10px">${r.vreal} m/s</td>
+      <td class="lft" style="font-size:10px">${warnTxt}</td>
+    </tr>`;
+  }).join('');
+
+  const condRows = C.exts.map(e => {
+    const dPrinc = calcDuctoDiam(e.qSist, vPrinc);
+    const dRamal = calcDuctoDiam(e.qSist/Math.max(1,e.bl.length), vRamal);
+    const wRect = calcDuctoRect(e.qSist, vPrinc, 250);
+    return `<tr>
+      <td class="num bld"><span class="etag et${['A','B','C'][e.n-1]||'A'}">Sist.${e.n}</span></td>
+      <td class="num caf" style="font-family:var(--mono)">${e.qAdm.toFixed(2)}</td>
+      <td class="num cac" style="font-family:var(--mono)">${e.qExt.toFixed(2)}</td>
+      <td class="num cud" style="font-family:var(--mono)">${e.qSist.toFixed(2)}</td>
+      <td class="num" style="font-family:var(--mono)">${(e.qSist*3.6).toFixed(0)}</td>
+      <td class="num" style="font-family:var(--mono)">${vPrinc}</td>
+      <td class="num cud" style="font-family:var(--mono)">${dPrinc}</td>
+      <td class="num" style="font-family:var(--mono)">${250}×${wRect}</td>
+      <td class="num" style="font-family:var(--mono);font-size:10px">${vRamal} / ${dRamal}mm</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('crej').innerHTML = `
+  <div class="card">
+    <div class="chd gr"><h2>Dimensionado de Bocas por Local</h2>
+      <p>v extracción ${vBocaE} m/s · v admisión ${vBocaA} m/s · Mínimo comercial 100×100 mm · Redondeado a 5 mm</p>
+    </div>
+    <div class="twrap"><table>
+      <thead><tr>
+        <th class="thbl">Planta</th><th class="thbl" style="text-align:left">Local</th><th class="thbl">Sist.</th>
+        <th class="thte">Q(l/s)</th><th class="thbl">Tipo</th><th class="thbl">v boca(m/s)</th>
+        <th class="thgr">Alto(mm)</th><th class="thgr">Ancho(mm)</th><th class="thbl">v real(m/s)</th><th class="thbl">Aviso</th>
+      </tr></thead>
+      <tbody>${locRows}</tbody>
+    </table></div>
+    <div class="nota-bl">ℹ️ El <strong>Alto</strong> se personaliza en cada local (botón ✎ Editar). El <strong>Ancho</strong> se calcula automáticamente. Velocidades según RITE IT 1.1.4.2 y guía IDAE. Para rejillas con cara de lamas al 60%, multiplicar ancho×1,67.</div>
+  </div>
+
+  <div class="card">
+    <div class="chd te"><h2>Calculadora Interactiva de Bocas / Rejillas</h2>
+      <p>Introduce el caudal y una dimensión — calcula la otra automáticamente en tiempo real</p>
+    </div>
+    <div class="g3">
+      <div class="ifield"><label>Caudal (l/s)</label>
+        <input type="number" id="rj-q" value="15" min="0.5" step="0.5" oninput="calcRej()" style="font-family:var(--mono)">
+      </div>
+      <div class="ifield"><label>Velocidad cara libre (m/s)</label>
+        <input type="number" id="rj-vel" value="${vBocaE}" min="0.3" max="6" step="0.1" oninput="calcRej()" style="font-family:var(--mono)">
+      </div>
+      <div class="ifield"><label>Referencia velocidades</label>
+        <select id="rj-velsel" onchange="document.getElementById('rj-vel').value=this.value;calcRej()">
+          <option value="${VEL.boca_ext}">Boca extracción (${VEL.boca_ext} m/s)</option>
+          <option value="${VEL.boca_adm}">Boca admisión (${VEL.boca_adm} m/s)</option>
+          <option value="${vRamal}">Ramal conducto (${vRamal} m/s)</option>
+          <option value="${vPrinc}">Conducto principal (${vPrinc} m/s)</option>
+        </select>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="rejilla-box">
+        <label>🔼 Conoces el ALTO → calcula el Ancho</label>
+        <div style="display:flex;gap:8px;align-items:flex-end;margin-top:6px">
+          <div style="flex:1"><div style="font-size:10px;color:#064e3b;margin-bottom:3px">Alto (mm)</div>
+            <input type="number" id="rj-h" value="200" min="50" step="5" oninput="calcRej()">
+          </div>
+          <div style="font-size:20px;padding-bottom:8px">→</div>
+          <div style="flex:1"><div style="font-size:10px;color:#064e3b;margin-bottom:3px">Ancho calculado</div>
+            <div class="rejilla-result"><div class="rv" id="rj-w-out">—</div><div class="rl">mm</div></div>
+          </div>
+        </div>
+        <div id="rj-area-hw" style="font-size:10px;color:#065f46;margin-top:5px;text-align:center"></div>
+        <div id="rj-warn-hw" class="rej-warn"></div>
+      </div>
+      <div class="rejilla-box">
+        <label>🔼 Conoces el ANCHO → calcula el Alto</label>
+        <div style="display:flex;gap:8px;align-items:flex-end;margin-top:6px">
+          <div style="flex:1"><div style="font-size:10px;color:#064e3b;margin-bottom:3px">Ancho (mm)</div>
+            <input type="number" id="rj-w" value="300" min="50" step="5" oninput="calcRej()">
+          </div>
+          <div style="font-size:20px;padding-bottom:8px">→</div>
+          <div style="flex:1"><div style="font-size:10px;color:#064e3b;margin-bottom:3px">Alto calculado</div>
+            <div class="rejilla-result"><div class="rv" id="rj-h-out">—</div><div class="rl">mm</div></div>
+          </div>
+        </div>
+        <div id="rj-area-wh" style="font-size:10px;color:#065f46;margin-top:5px;text-align:center"></div>
+        <div id="rj-warn-wh" class="rej-warn"></div>
+      </div>
+    </div>
+    <div class="g3" style="margin-top:11px">
+      <div class="mbox hgr"><span class="mlbl">Área libre necesaria</span><span class="mval gr" id="rj-area-tot">—</span></div>
+      <div class="mbox hte"><span class="mlbl">Ø conducto circular equiv.</span><span class="mval te" id="rj-diam-out">—</span></div>
+      <div class="mbox hin"><span class="mlbl">Conducto rect. (h=250 mm)</span><span class="mval in" id="rj-rect-out">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="chd bl"><h2>Conductos Principales por Sistema</h2>
+      <p>Principal ${vPrinc} m/s · Ramal ${vRamal} m/s · ${S.vent==='hibrida'?'Ventilación híbrida':'Ventilación mecánica'}</p>
+    </div>
+    <div class="twrap"><table>
+      <thead><tr>
+        <th class="thbl">Sistema</th>
+        <th class="thte">Q adm. (l/s)</th><th class="thor">Q ext. (l/s)</th><th class="thte">Q diseño (l/s)</th>
+        <th class="thte">Q (m³/h)</th><th class="thbl">v (m/s)</th>
+        <th class="thgr">Ø circ.(mm)</th><th class="thgr">Rect.250mm (mm)</th>
+        <th class="thbl">Ramal v/Ø</th>
+      </tr></thead>
+      <tbody>${condRows}</tbody>
+    </table></div>
+    <div class="nota">⚠️ <strong>Nota conductos:</strong> Diámetros para tramo principal. Ramales secundarios calculados con ${vRamal} m/s. Verificar pérdidas de carga en proyecto (RITE IT 1.1.4.2). En ventilación híbrida el cálculo de tiro natural requiere verificación de altura disponible (§2.3 HS3).</div>
+  </div>`;
+
+  calcRej();
+}
+
+function calcRej(){
+  const q   = parseFloat(document.getElementById('rj-q')?.value)||15;
+  const vel = parseFloat(document.getElementById('rj-vel')?.value)||2.5;
+  const h   = parseFloat(document.getElementById('rj-h')?.value)||200;
+  const w   = parseFloat(document.getElementById('rj-w')?.value)||300;
+  const rW  = calcRejilla(q, vel, h);
+  const rH  = calcRejillaH(q, vel, w);
+  const area_cm2 = ((q/1000)/vel*10000).toFixed(1);
+  const diam = calcDuctoDiam(q, vel);
+  const drect = calcDuctoRect(q, vel, 250);
+  const el = id => document.getElementById(id);
+  if(el('rj-w-out')) el('rj-w-out').textContent = rW.w;
+  if(el('rj-h-out')) el('rj-h-out').textContent = rH.h;
+  if(el('rj-area-hw')) el('rj-area-hw').textContent = `Área: ${(h*rW.w/1e6*1e4).toFixed(1)} cm² · v real: ${rW.vreal} m/s`;
+  if(el('rj-area-wh')) el('rj-area-wh').textContent = `Área: ${(w*rH.h/1e6*1e4).toFixed(1)} cm² · v real: ${rH.vreal} m/s`;
+  if(el('rj-warn-hw')) { el('rj-warn-hw').style.display = rW.warn?'block':'none'; el('rj-warn-hw').textContent='⚠ Tamaño mínimo 100×100 mm aplicado'; }
+  if(el('rj-warn-wh')) { el('rj-warn-wh').style.display = rH.warn?'block':'none'; el('rj-warn-wh').textContent='⚠ Tamaño mínimo 100×100 mm aplicado'; }
+  if(el('rj-area-tot')) el('rj-area-tot').textContent = `${area_cm2} cm²`;
+  if(el('rj-diam-out')) el('rj-diam-out').textContent = `${diam} mm`;
+  if(el('rj-rect-out')) el('rj-rect-out').textContent = `250 × ${drect} mm`;
+}
+
+/* ══════════════════════════════════════════════════════
+   RENDER — RESUMEN
+   ══════════════════════════════════════════════════════ */
+function RS(C){
+  const allQ = C.locs.every(l=>(l.esExt?l.qe:l.qAdopt)>0);
+  const vivOK = C.vivEquil.every(v=>v.dif<=2);
+  const globalOK = allQ;
+
+  document.getElementById('cres').innerHTML = `
+  <div class="gstat ${globalOK&&vivOK?'ok':'warn'}">
+    <div class="ic">${globalOK&&vivOK?'✅':'⚠️'}</div>
+    <h2>${globalOK&&vivOK?'Ventilación dimensionada — Parámetros correctos':'Revisar parámetros marcados abajo'}</h2>
+    <p style="font-size:11px;margin-top:4px">${S.vent==='hibrida'?'Ventilación híbrida':'Ventilación mecánica'} · ${C.locs.length} locales · ${C.exts.length} sistema(s) · Zona ${S.zona} · Método RITE ${S.metodoRITE}</p>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <strong style="display:block;margin-bottom:10px;color:#0f2a47">Caudales globales</strong>
+      <div class="mbox hbl"><span class="mlbl">↓ Q admisión total</span><span class="mval big">${C.qAdm_global.toFixed(2)} l/s</span></div>
+      <div class="mbox hor"><span class="mlbl">↑ Q extracción total</span><span class="mval big" style="color:var(--or)">${C.qExt_global.toFixed(2)} l/s</span></div>
+      ${C.exts.map(e=>`<div class="mbox ${['hbl','hgr','hor'][e.n-1]||'hbl'}">
+        <span class="mlbl">Sistema ${e.n} — Q diseño</span>
+        <span class="mval" style="font-size:15px">${e.qSist.toFixed(2)} l/s / ${(e.qSist*3.6).toFixed(0)} m³/h</span>
+      </div>`).join('')}
+    </div>
+    <div class="card">
+      <strong style="display:block;margin-bottom:10px;color:#0f2a47">Parámetros de diseño</strong>
+      <div class="mbox"><span class="mlbl">Tipo ventilación</span><span class="mval" style="font-size:13px">${S.vent==='hibrida'?'HÍBRIDA':'MECÁNICA'}</span></div>
+      <div class="mbox"><span class="mlbl">Zona climática</span><span class="mval" style="font-size:13px">${S.zona}</span></div>
+      <div class="mbox"><span class="mlbl">Factor zona híbrida</span><span class="mval" style="font-size:13px">${FACTOR_ZONA_HIBRIDA[S.zona]||1.0} ${S.vent==='hibrida'?'(aplicado)':'(sin efecto)'}</span></div>
+      <div class="mbox"><span class="mlbl">Método RITE no-resid.</span><span class="mval" style="font-size:13px">Método ${S.metodoRITE}</span></div>
+      <div class="mbox"><span class="mlbl">CO₂ exterior (Ce)</span><span class="mval" style="font-size:13px">${S.ce} ppm</span></div>
+      <div class="mbox"><span class="mlbl">v conducto principal</span><span class="mval" style="font-size:13px">${velPrincipal()} m/s</span></div>
+      <div class="mbox"><span class="mlbl">v ramal secundario</span><span class="mval" style="font-size:13px">${velRamal()} m/s</span></div>
+    </div>
+  </div>
+  ${C.vivEquil.length?`<div class="card"><strong style="display:block;margin-bottom:9px">Equilibrio por vivienda</strong>
+  <div class="vgrid">${C.vivEquil.map(v=>{const ok=v.dif<=2;return`<div class="vi ${ok?'vok':'vwarn'}"><span>${ok?'✅':'⚠'}</span><span><strong>${v.viv}:</strong> ↓${v.qAdm.toFixed(1)} l/s adm / ↑${v.qExt.toFixed(1)} l/s ext · Δ${v.dif.toFixed(1)} l/s — ${ok?'Equilibrado':'Revisar aberturas admisión'}</span></div>`;}).join('')}</div></div>`:''}
+  <div class="card">
+    <strong style="display:block;margin-bottom:10px">Verificaciones normativas</strong>
+    <div class="vgrid">
+      <div class="vi ${allQ?'vok':'verr'}"><span>${allQ?'✅':'❌'}</span><span>Todos los locales con caudal asignado: ${allQ?'Sí':'Revisar locales con Q=0'}</span></div>
+      <div class="vi vok"><span>✅</span><span>Caudales mínimos HS3 Tabla 2.1 aplicados por tipo de uso</span></div>
+      <div class="vi vok"><span>✅</span><span>Locales habitables ↓ admisión; húmedos ↑ extracción (§2.1 HS3)</span></div>
+      <div class="vi vok"><span>✅</span><span>Para no-residencial: Mayor de HS3 mínimo y RITE Método ${S.metodoRITE}</span></div>
+      <div class="vi ${S.vent==='hibrida'?'vok':'vok'}"><span>✅</span><span>Velocidades conductos según RITE IT 1.1.4.2 (principal: ${velPrincipal()} m/s, ramal: ${velRamal()} m/s)</span></div>
+      <div class="vi vok"><span>✅</span><span>Mínimo comercial rejillas 100×100 mm verificado</span></div>
+      <div class="vi ${S.vent==='hibrida'?'vwarn':'vok'}"><span>${S.vent==='hibrida'?'⚠':'✅'}</span><span>${S.vent==='hibrida'?`Factor zona climática ${FACTOR_ZONA_HIBRIDA[S.zona]||1.0} (Anejo H HS3) aplicado a caudales vivienda`:'Ventilación mecánica: verificar caudal nominal equipo ≥ Q diseño de cada sistema'}</span></div>
+      <div class="vi vwarn"><span>⚠</span><span>Aberturas de paso en puertas (art. 4.2 HS3): 70 cm² libre mínimo — verificar en diseño</span></div>
+      <div class="vi vwarn"><span>⚠</span><span>Aberturas de admisión en fachada: dimensionar según Q admisión por vivienda (art. 4.2.2 HS3)</span></div>
+      <div class="vi vwarn"><span>⚠</span><span>Pérdidas de carga en conductos: requiere cálculo hidráulico completo (RITE IT 1.1.4.2)</span></div>
+      <div class="vi vwarn"><span>⚠</span><span>Calidad IDA verificar con promotor (RITE IT 1.1.4.2.1) — afecta al Método A adoptado</span></div>
+      ${S.vent==='hibrida'?`<div class="vi vwarn"><span>⚠</span><span>Ventilación híbrida: verificar altura tiro natural disponible ≥ 1,5 m (§2.3 HS3) y presión disponible</span></div>`:''}
+      <div class="vi vwarn"><span>⚠</span><span>Cocinas con campana extractora independiente: verificar compatibilidad con sistema colectivo (§3.1.3 HS3)</span></div>
+      <div class="vi vwarn"><span>⚠</span><span>Garajes con >5 plazas: estudiar reducción caudal con detección CO (§3.1.4 HS3)</span></div>
+    </div>
+  </div>
+  <div class="pftr">Calculadora CTE DB HS3 v3.0 · ${S.edf} · ${new Date().toLocaleDateString('es-ES')} · CTE 2022 + RITE · Método RITE ${S.metodoRITE} · Zona ${S.zona}</div>`;
+}
+
+/* ══════════════════════════════════════════════════════
+   MODAL — EDITAR LOCAL
+   ══════════════════════════════════════════════════════ */
+function OM(id){
+  const l=S.locs.find(l=>l.id===id);
+  if(!l)return;
+  S.editId=id; S.ef={...l};
+  document.getElementById('modal-title').textContent='Editar local';
+  document.getElementById('modal').classList.add('open');
+  RM();
+}
+function CM(){document.getElementById('modal').classList.remove('open');S.editId=null;S.ef=null;}
+function SM(){const i=S.locs.findIndex(l=>l.id===S.editId);if(i>=0)S.locs[i]={...S.ef};CM();RA();}
+
+function RM(){
+  const f=S.ef;
+  const t=TIPOS_USO[f.ti]||{};
+  const plantas=['SS','PB','P1','P2','P3','P4','P5','P6','P7','P8','P9','P10','Ático','Cubierta']
+    .map(p=>`<option ${f.pl===p?'selected':''}>${p}</option>`).join('');
+  const grupos=[...new Set(Object.values(TIPOS_USO).map(t=>t.grupo))];
+  const usoOpts=grupos.map(g=>{
+    const opts=Object.entries(TIPOS_USO).filter(([k,v])=>v.grupo===g)
+      .map(([k,v])=>`<option value="${k}" ${f.ti===k?'selected':''}>${v.lb}</option>`).join('');
+    return `<optgroup label="── ${g} ──">${opts}</optgroup>`;
+  }).join('');
+  const c=calcLocal(f);
+  const q=c.esExt?c.qe:c.qAdopt;
+  const det=c.detalle||{};
+  const esGaraje=!!t.porPlaza;
+  const showPlazas=esGaraje;
+
+  let metHTML='';
+  if(!c.esViv&&!c.esExt&&det.metA!==null){
+    const rows=[{k:'hs3',lb:'HS3 mínimo',v:det.hs3},{k:'A',lb:'RITE Método A',v:det.metA},{k:'B',lb:'RITE Método B',v:det.metB},{k:'C',lb:'RITE Método C',v:det.metC}];
+    metHTML=`<div class="metodos-box"><h4>Comparativa métodos RITE IT 1.1.4.2</h4>
+      ${rows.map(r=>`<div class="met-row">
+        <span>${r.lb}</span>
+        <span class="met-val">${(r.v||0).toFixed(2)} l/s${det.adoptado===r.k?'<span class="met-adopt">ADOPTADO</span>':''}</span>
+      </div>`).join('')}
+      <div style="font-size:10px;color:#64748b;margin-top:6px">IDA ${t.ida||'—'} (${IDA_LABEL[t.ida]||'—'}) · Gv CO₂: ${S.gv_co2} ml/s·p · ${det.rh||'—'} ren/h</div>
+    </div>`;
+  }
+
+  document.getElementById('mbody').innerHTML=`
+    <div class="mbody">
+      <div class="mgrid">
+        <div class="ifield"><label>Planta</label><select onchange="MS('pl',this.value)">${plantas}</select></div>
+        <div class="ifield"><label>Sistema extracción (1/2/3)</label>
+          <select onchange="MS('ext',parseInt(this.value))">
+            ${[1,2,3].map(n=>`<option value="${n}" ${f.ext===n?'selected':''}>Sistema ${n}</option>`).join('')}
+          </select>
+        </div>
+        <div class="ifield" style="grid-column:1/-1"><label>Tipo de uso (CTE HS3 / RITE)</label>
+          <select onchange="MS('ti',this.value);RM()">${usoOpts}</select>
+        </div>
+        <div class="ifield"><label>Referencia / Nombre del local</label>
+          <input type="text" value="${f.rf}" oninput="MS('rf',this.value)" placeholder="Ej: Salón Viv.1 P2">
+        </div>
+        <div class="ifield"><label>Vivienda / Unidad de uso <span style="font-weight:400">(V1, V2… o vacío si no es vivienda)</span></label>
+          <input type="text" value="${f.viv||''}" oninput="MS('viv',this.value)" placeholder="Ej: V1, V2, Local-A…">
+        </div>
+      </div>
+      <div class="mgrid3">
+        <div class="ifield"><label>Superficie (m²)</label>
+          <input type="number" value="${f.sup||0}" min="1" step="0.5" oninput="MS('sup',parseFloat(this.value)||0);UT()">
+        </div>
+        <div class="ifield"><label>Ocupación (personas)</label>
+          <input type="number" value="${f.ocup||0}" min="0" step="1" oninput="MS('ocup',parseInt(this.value)||0);UT()" ${c.esViv?'title="Para vivienda no afecta al caudal (HS3 por local)"':''}>
+        </div>
+        <div class="ifield"><label>Altura libre (m)</label>
+          <input type="number" value="${f.alt||S.hlibre}" min="2.2" max="9" step="0.05" oninput="MS('alt',parseFloat(this.value)||S.hlibre);UT()">
+        </div>
+      </div>
+      <div class="mgrid">
+        <div class="ifield"><label>Alto boca/rejilla (mm)</label>
+          <input type="number" value="${f.rejH||200}" min="100" step="5" oninput="MS('rejH',parseInt(this.value)||200);UT()">
+        </div>
+        ${showPlazas?`<div class="ifield"><label>Nº plazas garaje</label>
+          <input type="number" value="${f.plazas||1}" min="1" step="1" oninput="MS('plazas',parseInt(this.value)||1);UT()">
+        </div>`:`<div class="ifield"><label>Caudal manual (l/s) — 0 = automático</label>
+          <input type="number" value="${f.qman||0}" min="0" step="0.5" oninput="MS('qman',parseFloat(this.value)||null);UT()">
+        </div>`}
+      </div>
+      ${c.esViv&&!c.esExt?`<div class="nota-bl" style="margin-top:0">ℹ️ <strong>Vivienda:</strong> Caudal fijo según HS3 Tabla 2.1 por local. La ocupación no afecta al cálculo normativo.</div>`:''}
+      ${metHTML}
+      <div id="m-preview" style="background:var(--llg);border:1px solid #86efac;border-radius:9px;padding:12px;margin-top:10px"></div>
+    </div>
+    <div class="mftr">
+      <button class="btn" onclick="CM()" style="background:#e2e8f0;color:#374151">Cancelar</button>
+      <button class="btn btn-sv" onclick="SM()">✓ Guardar</button>
+    </div>`;
+  UT();
+}
+
+function UT(){
+  const c=calcLocal(S.ef);
+  const q=c.esExt?c.qe:c.qAdopt;
+  const el=document.getElementById('m-preview');
+  if(el) el.innerHTML=`
+    <div style="font-size:11px;font-weight:700;color:#064e3b;margin-bottom:7px">Vista previa del cálculo</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;font-size:11.5px;margin-bottom:7px">
+      <div><span style="color:#64748b">Volumen: </span><strong>${c.vol} m³</strong></div>
+      <div><span style="color:#64748b">Tipo: </span><strong>${c.esExt?'↑ Extracción':'↓ Admisión'}</strong></div>
+      <div><span style="color:#64748b">Normativa: </span><strong>${c.esViv?'HS3 fijo':'RITE+HS3'}</strong></div>
+    </div>
+    <div style="background:#fff;border-radius:7px;padding:9px;text-align:center;border:1.5px solid #6ee7b7">
+      <div style="font-size:10px;color:#64748b">Caudal adoptado</div>
+      <div style="font-size:24px;font-weight:800;font-family:var(--mono);color:var(--teal)">${q.toFixed(2)} l/s</div>
+      <div style="font-size:11px;color:#94a3b8">${(q*3.6).toFixed(1)} m³/h · ${c.modoUsado}</div>
+    </div>`;
+}
+function MS(k,v){S.ef[k]=v;}
+
+/* ══════════════════════════════════════════════════════
+   CRUD
+   ══════════════════════════════════════════════════════ */
+function AL(){
+  const id=S.nxt++;
+  S.locs.push({id,pl:'PB',ti:'viv_dormitorio',rf:'Local '+id,ext:1,viv:'V1',sup:12,ocup:1,alt:S.hlibre,rejH:200,qman:null,plazas:0});
+  OM(id);
+}
+function DL(id){if(confirm('¿Eliminar este local?')){S.locs=S.locs.filter(l=>l.id!==id);RA();}}
+
+/* ══════════════════════════════════════════════════════
+   TABS
+   ══════════════════════════════════════════════════════ */
+function ST(t){
+  S.tab=t;
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('sec-'+t)?.classList.add('on');
+  document.querySelector(`[data-t="${t}"]`)?.classList.add('on');
+}
+document.querySelectorAll('.tbtn').forEach(b=>b.addEventListener('click',()=>ST(b.dataset.t)));
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)CM();});
+
+function RA(){const C=calcSistema();RD(C);RC(C);RRej(C);RS(C);}
+
+/* ══════════════════════════════════════════════════════
+   EXPORTACIÓN EXCEL (4 hojas)
+   ══════════════════════════════════════════════════════ */
+async function exportXLSX(){
+  if(typeof ExcelJS==='undefined'){alert('ExcelJS aún cargando...');return;}
+  const C=calcSistema();
+  const wb=new ExcelJS.Workbook();
+  wb.creator='CTE HS3 v2'; wb.created=new Date(); wb.modified=new Date();
+  const fl=a=>({type:'pattern',pattern:'solid',fgColor:{argb:a}});
+  const fn=(bold,col='FF000000',sz=10)=>({bold,color:{argb:col},size:sz,name:'Calibri'});
+  const al=(h='center',v='middle',w=false)=>({horizontal:h,vertical:v,wrapText:w});
+  const br=()=>{const t={style:'thin'};return{top:t,left:t,bottom:t,right:t};};
+  function sc(cell,f,font,align){
+    if(f)cell.fill=fl(f);
+    if(font)cell.font=fn(font.b||false,font.c||'FF000000',font.s||10);
+    cell.alignment=align||al(); cell.border=br();
+  }
+  function mhdr(ws,r,c1,c2,text,fill){
+    ws.mergeCells(r,c1,r,c2);
+    const cell=ws.getCell(r,c1);cell.value=text;
+    sc(cell,fill,{b:true,c:'FFFFFFFF',s:11},al('left','middle',true));
+    ws.getRow(r).height=22;
+  }
+  const EBG={1:'FFDBEAFE',2:'FFD1FAE5',3:'FFFED7AA'};
+
+  /* ── SHEET 1: DATOS ── */
+  const ws1=wb.addWorksheet('HS3_DATOS',{views:[{state:'frozen',ySplit:2}]});
+  [1,2,3,4,5,6,7,8,9,10,11].forEach(i=>ws1.getColumn(i).width=[7,22,20,10,7,7,7,14,10,10,14][i-1]||12);
+  mhdr(ws1,1,1,11,`CTE DB HS3 v3 — DATOS | ${S.edf} | Zona ${S.zona} | Ventilación ${S.vent} | RITE Método ${S.metodoRITE}`,'FF0F2A47');
+  ws1.getRow(1).height=24;
+  ['Planta','Tipo de uso','Referencia','Sistema','Vivienda','m²','Oc.','Alt.(m)','Q(l/s)','Q(m³/h)','Criterio'].forEach((h,i)=>{
+    const c=ws1.getCell(2,i+1);c.value=h;
+    sc(c,i<3?'FF0F2A47':(i===8||i===9?'FF0F766E':'FF2563EB'),{b:true,c:'FFFFFFFF',s:9},al('center','middle',true));
+  });
+  ws1.getRow(2).height=30;
+  C.locs.forEach((l,ri)=>{
+    const r=ri+3;
+    const t=l.tipo||{lb:l.ti,grupo:'—'};
+    const q=l.esExt?l.qe:l.qAdopt;
+    const bg=EBG[l.ext]||'FFFFFFFF';
+    [l.pl,t.lb+' ('+t.grupo+')',l.rf,'Sistema '+l.ext,l.viv||'—',l.sup,l.ocup,l.alt||S.hlibre,q,+(q*3.6).toFixed(1),l.modoUsado].forEach((v,ci)=>{
+      const cell=ws1.getCell(r,ci+1);cell.value=v;
+      sc(cell,ci===3?bg:(ri%2===0?'FFF8FAFC':'FFFFFFFF'),{b:ci===3||ci===8,s:10},ci<=2||ci===10?al('left'):al());
+      if(ci>=5&&ci<=7)cell.numFmt='0.00';
+      if(ci===8||ci===9)cell.numFmt='0.00';
+    });
+    ws1.getRow(r).height=15;
+  });
+  const tr1=C.locs.length+3;
+  ws1.mergeCells(tr1,1,tr1,8);
+  const tc=ws1.getCell(tr1,1);tc.value='TOTALES';sc(tc,'FF0F2A47',{b:true,c:'FFFFFFFF',s:10},al('left'));
+  const tcq=ws1.getCell(tr1,9);tcq.value=C.qAdm_global+C.qExt_global;sc(tcq,'FF0F2A47',{b:true,c:'FFFFFFFF',s:11});tcq.numFmt='0.00';
+  ws1.getRow(tr1).height=22;
+
+  /* ── SHEET 2: CAUDALES ── */
+  const ws2=wb.addWorksheet('HS3_CAUDALES');
+  [1,2,3,4,5,6,7,8].forEach(i=>ws2.getColumn(i).width=[10,22,18,14,12,12,12,12][i-1]||12);
+  let r2=1;
+  mhdr(ws2,r2,1,8,`HS3 + RITE — CAUDALES | Método ${S.metodoRITE} | ${S.edf}`,'FF0F766E'); r2+=2;
+  [['↓ Q admisión global (l/s)',C.qAdm_global],['↑ Q extracción global (l/s)',C.qExt_global],['Método RITE activo',`Método ${S.metodoRITE}`],['CO₂ exterior (ppm)',S.ce]].forEach(([lb,v])=>{
+    const c1=ws2.getCell(r2,1);c1.value=lb;sc(c1,'FFD1FAE5',{b:true,s:10},al('left'));
+    const c2=ws2.getCell(r2,2);c2.value=v;sc(c2,'FF0F766E',{b:true,c:'FFFFFFFF',s:11});
+    if(typeof v==='number')c2.numFmt='0.00'; ws2.getRow(r2).height=18;r2++;
+  }); r2++;
+  C.exts.forEach(e=>{
+    mhdr(ws2,r2,1,8,`SISTEMA ${e.n} — ↓Adm: ${e.qAdm.toFixed(2)} l/s | ↑Ext: ${e.qExt.toFixed(2)} l/s | Q diseño: ${e.qSist.toFixed(2)} l/s`,['FF1E3A8A','FF064E3B','FF92400E'][e.n-1]||'FF0F2A47'); r2++;
+    ['Planta','Referencia','Q adopt.(l/s)','HS3 mín.(l/s)','RITE A(l/s)','RITE B(l/s)','RITE C(l/s)','Criterio'].forEach((h,i)=>{
+      const c=ws2.getCell(r2,i+1);c.value=h;sc(c,'FF334155',{b:true,c:'FFFFFFFF',s:9},al('center','middle',true));
+    }); ws2.getRow(r2).height=26;r2++;
+    e.bl.forEach((l,li)=>{
+      const q=l.esExt?l.qe:l.qAdopt;
+      const det=l.detalle||{};
+      const bg=li%2===0?'FFF8FAFC':'FFFFFFFF';
+      [l.pl,l.rf,q,det.hs3||'—',det.metA||'—',det.metB||'—',det.metC||'—',l.modoUsado].forEach((v,ci)=>{
+        const c=ws2.getCell(r2,ci+1);c.value=v;
+        const isAdopt=det.adoptado&&((ci===3&&det.adoptado==='hs3')||(ci===4&&det.adoptado==='A')||(ci===5&&det.adoptado==='B')||(ci===6&&det.adoptado==='C'));
+        sc(c,isAdopt?'FF14532D':bg,{b:isAdopt,c:isAdopt?'FFFFFFFF':undefined,s:10},ci<=1||ci===7?al('left'):al());
+        if(typeof v==='number')c.numFmt='0.00';
+      });ws2.getRow(r2).height=16;r2++;
+    });
+    ws2.getRow(r2).height=22;r2+=2;
+  });
+
+  /* ── SHEET 3: REJILLAS ── */
+  const ws3=wb.addWorksheet('HS3_REJILLAS');
+  [1,2,3,4,5,6,7,8,9,10].forEach(i=>ws3.getColumn(i).width=[7,20,10,10,10,10,12,12,12,14][i-1]||12);
+  let r3=1;
+  const vBE=velBocaExt(),vBA=velBocaAdm(),vRP=velPrincipal(),vRR=velRamal();
+  mhdr(ws3,r3,1,10,`HS3 — REJILLAS Y CONDUCTOS | ${S.edf} | v ext ${vBE} m/s · v adm ${vBA} m/s · Principal ${vRP} m/s`,'FF065F46'); r3+=2;
+  ['Planta','Referencia','Sistema','Tipo','Q(l/s)','v boca(m/s)','Alto(mm)','Ancho(mm)','v real(m/s)','Aviso'].forEach((h,i)=>{
+    const c=ws3.getCell(r3,i+1);c.value=h;sc(c,'FF065F46',{b:true,c:'FFFFFFFF',s:9},al('center','middle',true));
+  }); ws3.getRow(r3).height=26; r3++;
+  C.locs.forEach((l,li)=>{
+    const q=l.esExt?l.qe:l.qAdopt;
+    const vBoca=l.esExt?vBE:vBA;
+    const h=l.rejH||200;
+    const r=calcRejilla(q,vBoca,h);
+    const bg=li%2===0?'FFF8FAFC':'FFFFFFFF';
+    [l.pl,l.rf,'Sistema '+l.ext,l.esExt?'↑ Extracción':'↓ Admisión',q,vBoca,h,r.w,r.vreal,r.warn?'⚠ Mínimo 100×100 aplicado':'✓'].forEach((v,ci)=>{
+      const c=ws3.getCell(r3,ci+1);c.value=v;
+      sc(c,r.warn&&ci===9?'FFFEF9C3':bg,{b:ci===7||ci===6,s:10,c:r.warn&&ci===9?'FF78350F':undefined},ci<=1?al('left'):al());
+      if(typeof v==='number')c.numFmt='0.00';
+    }); ws3.getRow(r3).height=16; r3++;
+  });
+  r3++;
+  mhdr(ws3,r3,1,7,'CONDUCTOS PRINCIPALES POR SISTEMA','FF0F2A47'); r3++;
+  ['Sistema','Q adm.(l/s)','Q ext.(l/s)','Q diseño(l/s)','Q(m³/h)','Ø circ.(mm)','Rect.250mm(mm)'].forEach((h,i)=>{
+    const c=ws3.getCell(r3,i+1);c.value=h;sc(c,'FF334155',{b:true,c:'FFFFFFFF',s:9},al('center','middle',true));
+  }); ws3.getRow(r3).height=24; r3++;
+  C.exts.forEach(e=>{
+    const bg=EBG[e.n]||'FFFFFFFF';
+    const dP=calcDuctoDiam(e.qSist,vRP);
+    const wR=calcDuctoRect(e.qSist,vRP,250);
+    ['Sistema '+e.n,e.qAdm,e.qExt,e.qSist,+(e.qSist*3.6).toFixed(0),dP,`250×${wR}`].forEach((v,ci)=>{
+      const c=ws3.getCell(r3,ci+1);c.value=v;
+      sc(c,bg,{b:ci===0||ci===3,s:10},ci===0?al('left'):al());
+      if(typeof v==='number')c.numFmt='0.00';
+    }); ws3.getRow(r3).height=20; r3++;
+  });
+
+  /* ── SHEET 4: RESUMEN ── */
+  const ws4=wb.addWorksheet('HS3_RESUMEN');
+  ws4.getColumn(1).width=46; ws4.getColumn(2).width=22; ws4.getColumn(3).width=16;
+  let r4=1;
+  mhdr(ws4,r4,1,3,'RESUMEN DE CUMPLIMIENTO — CTE DB HS3 + RITE IT 1.1.4.2 (v3)','FF312E81'); r4++;
+  ws4.mergeCells(r4,1,r4,3);
+  const ws4s=ws4.getCell(r4,1);ws4s.value=`${S.edf} · Zona ${S.zona} · Plantas ${S.np} · Ventilación ${S.vent} · Método RITE ${S.metodoRITE} · Q adm: ${C.qAdm_global.toFixed(2)} l/s · Q ext: ${C.qExt_global.toFixed(2)} l/s`;
+  sc(ws4s,'FFE0E7FF',{s:10,c:'FF312E81'},al('left')); ws4.getRow(r4).height=18; r4+=2;
+  mhdr(ws4,r4,1,3,'CAUDALES GLOBALES','FF0F2A47'); r4++;
+  [['↓ Q admisión total (l/s):',C.qAdm_global,'0.00',true],['↑ Q extracción total (l/s):',C.qExt_global,'0.00',true],
+   ['Método RITE aplicado:',`Método ${S.metodoRITE}`,'@',false],['Zona climática:',S.zona,'@',false],
+   ['Factor zona híbrida:',FACTOR_ZONA_HIBRIDA[S.zona]||1.0,'0.00',false],['CO₂ exterior Ce (ppm):',S.ce,'0',false]].forEach(([lb,v,nf,hl],i)=>{
+    const c1=ws4.getCell(r4,1);c1.value=lb;sc(c1,i%2?'FFDEEAF1':'FFBDD7EE',{b:hl,s:10},al('left'));
+    const c2=ws4.getCell(r4,2);c2.value=v;sc(c2,hl?'FF0F2A47':'FFDBEAFE',{b:hl,c:hl?'FFFFFFFF':'FF1E3A8A',s:hl?12:10});
+    if(nf!=='@'&&typeof v==='number')c2.numFmt=nf; ws4.getRow(r4).height=18; r4++;
+  }); r4++;
+  mhdr(ws4,r4,1,3,'POR SISTEMA DE EXTRACCIÓN','FF0F766E'); r4++;
+  C.exts.forEach(e=>{
+    const c1=ws4.getCell(r4,1);c1.value=`Sistema ${e.n} — ${e.bl.length} locales`;sc(c1,EBG[e.n]||'FFFFFFFF',{b:true,s:10},al('left'));
+    const c2=ws4.getCell(r4,2);c2.value=`↓${e.qAdm.toFixed(2)} / ↑${e.qExt.toFixed(2)} / Q=${e.qSist.toFixed(2)} l/s`;sc(c2,EBG[e.n]||'FFFFFFFF',{s:10});
+    const c3=ws4.getCell(r4,3);c3.value=`${(e.qSist*3.6).toFixed(0)} m³/h`;sc(c3,EBG[e.n]||'FFFFFFFF',{b:true,s:11});
+    ws4.getRow(r4).height=20; r4++;
+  }); r4++;
+  if(C.vivEquil.length){
+    mhdr(ws4,r4,1,3,'EQUILIBRIO POR VIVIENDA','FF064E3B'); r4++;
+    C.vivEquil.forEach(v=>{
+      const ok=v.dif<=2;
+      const c1=ws4.getCell(r4,1);c1.value=`Vivienda ${v.viv} — ↓${v.qAdm.toFixed(2)} adm / ↑${v.qExt.toFixed(2)} ext`;
+      sc(c1,ok?'FFD1FAE5':'FFFEE2E2',{b:true,s:10},al('left'));
+      const c2=ws4.getCell(r4,2);c2.value=`Δ ${v.dif.toFixed(2)} l/s`;sc(c2,ok?'FFD1FAE5':'FFFEE2E2',{s:10});
+      const c3=ws4.getCell(r4,3);c3.value=ok?'✅ OK':'⚠ Revisar';
+      sc(c3,ok?'FFD1FAE5':'FFFEE2E2',{b:true,c:ok?'FF065F46':'FFDC2626',s:10});
+      ws4.getRow(r4).height=18; r4++;
+    }); r4++;
+  }
+  mhdr(ws4,r4,1,3,'VERIFICACIONES NORMATIVAS CTE DB HS3 + RITE','FF0F2A47'); r4++;
+  [
+    [true,'✅ Caudales HS3 Tabla 2.1 aplicados (vivienda: fijo por local; no-resid.: mínimo HS3)'],
+    [true,'✅ Caudales RITE IT 1.1.4.2 Métodos A/B/C calculados para no-residencial'],
+    [true,`✅ Valor adoptado = mayor entre HS3 mínimo y RITE Método ${S.metodoRITE}`],
+    [true,'✅ Locales húmedos (cocinas, baños) con extracción; habitables con admisión'],
+    [true,'✅ Velocidades conductos según RITE IT 1.1.4.2 (ramal vs principal diferenciados)'],
+    [true,'✅ Mínimo comercial bocas 100×100 mm verificado'],
+    [S.vent==='hibrida',`${S.vent==='hibrida'?'✅':'—'} Factor zona climática ${FACTOR_ZONA_HIBRIDA[S.zona]||1.0} Anejo H HS3 aplicado (solo híbrida)`],
+    [false,'⚠ Aberturas de paso en puertas: ≥70 cm² sección libre (art. 4.2 HS3) — verificar diseño'],
+    [false,'⚠ Aberturas de admisión en fachada: dimensionar según Q admisión vivienda (art. 4.2.2 HS3)'],
+    [false,'⚠ Pérdidas de carga en conductos: requiere cálculo hidráulico completo (RITE IT 1.1.4.2)'],
+    [false,'⚠ Calidad IDA: verificar con promotor para cada uso (RITE IT 1.1.4.2.1)'],
+    [false,'⚠ Garajes >5 plazas: estudiar reducción caudal con detección CO (§3.1.4 HS3)'],
+    [false,'⚠ Cocinas con campana: verificar compatibilidad con sistema colectivo (§3.1.3 HS3)'],
+    [false,'⚠ Ventilación híbrida: verificar altura tiro natural disponible (§2.3 HS3)'],
+  ].forEach(([ok,txt],i)=>{
+    ws4.mergeCells(r4,1,r4,3);
+    const c=ws4.getCell(r4,1);c.value=txt;
+    sc(c,ok?(i%2?'FFD1FAE5':'FFE2EFDA'):(i%2?'FFFEF9C3':'FFFEF3C7'),{s:9,c:ok?'FF065F46':'FF78350F'},al('left'));
+    ws4.getRow(r4).height=15;r4++;
+  });
+
+  try{
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;
+    a.download=`CTE_HS3_v2_${S.edf.replace(/[^a-zA-Z0-9]/g,'_')}.xlsx`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  }catch(err){console.error(err);alert('Error exportando: '+err.message);}
+}
+
+/* ══ INIT ══ */
+RA();
+</script>
+</body>
+</html>

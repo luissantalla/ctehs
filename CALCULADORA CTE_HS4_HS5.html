@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTE HS4/HS5/HE4 v3 — Calculadora de Instalaciones</title>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --db:#0f2a47;--dm:#1a4a7a;--dl:#2563eb;--lb:#dbeafe;--llb:#eff6ff;
+  --dg:#064e3b;--mg:#065f46;--lg:#d1fae5;--llg:#f0fdf4;
+  --or:#7c2d12;--lo:#fed7aa;--lo2:#fff7ed;
+  --pu:#3b0764;--lp:#ede9fe;
+  --te:#134e4a;--lt:#ccfbf1;
+  --ro:#881337;--lr:#ffe4e6;
+  --am:#78350f;--la:#fef3c7;
+  --in:#312e81;--li:#e0e7ff;
+  --re:#dc2626;--ye:#854d0e;--ly:#fef9c3;
+  --gy:#475569;--lgy:#f8fafc;--bdr:#e2e8f0;
+  --inp:#fffce8;
+  --font:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);background:#eef2f7;color:#1e293b;font-size:13px;line-height:1.45;}
+
+/* HEADER */
+#hdr{background:var(--db);color:#fff;padding:10px 20px;
+  display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+  box-shadow:0 2px 12px rgba(0,0,0,.4);position:sticky;top:0;z-index:200;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+#hdr h1{font-size:15px;font-weight:700;letter-spacing:-.2px;}
+#hdr h1 span{color:#60a5fa;}
+#hdr p{font-size:10px;color:#93c5fd;margin-top:1px;font-family:var(--mono);}
+.hdr-mid{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;}
+.hig label{display:block;font-size:9px;color:#7dd3fc;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
+.hig input,.hig select{background:#1a3a5c;border:1px solid #2d5f8a;color:#fff;
+  border-radius:7px;padding:6px 10px;font-size:12px;outline:none;font-family:var(--font);}
+.hig input:focus,.hig select:focus{border-color:#60a5fa;}
+.hig input[type=number]{width:58px;font-weight:700;text-align:center;}
+.hig select{min-width:160px;}
+.hdr-acts{display:flex;gap:7px;align-items:center;}
+.btn{padding:7px 14px;border:none;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;transition:all .15s;white-space:nowrap;font-family:var(--font);}
+.btn:hover{filter:brightness(1.12);transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn-xl{background:#16a34a;color:#fff;}
+.btn-pr{background:#d97706;color:#fff;}
+.btn-add{background:var(--dl);color:#fff;}
+.btn-ed{background:#dbeafe;color:#1e3a8a;padding:3px 8px;border-radius:5px;font-size:11px;}
+.btn-de{background:#fee2e2;color:#b91c1c;padding:3px 8px;border-radius:5px;font-size:11px;}
+
+/* TABS */
+#tabnav{background:#fff;padding:6px 20px 0;display:flex;gap:3px;
+  border-bottom:2px solid var(--bdr);box-shadow:0 1px 4px rgba(0,0,0,.06);overflow-x:auto;}
+.tbtn{padding:8px 14px;border:none;background:transparent;border-radius:8px 8px 0 0;
+  font-weight:600;font-size:12px;cursor:pointer;color:#64748b;
+  border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;
+  white-space:nowrap;font-family:var(--font);}
+.tbtn:hover{color:var(--db);background:#f1f5f9;}
+.tbtn.on{color:var(--db);border-bottom-color:var(--dl);background:#f8fafc;font-weight:700;}
+
+/* MAIN */
+#wrap{max-width:1500px;margin:0 auto;padding:18px;}
+.sec{display:none;}
+.sec.on{display:block;}
+
+/* CARDS */
+.card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.07);
+  padding:18px;margin-bottom:14px;page-break-inside:avoid;break-inside:avoid;}
+.card.allow{page-break-inside:auto;break-inside:auto;}
+.chd{color:#fff;padding:12px 16px;border-radius:9px;margin-bottom:14px;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.chd.bl{background:var(--db);}
+.chd.gr{background:var(--dg);}
+.chd.te{background:var(--te);}
+.chd.in{background:#312e81;}
+.chd h2{font-size:14px;font-weight:700;margin-bottom:2px;}
+.chd p{font-size:10px;opacity:.75;line-height:1.4;}
+
+/* GRIDS */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:14px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g2r{display:grid;grid-template-columns:2fr 1fr;gap:14px;}
+.g8{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px;}
+
+/* BAJANTE CARDS - 8 colors */
+.bcard{border-radius:10px;border:2px solid;padding:13px;
+  page-break-inside:avoid;break-inside:avoid;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.bA{background:#dbeafe;border-color:#93c5fd;color:#1e3a8a;}
+.bB{background:#d1fae5;border-color:#6ee7b7;color:#064e3b;}
+.bC{background:#fed7aa;border-color:#fdba74;color:#7c2d12;}
+.bD{background:#ede9fe;border-color:#c4b5fd;color:#3b0764;}
+.bE{background:#ccfbf1;border-color:#5eead4;color:#134e4a;}
+.bF{background:#ffe4e6;border-color:#fda4af;color:#881337;}
+.bG{background:#fef3c7;border-color:#fcd34d;color:#78350f;}
+.bH{background:#e0e7ff;border-color:#a5b4fc;color:#312e81;}
+.bcard h3{font-size:14px;font-weight:800;margin-bottom:9px;}
+.kvr{display:flex;justify-content:space-between;font-size:11.5px;padding:2px 0;border-bottom:1px solid rgba(0,0,0,.07);}
+.kvr:last-of-type{border:none;}
+.kvr.hl{font-weight:700;padding-top:6px;margin-top:4px;border-top:1px solid rgba(0,0,0,.12);}
+.bstatus{text-align:center;padding:5px;border-radius:6px;font-weight:700;font-size:11px;margin-top:8px;}
+.sok{background:#16a34a;color:#fff;}
+.swarn{background:#dc2626;color:#fff;}
+.sna{background:#94a3b8;color:#fff;}
+.sok2{background:#d97706;color:#fff;}
+
+/* BADGE colors */
+.bgA{background:#dbeafe;color:#1e3a8a;border-color:#93c5fd;}
+.bgB{background:#d1fae5;color:#064e3b;border-color:#6ee7b7;}
+.bgC{background:#fed7aa;color:#7c2d12;border-color:#fdba74;}
+.bgD{background:#ede9fe;color:#3b0764;border-color:#c4b5fd;}
+.bgE{background:#ccfbf1;color:#134e4a;border-color:#5eead4;}
+.bgF{background:#ffe4e6;color:#881337;border-color:#fda4af;}
+.bgG{background:#fef3c7;color:#78350f;border-color:#fcd34d;}
+.bgH{background:#e0e7ff;color:#312e81;border-color:#a5b4fc;}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;border:1.5px solid currentColor;}
+
+/* TABLES */
+.twrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{border-collapse:collapse;width:100%;font-size:11.5px;}
+th,td{border:1px solid #cbd5e1;padding:4px 7px;}
+th{text-align:center;font-weight:600;font-size:11px;print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.thbl{background:var(--db);color:#fff;}
+.thgr{background:var(--dg);color:#fff;}
+.thmd{background:var(--dl);color:#fff;}
+.thor{background:#b45309;color:#fff;}
+.thte{background:var(--te);color:#fff;}
+.thin{background:#312e81;color:#fff;}
+tr:nth-child(even) td{background:#f8fafc;}
+tr:hover td{background:#eff6ff;}
+td.num{text-align:center;}
+td.lft{text-align:left;}
+td.bld{font-weight:700;}
+td.cud{background:#d1fae5;color:#065f46;font-weight:700;text-align:center;}
+td.caf{background:#dbeafe;color:#1e3a8a;text-align:center;}
+td.cac{background:#fed7aa;color:#7c2d12;text-align:center;}
+td.hv{background:var(--db)!important;color:#fff;font-weight:700;}
+td.ok{background:#d1fae5;color:#065f46;font-weight:700;text-align:center;}
+td.warn{background:#fee2e2;color:#dc2626;font-weight:700;text-align:center;}
+
+/* METRICS */
+.mbox{background:var(--lgy);border:1px solid var(--bdr);border-radius:9px;
+  padding:10px 14px;display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:5px;page-break-inside:avoid;break-inside:avoid;}
+.mbox.hbl{background:#dbeafe;border-color:#93c5fd;}
+.mbox.hgr{background:#d1fae5;border-color:#86efac;}
+.mbox.hor{background:#fed7aa;border-color:#fdba74;}
+.mbox.hte{background:#ccfbf1;border-color:#5eead4;}
+.mbox.hre{background:#fee2e2;border-color:#f87171;}
+.mbox.ham{background:#fef3c7;border-color:#fcd34d;}
+.mlbl{font-size:11.5px;color:var(--gy);}
+.mval{font-size:17px;font-weight:800;color:var(--db);font-family:var(--mono);}
+.mval.gr{color:var(--mg);}
+.mval.re{color:#dc2626;}
+.mval.am{color:#78350f;}
+.mval.big{font-size:24px;}
+
+/* PRESSURE MODULE */
+.pres-ok{color:#15803d;font-weight:700;}
+.pres-warn{color:#dc2626;font-weight:700;}
+.pres-bar{height:14px;border-radius:7px;background:#e2e8f0;overflow:hidden;margin-top:4px;}
+.pres-fill{height:100%;border-radius:7px;transition:width .4s;}
+.pres-fill.ok{background:linear-gradient(90deg,#16a34a,#4ade80);}
+.pres-fill.warn{background:linear-gradient(90deg,#dc2626,#f87171);}
+
+/* STATUS */
+.gstat{text-align:center;padding:14px;border-radius:11px;border:2px solid;
+  margin-bottom:14px;page-break-inside:avoid;break-inside:avoid;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.gstat.ok{background:#f0fdf4;border-color:#4ade80;}
+.gstat.warn{background:#fef2f2;border-color:#f87171;}
+.gstat.part{background:#fffbeb;border-color:#fcd34d;}
+.gstat .ic{font-size:32px;line-height:1;}
+.gstat h2{font-size:16px;font-weight:800;margin-top:5px;}
+.gstat.ok h2{color:#15803d;}
+.gstat.warn h2{color:#dc2626;}
+.gstat.part h2{color:#78350f;}
+
+/* NOTA */
+.nota{background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;
+  padding:9px 13px;font-size:11px;color:#78350f;margin-top:11px;
+  page-break-inside:avoid;break-inside:avoid;}
+.nota.blue{background:#eff6ff;border-color:#93c5fd;color:#1e3a8a;}
+.nota.green{background:#f0fdf4;border-color:#86efac;color:#065f46;}
+.nota.red{background:#fef2f2;border-color:#f87171;color:#991b1b;}
+
+/* VERIF */
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+.vi{padding:7px 11px;border-radius:7px;font-size:11px;display:flex;gap:6px;align-items:flex-start;line-height:1.35;}
+.vok{background:#f0fdf4;color:#15803d;}
+.vwarn{background:#fef9c3;color:#78350f;}
+.vna{background:#f1f5f9;color:#64748b;}
+
+/* INPUT FIELDS */
+.ifield{margin-bottom:0;}
+.ifield label{display:block;font-size:10px;font-weight:700;color:#64748b;
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.ifield select,.ifield input[type=text],.ifield input[type=number]{
+  width:100%;border:2px solid var(--bdr);border-radius:8px;
+  padding:7px 10px;background:var(--inp);font-size:13px;
+  outline:none;transition:border-color .15s;font-family:var(--font);}
+.ifield select:focus,.ifield input:focus{border-color:var(--dl);}
+.ifield p{font-size:10px;color:#94a3b8;margin-top:3px;}
+
+/* MODAL */
+#modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);
+  z-index:500;align-items:center;justify-content:center;padding:14px;}
+#modal.open{display:flex;}
+.mbox2{background:#fff;border-radius:14px;width:100%;max-width:660px;
+  max-height:93vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.45);}
+.mhdr{background:var(--db);color:#fff;padding:13px 18px;border-radius:14px 14px 0 0;
+  display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;}
+.mhdr h3{font-size:14px;font-weight:700;}
+.mcls{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;}
+.mbody{padding:18px;}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:14px;}
+.agrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px;}
+.arow{display:flex;align-items:center;gap:5px;background:#f8fafc;border-radius:7px;padding:5px 9px;}
+.aname{flex:1;font-size:11.5px;color:#374151;}
+.actr{display:flex;align-items:center;gap:3px;}
+.cbtn{width:23px;height:23px;border:none;border-radius:5px;background:#e2e8f0;
+  font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-weight:700;line-height:1;transition:background .1s;}
+.cbtn:hover{background:#cbd5e1;}
+.cinp{width:38px;text-align:center;border:2px solid var(--bdr);border-radius:5px;
+  padding:2px 3px;background:var(--inp);font-size:12px;font-weight:700;font-family:var(--mono);}
+.mtots{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;
+  background:#f0fdf4;border-radius:9px;padding:11px;margin-bottom:13px;text-align:center;}
+.mtitem .lbl{font-size:10px;color:#64748b;}
+.mtitem .val{font-size:19px;font-weight:800;font-family:var(--mono);}
+.mftr{padding:0 18px 18px;display:flex;justify-content:flex-end;gap:9px;}
+.btn-sv{background:var(--dl);color:#fff;}
+
+/* PLUVIAL */
+.pluv-zone{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;
+  border-radius:8px;border:2px solid;font-weight:700;font-size:13px;}
+.pzA{background:#fef3c7;border-color:#fcd34d;color:#78350f;}
+.pzB{background:#dbeafe;border-color:#93c5fd;color:#1e3a8a;}
+.pzC{background:#d1fae5;border-color:#6ee7b7;color:#065f46;}
+.pzD{background:#ede9fe;border-color:#c4b5fd;color:#3b0764;}
+.pzE{background:#fee2e2;border-color:#f87171;color:#991b1b;}
+
+/* SECTION PRINT TITLE */
+.spt{display:none;background:var(--db);color:#fff;padding:9px 14px;border-radius:8px;
+  margin-bottom:14px;font-size:13px;font-weight:700;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.pftr{display:none;margin-top:18px;padding:9px;background:var(--db);color:#fff;
+  border-radius:7px;font-size:10px;text-align:center;font-family:var(--mono);}
+.print-val{display:none;}
+
+/* PRINT */
+@media print{
+  *{print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important;}
+  @page{margin:12mm;size:A4;}
+  body{background:#fff;font-size:10px;}
+  #hdr{position:static;padding:8px 14px;}
+  .hdr-mid,.hdr-acts{display:none!important;}
+  #tabnav{display:none!important;}
+  #wrap{padding:8px;max-width:100%;}
+  .sec{display:block!important;}
+  #sec-hs4,#sec-hs5,#sec-pluv,#sec-res,#sec-acs{page-break-before:always;}
+  .spt{display:block!important;}
+  .card{box-shadow:none;border:1px solid #e2e8f0;page-break-inside:avoid;break-inside:avoid;}
+  .card.allow{page-break-inside:auto;break-inside:auto;}
+  .g4,.g8{grid-template-columns:repeat(4,1fr);}
+  .g3{grid-template-columns:repeat(3,1fr);}
+  .g2,.g2r{grid-template-columns:1fr 1fr;}
+  thead{display:table-header-group;}
+  tr{page-break-inside:avoid;break-inside:avoid;}
+  .no-print{display:none!important;}
+  th,td{font-size:9px;padding:3px 5px;}
+  .btn-add,.btn-ed,.btn-de{display:none!important;}
+  .pftr{display:block!important;}
+  .print-val{display:inline!important;}
+  .ifield select,.ifield input,.ifield p{display:none!important;}
+}
+
+
+/* ── ACS / HE4 ── */
+.zsol{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;
+  border-radius:8px;border:2px solid;font-weight:700;font-size:13px;}
+.zI  {background:#e0f2fe;border-color:#7dd3fc;color:#0c4a6e;}
+.zII {background:#dbeafe;border-color:#93c5fd;color:#1e3a8a;}
+.zIII{background:#d1fae5;border-color:#6ee7b7;color:#065f46;}
+.zIV {background:#fef3c7;border-color:#fcd34d;color:#78350f;}
+.zV  {background:#fee2e2;border-color:#f87171;color:#991b1b;}
+.gencard{border-radius:10px;border:2px solid;padding:11px;cursor:pointer;
+  transition:all .15s;page-break-inside:avoid;break-inside:avoid;
+  print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+.gencard:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12);}
+.gencard.sel{box-shadow:0 0 0 3px var(--dl);transform:translateY(-1px);}
+.gencard h4{font-size:12px;font-weight:700;margin-bottom:4px;}
+.gencard p{font-size:10px;opacity:.8;line-height:1.35;}
+.gencard .gc-ico{font-size:22px;margin-bottom:5px;}
+.gc-sol{background:#fef9c3;border-color:#fcd34d;color:#78350f;}
+.gc-bdc{background:#d1fae5;border-color:#6ee7b7;color:#065f46;}
+.gc-gas{background:#dbeafe;border-color:#93c5fd;color:#1e3a8a;}
+.gc-bio{background:#d1fae5;border-color:#86efac;color:#14532d;}
+.gc-ele{background:#ede9fe;border-color:#c4b5fd;color:#3b0764;}
+.gc-cog{background:#fce7f3;border-color:#f9a8d4;color:#831843;}
+.gc-dis{background:#e0f2fe;border-color:#7dd3fc;color:#0c4a6e;}
+.gc-off{background:#f1f5f9;border-color:#e2e8f0;color:#94a3b8;}
+.pct-bar{height:18px;border-radius:9px;background:#e2e8f0;overflow:hidden;
+  position:relative;margin:6px 0;}
+.pct-fill{height:100%;border-radius:9px;display:flex;align-items:center;
+  padding:0 8px;font-size:10px;font-weight:700;color:#fff;
+  transition:width .5s;white-space:nowrap;overflow:hidden;}
+.pct-fill.need{background:linear-gradient(90deg,#dc2626,#ef4444);}
+.pct-fill.ok  {background:linear-gradient(90deg,#16a34a,#4ade80);}
+.pct-fill.warn{background:linear-gradient(90deg,#d97706,#fbbf24);}
+.rite-row{display:flex;justify-content:space-between;align-items:center;
+  padding:6px 10px;border-radius:7px;font-size:11px;margin-bottom:4px;}
+.rite-ok  {background:#f0fdf4;color:#15803d;}
+.rite-warn{background:#fef9c3;color:#78350f;}
+.rite-info{background:#eff6ff;color:#1e3a8a;}
+.demand-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:14px;}
+.ditem{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:9px 12px;}
+.ditem label{display:block;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:5px;}
+.ditem input,.ditem select{width:100%;border:2px solid #e2e8f0;border-radius:6px;
+  padding:6px 9px;background:var(--inp);font-size:13px;outline:none;font-family:var(--font);}
+.ditem input:focus,.ditem select:focus{border-color:var(--dl);}
+
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div>
+    <h1>⚡ Calculadora <span>CTE</span> — DB HS4 · DB HS5 · DB HE4 · <span style="color:#4ade80">v3</span></h1>
+    <p>Suministro · Evacuación · Pluviales · Presión · ACS/HE4 · RITE · 3 errores críticos corregidos</p>
+  </div>
+  <div class="hdr-mid">
+    <div class="hig">
+      <label>Edificio</label>
+      <input type="text" id="inp-edf" value="Edificio de Ejemplo" oninput="S.edf=this.value;RA()">
+    </div>
+    <div class="hig">
+      <label>Plantas</label>
+      <input type="number" id="inp-np" value="3" min="1" max="20" oninput="S.np=Math.min(20,Math.max(1,parseInt(this.value)||1));RA()">
+    </div>
+    <div class="hig">
+      <label>Nº bajantes (4-8)</label>
+      <input type="number" id="inp-nb" value="4" min="4" max="8" oninput="S.nbaj=Math.min(8,Math.max(4,parseInt(this.value)||4));RA()">
+    </div>
+  </div>
+  <div class="hdr-acts">
+    <button class="btn btn-xl" onclick="exportXLSX()">📥 Excel con colores</button>
+    <button class="btn btn-pr no-print" onclick="window.print()">🖨️ Imprimir / PDF</button>
+  </div>
+</div>
+<div id="tabnav">
+  <button class="tbtn on" data-t="dat">🏗 Datos</button>
+  <button class="tbtn" data-t="hs4">💧 HS4 Suministro</button>
+  <button class="tbtn" data-t="hs5">🚿 HS5 Evacuación</button>
+  <button class="tbtn" data-t="pluv">🌧 HS5 Pluviales</button>
+  <button class="tbtn" data-t="acs">🔥 ACS / HE4</button>
+  <button class="tbtn" data-t="res">✅ Resumen CTE</button>
+</div>
+<div id="wrap">
+  <section id="sec-dat"  class="sec on"><div class="spt">🏗 DATOS / LOCALES HÚMEDOS</div><div id="cdatos"></div></section>
+  <section id="sec-hs4"  class="sec"><div class="spt">💧 DB HS4 — SUMINISTRO DE AGUA</div><div id="chs4"></div></section>
+  <section id="sec-hs5"  class="sec"><div class="spt">🚿 DB HS5 — EVACUACIÓN RESIDUAL</div><div id="chs5"></div></section>
+  <section id="sec-pluv" class="sec"><div class="spt">🌧 DB HS5 — EVACUACIÓN PLUVIAL</div><div id="cpluv"></div></section>
+  <section id="sec-acs"  class="sec"><div class="spt">🔥 ACS — DB HE4 / RITE IT 1.2.4.3</div><div id="cacs"></div></section><!-- [FIX E5] dentro del #wrap -->
+  <section id="sec-res"  class="sec"><div class="spt">✅ RESUMEN DE CUMPLIMIENTO CTE</div><div id="cres"></div></section>
+</div>
+
+<div id="modal">
+  <div class="mbox2">
+    <div class="mhdr"><h3>Editar local húmedo</h3><button class="mcls" onclick="CM()">×</button></div>
+    <div id="mbody"></div>
+  </div>
+</div>
+
+<script>
+
+/* ═══ CONSTANTES CTE ═══ */
+/* ud = uso privado · ud_pub = uso público (Tabla 4.1 CTE DB HS5) */
+const AP=[
+  {k:'lavabo',      lb:'Lavabo',              ud:1, ud_pub:2, af:.100,acs:.065, daf:12,dacs:12},
+  {k:'ducha',       lb:'Ducha',               ud:2, ud_pub:3, af:.200,acs:.100, daf:12,dacs:12},
+  {k:'banera_g',    lb:'Bañera ≥1,40m',       ud:3, ud_pub:4, af:.300,acs:.200, daf:20,dacs:20},
+  {k:'banera_p',    lb:'Bañera <1,40m',        ud:2, ud_pub:3, af:.200,acs:.150, daf:20,dacs:20},/* [FIX E2] privado=2 UD, público=3 UD */
+  {k:'inod_c',      lb:'Inodoro cisterna',    ud:4, ud_pub:5, af:.100,acs:0,    daf:12,dacs:0},
+  {k:'inod_f',      lb:'Inodoro fluxor',      ud:8, ud_pub:10,af:1.25,acs:0,    daf:25,dacs:0},
+  {k:'bide',        lb:'Bidé',                ud:2, ud_pub:3, af:.100,acs:.065, daf:12,dacs:12},
+  {k:'fregadero',   lb:'Fregadero domést.',   ud:3, ud_pub:6, af:.200,acs:.100, daf:12,dacs:12},
+  {k:'lavadora',    lb:'Lavadora domést.',    ud:3, ud_pub:4, af:.200,acs:.150, daf:20,dacs:20},/* [FIX E2] privado=3, público=4 */
+  {k:'lavavajillas',lb:'Lavavajillas domést.',ud:3, ud_pub:4, af:.150,acs:.100, daf:12,dacs:12},/* [FIX E2] privado=3, público=4 */
+  {k:'lavadero',    lb:'Lavadero',            ud:3, ud_pub:4, af:.200,acs:.100, daf:12,dacs:12},
+];
+/* Tabla 4.4 HS5 — bajantes residuales */
+const T44=[
+  {d:50, l:10, g:6  },{d:63, l:19, g:11 },{d:75,l:27,  g:16 },
+  {d:90, l:135,g:87 },{d:110,l:360,g:181},{d:125,l:540, g:280},
+  {d:160,l:1208,g:614},{d:200,l:2200,g:1120},
+];
+/* Tabla 4.5 HS5 — colectores residuales */
+const T45={
+  1:[{d:50,u:20},{d:63,u:24},{d:75,u:38},{d:90,u:96},{d:110,u:261},{d:125,u:395},{d:160,u:780}],
+  2:[{d:50,u:25},{d:63,u:31},{d:75,u:48},{d:90,u:130},{d:110,u:321},{d:125,u:480},{d:160,u:1000}],
+  4:[{d:50,u:35},{d:63,u:43},{d:75,u:65},{d:90,u:182},{d:110,u:444},{d:125,u:650},{d:160,u:1300}],
+};
+/* Tabla 4.3 HS5 — ramales colectores (UD máx) — [FIX E6] eliminado DN=100 (no normativo) */
+const T43={
+  1:{32:1, 40:2, 50:6, 63:11, 75:21, 90:47, 110:121, 125:195, 160:480},
+  2:{32:2, 40:3, 50:8, 63:14, 75:28, 90:63, 110:160, 125:260, 160:640},
+  4:{32:3, 40:6, 50:13,63:20, 75:41, 90:90, 110:230, 125:380, 160:930},
+};
+const T43D=[32,40,50,63,75,90,110,125,160];
+/* Tabla 4.7 HS5 — canalones (m² para i=100mm/h) */
+const T47={
+  0.5:{80:35,100:60, 125:90, 150:185,200:290},
+  1:  {80:45,100:80, 125:125,150:260,200:400},
+  2:  {80:65,100:105,125:170,150:350,200:570},
+  4:  {80:90,100:135,125:210,150:445,200:720},
+};
+const T47D=[80,100,125,150,200];
+/* Tabla 4.8 HS5 — bajantes pluviales (m² para i=100mm/h) */
+const T48=[
+  {d:50,s:65},{d:63,s:113},{d:75,s:177},{d:90,s:318},
+  {d:110,s:580},{d:125,s:805},{d:160,s:1544},{d:200,s:2700},
+];
+/* Tabla 4.9 HS5 — colectores pluviales colgados (m² para i=100mm/h) */
+const T49={
+  1:[{d:90,s:216},{d:110,s:478},{d:125,s:784},{d:160,s:1992},{d:200,s:3912}],
+  2:[{d:90,s:305},{d:110,s:677},{d:125,s:1109},{d:160,s:2817},{d:200,s:5525}],
+  4:[{d:90,s:431},{d:110,s:957},{d:125,s:1568},{d:160,s:3983},{d:200,s:7815}],
+};
+/* Zonas pluviométricas CTE HS5 Anejo B */
+const ZPLUV={
+  A:{i:90, desc:'Zona A — Meseta central, Extremadura (i=90 mm/h)'},
+  B:{i:110,desc:'Zona B — Levante, Aragón, S. Cataluña, Baleares, Canarias'},/* [FIX M5] Canarias=Zona B */
+  C:{i:135,desc:'Zona C — Cataluña costera, Ebro medio, norte'},
+  D:{i:150,desc:'Zona D — Galicia, Cornisa Cantábrica, Pirineos'},
+  E:{i:180,desc:'Zona E — Galicia N.O., zonas atlánticas extremas'},
+};
+/* Diámetros normalizados suministro */
+const ND=[12,15,20,25,32,40,50,63,75,90,110];
+/* Colores bajante (hasta 8) */
+const BJCL={A:'bA',B:'bB',C:'bC',D:'bD',E:'bE',F:'bF',G:'bG',H:'bH'};
+const BJBG={A:'bgA',B:'bgB',C:'bgC',D:'bgD',E:'bgE',F:'bgF',G:'bgG',H:'bgH'};
+/* Fill ARGB para Excel */
+const BJFILL={
+  A:'FFDBEAFE',B:'FFD1FAE5',C:'FFFED7AA',D:'FFEDE9FE',
+  E:'FFCCFBF1',F:'FFFFE4E6',G:'FFFEF3C7',H:'FFE0E7FF',
+};
+
+/* ═══ ESTADO ═══ */
+let S={
+  edf:'Edificio de Ejemplo', np:3,
+  uso:'privado',  /* privado | publico | deportivo | hospital */
+  nbaj:4,        /* 4-8 bajantes */
+  vel:1.5, pend:2, pend_ram:2,
+  pres:{
+    p_red:300,     /* kPa presión en acometida */
+    h_planta:2.80, /* m altura libre por planta */
+    l_deriv:8,     /* m longitud estimada derivación horizontal */
+    material:'pvc',/* pvc | cobre | acero | pp */
+    incluye_cont:true
+  },
+  pluv:{
+    zona:'C',
+    pend_can:1,     /* pendiente canalón % */
+    pend_col:2,     /* pendiente colector pluvial % */
+    areas:[         /* áreas de cubierta */
+      {id:1,desc:'Cubierta principal',area:120,bj:1},
+      {id:2,desc:'Cubierta posterior',area:45,bj:1},
+    ],
+    nxtArea:3
+  },
+  locs:[
+    {id:1, pl:'PB',ti:'Cocina',    rf:'Cocina PB',    bj:'A',lavabo:0,ducha:0,banera_g:0,banera_p:0,inod_c:0,inod_f:0,bide:0,fregadero:1,lavadora:1,lavavajillas:1,lavadero:0},
+    {id:2, pl:'PB',ti:'Aseo',      rf:'Aseo PB',      bj:'A',lavabo:1,ducha:0,banera_g:0,banera_p:0,inod_c:1,inod_f:0,bide:0,fregadero:0,lavadora:0,lavavajillas:0,lavadero:0},
+    {id:3, pl:'P1',ti:'Baño',      rf:'Baño 1a',      bj:'A',lavabo:1,ducha:0,banera_g:1,banera_p:0,inod_c:1,inod_f:0,bide:1,fregadero:0,lavadora:0,lavavajillas:0,lavadero:0},
+    {id:4, pl:'P1',ti:'Baño',      rf:'Baño 1b',      bj:'B',lavabo:1,ducha:1,banera_g:0,banera_p:0,inod_c:1,inod_f:0,bide:0,fregadero:0,lavadora:0,lavavajillas:0,lavadero:0},
+    {id:5, pl:'P1',ti:'Cocina',    rf:'Cocina P1',    bj:'A',lavabo:0,ducha:0,banera_g:0,banera_p:0,inod_c:0,inod_f:0,bide:0,fregadero:1,lavadora:1,lavavajillas:1,lavadero:0},
+    {id:6, pl:'P2',ti:'Baño',      rf:'Baño 2a',      bj:'A',lavabo:1,ducha:0,banera_g:1,banera_p:0,inod_c:1,inod_f:0,bide:1,fregadero:0,lavadora:0,lavavajillas:0,lavadero:0},
+    {id:7, pl:'P2',ti:'Baño',      rf:'Baño 2b',      bj:'B',lavabo:1,ducha:1,banera_g:0,banera_p:0,inod_c:1,inod_f:0,bide:0,fregadero:0,lavadora:0,lavavajillas:0,lavadero:0},
+    {id:8, pl:'P2',ti:'Lavandería',rf:'Lavandería P2',bj:'C',lavabo:0,ducha:0,banera_g:0,banera_p:0,inod_c:0,inod_f:0,bide:0,fregadero:0,lavadora:1,lavavajillas:0,lavadero:1},
+    {id:9, pl:'P2',ti:'Cocina',    rf:'Cocina P2',    bj:'B',lavabo:0,ducha:0,banera_g:0,banera_p:0,inod_c:0,inod_f:0,bide:0,fregadero:1,lavadora:1,lavavajillas:1,lavadero:0},
+    {id:10,pl:'P3',ti:'Baño',      rf:'Baño 3a',      bj:'A',lavabo:1,ducha:0,banera_g:1,banera_p:0,inod_c:1,inod_f:0,bide:1,fregadero:0,lavadora:0,lavavajillas:0,lavadero:0},
+    {id:11,pl:'P3',ti:'Baño',      rf:'Baño 3b',      bj:'C',lavabo:1,ducha:1,banera_g:0,banera_p:0,inod_c:1,inod_f:0,bide:0,fregadero:0,lavadora:0,lavavajillas:0,lavadero:0},
+    {id:12,pl:'P3',ti:'Cocina',    rf:'Cocina P3',    bj:'D',lavabo:0,ducha:0,banera_g:0,banera_p:0,inod_c:0,inod_f:0,bide:0,fregadero:1,lavadora:1,lavavajillas:1,lavadero:0},
+  ],
+  nxt:13
+};
+
+/* ═══ FUNCIONES AUXILIARES ═══ */
+function BKEYS(){return 'ABCDEFGH'.slice(0,S.nbaj).split('');}
+
+function cL(l){
+  /* [FIX E2] UD depende del tipo de uso (privado=ud, público/otros=ud_pub) */
+  const esPub=S.uso!=='privado';
+  return{
+    ud:AP.reduce((s,a)=>s+(l[a.k]||0)*(esPub?(a.ud_pub||a.ud):a.ud),0),
+    af:AP.reduce((s,a)=>s+(l[a.k]||0)*a.af,0),
+    acs:AP.reduce((s,a)=>s+(l[a.k]||0)*a.acs,0),
+    nap:AP.reduce((s,a)=>s+(l[a.k]||0),0),
+    hasI:((l.inod_c||0)+(l.inod_f||0))>0,
+  };
+}
+
+function kvCalc(n){
+  if(n<=0)return 1;
+  switch(S.uso){
+    case 'privado':  return n<=1?1:Math.max(0.20,1/Math.sqrt(n-1));
+    case 'publico':  return n<=0?1:Math.max(0.15,1/Math.sqrt(n));
+    case 'deportivo':return n<=1?1:Math.max(0.60,1/Math.sqrt(n-1));
+    case 'hospital': return n<=1?1:Math.max(0.50,1/Math.sqrt(n-1));
+    default:         return n<=1?1:1/Math.sqrt(n-1);
+  }
+}
+
+function dBaj(ud,np){
+  if(!ud)return{d:0,overflow:false};
+  for(const r of T44){if(np<=3&&ud<=r.l)return{d:r.d,overflow:false};if(np>3&&ud<=r.g)return{d:r.d,overflow:false};}
+  return{d:200,overflow:true}; /* [M4] overflow: UD supera límite T.4.4 */
+}
+function dCol5(ud,p){const t=T45[p]||T45[2];for(const r of t)if(ud<=r.u)return r.d;return 200;}
+function nD(mm){for(const d of ND)if(d>=mm)return d;return 110;}
+
+function dRamal(ud,p){
+  const row=T43[p]||T43[2];
+  for(const d of T43D){if(ud<=row[d])return d;}
+  return 160;
+}
+
+/* Canalón: devuelve diámetro para superficie corregida a i=100 */
+function dCanal(s_corr,pend){
+  const row=T47[pend]||T47[1];
+  for(const d of T47D){if(s_corr<=row[d])return d;}
+  return '>200';
+}
+/* Bajante pluvial */
+function dBajPluv(s_corr){
+  for(const r of T48){if(s_corr<=r.s)return r.d;}
+  return 200;
+}
+/* Colector pluvial */
+function dColPluv(s_corr,p){
+  const t=T49[p]||T49[2];
+  for(const r of t){if(s_corr<=r.s)return r.d;}
+  return 200;
+}
+
+/* ═══ CÁLCULO PRINCIPAL ═══ */
+function CA(){
+  const keys=BKEYS();
+  const lc=S.locs.map(l=>({...l,...cL(l)}));
+  const mt=keys.map(b=>{
+    const bl=lc.filter(l=>l.bj===b);
+    const tUD=bl.reduce((s,l)=>s+l.ud,0);
+    const tAF=bl.reduce((s,l)=>s+l.af,0);
+    const tACS=bl.reduce((s,l)=>s+l.acs,0);
+    const tN=bl.reduce((s,l)=>s+l.nap,0);
+    const hasI=bl.some(l=>l.hasI);
+    const res=dBaj(tUD,S.np),dc=res.d,overflow=res.overflow;
+    const da=hasI?Math.max(dc,110):dc;
+    const kv=kvCalc(tN);
+    const dram=dRamal(tUD,S.pend_ram);
+    return{b,tUD,tAF,tACS,tN,hasI,dc,da,kv,qAF:tAF*kv,qACS:tACS*kv,nl:bl.length,dram,overflow};
+  });
+  const TUD=mt.reduce((s,m)=>s+m.tUD,0);
+  const TAF=mt.reduce((s,m)=>s+m.tAF,0);
+  const TACS=mt.reduce((s,m)=>s+m.tACS,0);
+  const TN=mt.reduce((s,m)=>s+m.tN,0);
+  const kv=kvCalc(TN);
+  const qAF=TAF*kv,qACS=TACS*kv;
+  const dtmm=qAF>0?Math.sqrt(4*qAF/1000/(Math.PI*S.vel))*1000:0;
+  const dColR=dCol5(TUD,S.pend);
+  /* Ramal por local */
+  const lcr=lc.map(l=>({...l,dram:dRamal(l.ud,S.pend_ram)}));
+  /* Presión */
+  const PR=calcPres(qAF,nD(dtmm));
+  /* Pluvial */
+  const PLV=calcPluv();
+  return{lc:lcr,mt,TUD,TAF,TACS,TN,kv,qAF,qACS,dtmm,dN:nD(dtmm),dColR,PR,PLV};
+}
+
+/* ═══ MÓDULO PRESIÓN ═══ */
+function calcPres(qAF_ls,diam_mm){
+  const p=S.pres;
+  /* Materiales: rugosidad absoluta en metros */
+  const eps={pvc:0.0000015,cobre:0.0000015,acero:0.00015,pp:0.000007}[p.material]||0.0000015;
+  const D=diam_mm/1000; /* diámetro en m */
+  const Q=qAF_ls/1000;  /* caudal en m³/s */
+  const A=Math.PI*D*D/4;
+  const v=A>0?Q/A:0;
+  const nu=1e-6; /* viscosidad cinemática agua 15°C */
+  const Re=v>0?v*D/nu:0;
+  let f=0.02;
+  if(Re>2300){
+    /* Swamee-Jain */
+    const x=eps/(3.7*D)+5.74/Math.pow(Re,0.9);
+    const lf=Math.log10(x);
+    f=0.25/(lf*lf);
+  }
+  /* Altura total peor caso: de red a grifo más desfavorable */
+  const H_total=(S.np-1)*p.h_planta+2.5; /* +2.5m: desde calle hasta grifo pta alta */
+  const dP_altura=9.81*H_total; /* kPa */
+  /* Longitud montante ~ altura total + 20% */
+  const L_mont=H_total*1.2;
+  const dP_mont=f*(L_mont/D)*(1000*v*v/2)/1000; /* kPa */
+  /* Derivación horizontal — [FIX E3] usar caudal de UN aparato (peor caso: calentador/ducha 0,20 l/s)
+     La derivación individual no lleva el caudal total del edificio, sino el de un único punto */
+  const D_der=0.020;
+  const Q_der=Math.min(Q,0.200/1000); /* [FIX E3] máx. un aparato individual (calentador: 0,20 l/s) */
+  const A_der=Math.PI*D_der*D_der/4;
+  const v_der=A_der>0?Q_der/A_der:0;
+  const Re_der=v_der>0?v_der*D_der/nu:0;
+  let f_der=0.02;
+  if(Re_der>2300){const x=eps/(3.7*D_der)+5.74/Math.pow(Re_der,0.9);const lf=Math.log10(x);f_der=0.25/(lf*lf);}
+  const dP_der=f_der*(p.l_deriv/D_der)*(1000*v_der*v_der/2)/1000; /* kPa */
+  /* Accesorios y contador: 20% adicional */
+  const dP_acc=0.20*(dP_mont+dP_der);
+  const dP_cont=p.incluye_cont?20:0; /* kPa estimación contador+acometida */
+  const P_disp=p.p_red-dP_altura-dP_mont-dP_der-dP_acc-dP_cont;
+  const pct=Math.max(0,Math.min(100,P_disp/5));
+  return{
+    H_total,dP_altura,dP_mont,dP_der,dP_acc,dP_cont,
+    P_disp,v_mont:v,Re,f,pct,
+    ok_grif:P_disp>=100,ok_cal:P_disp>=150,
+  };
+}
+
+/* ═══ MÓDULO PLUVIAL ═══ */
+function calcPluv(){
+  const pz=S.pluv;
+  const zd=ZPLUV[pz.zona]||ZPLUV.C;
+  const f=zd.i/100;
+  /* Agrupar áreas por bajante pluvial */
+  const nbj=new Set(pz.areas.map(a=>a.bj)).size;
+  const grupos={};
+  for(const a of pz.areas){
+    if(!grupos[a.bj])grupos[a.bj]={areas:[],total:0};
+    grupos[a.bj].areas.push(a);
+    grupos[a.bj].total+=a.area;
+  }
+  const bjRes=Object.entries(grupos).map(([bj,g])=>{
+    const sc=g.total*f; /* [FIX E1] Sc = Sreal × f (CTE DB HS5 art.4.2.3.1) */
+    const dc=dBajPluv(sc);
+    const dcan=dCanal(sc,pz.pend_can);
+    return{bj:parseInt(bj),total:g.total,sc,dc,dcan,areas:g.areas};
+  }).sort((a,b)=>a.bj-b.bj);
+  const totalArea=pz.areas.reduce((s,a)=>s+a.area,0);
+  const sc_total=totalArea*f; /* [FIX E1] */
+  const dColP=dColPluv(sc_total,pz.pend_col);
+  return{f,zd,grupos,bjRes,totalArea,sc_total,dColP};
+}
+
+const f3=n=>typeof n==='number'?n.toFixed(3):n;
+const f1=n=>typeof n==='number'?n.toFixed(1):n;
+const f0=n=>typeof n==='number'?Math.round(n).toString():String(n);
+
+/* ═══ RENDER DATOS ═══ */
+function RD(C){
+  const apH=AP.map(a=>`<th class="thmd" title="${a.lb}" style="min-width:48px">${a.lb.split(' ')[0].substring(0,6)}</th>`).join('');
+  const rows=C.lc.map((l,i)=>{
+    const apc=AP.map(a=>`<td class="num${(l[a.k]||0)>0?' cud':''}">${l[a.k]||0}</td>`).join('');
+    return`<tr><td class="num bld" style="color:#0f2a47">${l.pl}</td>
+      <td class="lft">${l.ti}</td>
+      <td class="lft" style="font-weight:600;min-width:110px">${l.rf}</td>
+      <td class="num"><span class="badge ${BJBG[l.bj]||''}">Baj.${l.bj}</span></td>
+      ${apc}
+      <td class="cud" style="font-weight:800">${l.ud}</td>
+      <td class="caf">${f3(l.af)}</td>
+      <td class="cac">${f3(l.acs)}</td>
+      <td class="num" style="color:#065f46;font-weight:700">${l.dram} mm</td>
+      <td class="num no-print" style="white-space:nowrap">
+        <button class="btn btn-ed" onclick="OM(${l.id})">✎</button>
+        <button class="btn btn-de" onclick="DL(${l.id})" style="margin-left:3px">✕</button>
+      </td></tr>`;
+  }).join('');
+  const bjS=BKEYS().map(b=>{
+    const bd=C.mt.find(x=>x.b===b)||{nl:0,tUD:0,tAF:0,tACS:0};
+    return`<div class="bcard ${BJCL[b]||''}">
+      <h3>Bajante ${b}</h3>
+      <div class="kvr"><span>Locales</span><span>${bd.nl}</span></div>
+      <div class="kvr"><span>UD totales</span><span style="font-size:15px;font-weight:800">${bd.tUD}</span></div>
+      <div class="kvr"><span>Q máx. AF</span><span>${f3(bd.tAF)} l/s</span></div>
+      <div class="kvr"><span>Q máx. ACS</span><span>${f3(bd.tACS)} l/s</span></div>
+    </div>`;
+  }).join('');
+  document.getElementById('cdatos').innerHTML=`
+  <div class="card allow">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;flex-wrap:wrap;gap:8px">
+      <div><strong style="font-size:14px">Locales húmedos del edificio</strong>
+        <p style="color:#64748b;font-size:11px;margin-top:2px">Columna <strong>Ø ramal</strong>: diámetro mínimo del ramal colector del local (Tabla 4.3 HS5) · Asigna cada local a una bajante (A–${BKEYS().slice(-1)[0]})</p></div>
+      <button class="btn btn-add no-print" onclick="AL()">+ Añadir local</button>
+    </div>
+    <div class="twrap"><table>
+      <thead><tr>
+        <th class="thbl">Planta</th><th class="thbl" style="text-align:left">Tipo</th>
+        <th class="thbl" style="text-align:left;min-width:110px">Referencia</th>
+        <th class="thbl">Bajante / Montante</th>
+        ${apH}
+        <th class="thgr" style="min-width:50px">Total UD</th>
+        <th class="thmd" style="min-width:58px">AF (l/s)</th>
+        <th class="thor" style="min-width:60px">ACS (l/s)</th>
+        <th class="thgr" style="min-width:64px">Ø ramal T.4.3</th>
+        <th class="thbl no-print">Acción</th>
+      </tr></thead>
+      <tbody>${rows}
+        <tr>
+          <td colspan="${4+AP.length}" class="hv lft">TOTALES EDIFICIO →</td>
+          <td class="hv num">${C.TUD}</td><td class="hv num">${f3(C.TAF)}</td>
+          <td class="hv num">${f3(C.TACS)}</td><td class="hv num"></td>
+          <td class="hv no-print"></td>
+        </tr>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="g8">${bjS}</div>`;
+}
+
+/* ═══ RENDER HS4 ═══ */
+function RH4(C){
+  const usOpts={privado:'Residencial privado — Kv=1/√(n-1)',publico:'Residencial público/hotel — Kv=1/√n',deportivo:'Deportivo/escolar — Kv≥0,60',hospital:'Sanitario/hospital — Kv≥0,50'};
+  const bjC=C.mt.map(m=>`
+    <div class="bcard ${BJCL[m.b]||''}">
+      <h3>Montante ${m.b}</h3>
+      <div class="kvr"><span>Q máx. AF</span><span>${f3(m.tAF)} l/s</span></div>
+      <div class="kvr"><span>Q máx. ACS</span><span>${f3(m.tACS)} l/s</span></div>
+      <div class="kvr"><span>N° aparatos (n)</span><span>${m.tN}</span></div>
+      <div class="kvr"><span>Kv</span><span style="font-family:var(--mono)">${f3(m.kv)}</span></div>
+      <div class="kvr hl"><span>Qc AF cálculo</span><span style="font-family:var(--mono)">${f3(m.qAF)} l/s</span></div>
+      <div class="kvr hl"><span>Qc ACS cálculo</span><span style="font-family:var(--mono)">${f3(m.qACS)} l/s</span></div>
+    </div>`).join('');
+  /* Tabla 4.2 derivaciones */
+  const t42=AP.map((a,i)=>{
+    const dn_af=a.daf,dn_acs=a.dacs;
+    const v_af=a.af>0?(a.af/1000)/(Math.PI*(dn_af/1000)*(dn_af/1000)/4):0;
+    const ok_v=v_af<=2.0;
+    return`<tr><td class="lft" style="${i%2?'':'background:#eff6ff'}">${a.lb}</td>
+      <td class="num" style="${i%2?'':'background:#eff6ff'};font-family:var(--mono)">${a.af.toFixed(3)}</td>
+      <td class="num bld" style="${i%2?'':'background:#eff6ff'}">${dn_af} mm</td>
+      <td class="num" style="${i%2?'':'background:#eff6ff'}">${dn_acs?dn_acs+' mm':'—'}</td>
+      <td class="${ok_v?'ok':'warn'}" style="${i%2?'':'background:#eff6ff'}">${v_af>0?f1(v_af)+' m/s':'—'}</td>
+    </tr>`;
+  }).join('');
+  /* Tabla presión */
+  const PR=C.PR;
+  const pct=PR.pct;
+  const pcol=PR.ok_grif?'ok':'warn';
+  document.getElementById('chs4').innerHTML=`
+  <div class="card">
+    <div class="chd bl"><h2>DB HS4 — Suministro de Agua</h2>
+      <p>Tabla 2.1 (caudales mínimos) · Tabla 4.2 (derivaciones) · Kv según tipo de uso · Dimensionado de montantes · Módulo de presión</p>
+    </div>
+    <div class="g2r" style="margin-bottom:14px">
+      <div>
+        <div class="ifield" style="margin-bottom:10px">
+          <label>Tipo de uso del edificio — Kv de simultaneidad (CTE DB HS4)</label>
+          <select onchange="S.uso=this.value;RA()">
+            ${Object.entries(usOpts).map(([k,v])=>`<option value="${k}"${S.uso===k?' selected':''}>${v}</option>`).join('')}
+          </select>
+          <p>Afecta al coeficiente de simultaneidad Kv y por tanto al caudal de cálculo Qc de todos los montantes</p>
+        </div>
+      </div>
+      <div class="card" style="margin:0;padding:12px">
+        <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:8px">Kv adoptado por uso</div>
+        ${[['privado','1/√(n−1)','Mín. 0,20'],['publico','1/√n','Mín. 0,15'],['deportivo','1/√(n−1)','Mín. 0,60'],['hospital','1/√(n−1)','Mín. 0,50']].map(([k,f,m])=>`
+        <div style="display:flex;justify-content:space-between;padding:4px 6px;border-radius:5px;font-size:11px;margin-bottom:3px;background:${S.uso===k?'#dbeafe':'transparent'};font-weight:${S.uso===k?700:400}">
+          <span>${k.charAt(0).toUpperCase()+k.slice(1)}</span>
+          <span style="font-family:var(--mono)">${f} <span style="color:#64748b">(${m})</span></span>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="g8">${bjC}</div>
+    <div class="g2">
+      <div>
+        <strong style="display:block;margin-bottom:10px;color:#0f2a47">Total edificio — Caudales de cálculo</strong>
+        <div class="mbox"><span class="mlbl">Q máx. AF total</span><span class="mval" style="font-size:14px">${f3(C.TAF)} l/s</span></div>
+        <div class="mbox"><span class="mlbl">Q máx. ACS total</span><span class="mval" style="font-size:14px">${f3(C.TACS)} l/s</span></div>
+        <div class="mbox"><span class="mlbl">N° total aparatos (n)</span><span class="mval" style="font-size:14px">${C.TN}</span></div>
+        <div class="mbox"><span class="mlbl">Kv global</span><span class="mval" style="font-size:14px;font-family:var(--mono)">${f3(C.kv)}</span></div>
+        <div class="mbox hbl"><span class="mlbl" style="font-weight:700">Qc AF de cálculo</span><span class="mval big">${f3(C.qAF)} l/s</span></div>
+        <div class="mbox hor"><span class="mlbl" style="font-weight:700">Qc ACS de cálculo</span><span class="mval big" style="color:var(--or)">${f3(C.qACS)} l/s</span></div>
+      </div>
+      <div>
+        <strong style="display:block;margin-bottom:10px;color:#0f2a47">Dimensionado montante principal</strong>
+        <div style="margin-bottom:12px">
+          <div class="ifield">
+            <label>Velocidad de cálculo (m/s)</label>
+            <input type="number" step="0.1" min="0.3" max="3" value="${S.vel}" oninput="S.vel=parseFloat(this.value)||1.5;RA()">
+            <span class="print-val" style="font-family:var(--mono);font-weight:700">${S.vel} m/s</span>
+            <p>Recomendado: 1,0–2,0 m/s en residencial</p>
+          </div>
+        </div>
+        <div class="mbox"><span class="mlbl">Qc AF adoptado</span><span class="mval" style="font-size:14px">${f3(C.qAF)} l/s</span></div>
+        <div class="mbox"><span class="mlbl">Ø interior teórico</span><span class="mval" style="font-size:14px">${f1(C.dtmm)} mm</span></div>
+        <div class="mbox hgr" style="margin-top:8px">
+          <span class="mlbl" style="font-weight:700;color:var(--mg)">Ø normalizado recomendado</span>
+          <span class="mval gr big" style="font-size:28px">${C.dN} mm</span>
+        </div>
+        <p style="font-size:10px;color:#94a3b8;margin-top:5px">Serie: 12/15/20/25/32/40/50/63/75/90/110 mm</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRESIÓN -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:13px">
+      <div>
+        <strong style="font-size:14px;color:#0f2a47">Verificación de presión disponible — art. 2.1.3 DB HS4</strong>
+        <p style="font-size:11px;color:#64748b;margin-top:2px">Cálculo simplificado Darcy-Weisbach · Aparato más desfavorable (planta más alta, derivación más larga)</p>
+      </div>
+      <div class="${PR.ok_grif?'pres-ok':'pres-warn'}" style="font-size:18px">
+        ${PR.ok_grif?'✅ PRESIÓN OK':'⚠ PRESIÓN INSUFICIENTE'}
+      </div>
+    </div>
+    <div class="g2">
+      <div>
+        <div class="g2" style="gap:8px;margin-bottom:8px">
+          <div class="ifield">
+            <label>Presión en acometida (kPa)</label>
+            <input type="number" step="10" min="100" max="600" value="${S.pres.p_red}" oninput="S.pres.p_red=parseFloat(this.value)||300;RA()">
+            <span class="print-val">${S.pres.p_red} kPa</span><p>Verificar con compañía suministradora</p>
+          </div>
+          <div class="ifield">
+            <label>Altura libre por planta (m)</label>
+            <input type="number" step="0.05" min="2" max="5" value="${S.pres.h_planta}" oninput="S.pres.h_planta=parseFloat(this.value)||2.8;RA()">
+            <span class="print-val">${S.pres.h_planta} m</span>
+          </div>
+          <div class="ifield">
+            <label>Long. estimada derivación (m)</label>
+            <input type="number" step="1" min="1" max="50" value="${S.pres.l_deriv}" oninput="S.pres.l_deriv=parseFloat(this.value)||8;RA()">
+            <span class="print-val">${S.pres.l_deriv} m</span><p>Desde montante hasta aparato más alejado</p>
+          </div>
+          <div class="ifield">
+            <label>Material de tubería</label>
+            <select onchange="S.pres.material=this.value;RA()">
+              <option value="pvc"${S.pres.material==='pvc'?' selected':''}>PVC / PE (ε=0,0015mm)</option>
+              <option value="cobre"${S.pres.material==='cobre'?' selected':''}>Cobre (ε=0,0015mm)</option>
+              <option value="pp"${S.pres.material==='pp'?' selected':''}>Polipropileno (ε=0,007mm)</option>
+              <option value="acero"${S.pres.material==='acero'?' selected':''}>Acero galvanizado (ε=0,15mm)</option>
+            </select>
+            <span class="print-val">${S.pres.material}</span>
+          </div>
+        </div>
+        <label style="display:flex;gap:8px;align-items:center;font-size:12px;margin-bottom:8px;cursor:pointer">
+          <input type="checkbox" ${S.pres.incluye_cont?'checked':''} onchange="S.pres.incluye_cont=this.checked;RA()">
+          Incluir estimación pérdidas acometida + contador (≈20 kPa)
+        </label>
+      </div>
+      <div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:13px">
+          <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">Desglose pérdidas de carga — peor caso (planta ${S.np})</div>
+          ${[
+            ['Altura total peor caso',f1(PR.H_total)+' m',''],
+            ['ΔP altura = 9,81×H',f1(PR.dP_altura)+' kPa',''],
+            ['ΔP pérd. fricción montante',f1(PR.dP_mont)+' kPa',''],
+            ['ΔP pérd. fricción derivación',f1(PR.dP_der)+' kPa',''],
+            ['ΔP accesorios (+20%)',f1(PR.dP_acc)+' kPa',''],
+            ['ΔP acometida+contador',f1(PR.dP_cont)+' kPa',''],
+          ].map(([k,v])=>`<div class="kvr"><span>${k}</span><span style="font-family:var(--mono)">${v}</span></div>`).join('')}
+          <div style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+              <span style="font-weight:700;font-size:12px">P disponible en aparato</span>
+              <span class="${PR.ok_grif?'pres-ok':'pres-warn'}" style="font-size:18px;font-family:var(--mono)">${f1(PR.P_disp)} kPa</span>
+            </div>
+            <div class="pres-bar"><div class="pres-fill ${pcol}" style="width:${Math.min(100,pct*2)}%"></div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px">
+            <div style="padding:7px;border-radius:7px;text-align:center;background:${PR.ok_grif?'#d1fae5':'#fee2e2'}">
+              <div style="font-size:10px;color:#64748b">Grifos (mín. 100 kPa)</div>
+              <div style="font-size:14px;font-weight:800;color:${PR.ok_grif?'#065f46':'#dc2626'}">${PR.ok_grif?'✅ CUMPLE':'⚠ NO CUMPLE'}</div>
+            </div>
+            <div style="padding:7px;border-radius:7px;text-align:center;background:${PR.ok_cal?'#d1fae5':'#fee2e2'}">
+              <div style="font-size:10px;color:#64748b">Calentadores (mín. 150 kPa)</div>
+              <div style="font-size:14px;font-weight:800;color:${PR.ok_cal?'#065f46':'#dc2626'}">${PR.ok_cal?'✅ CUMPLE':'⚠ NO CUMPLE'}</div>
+            </div>
+          </div>
+          <p style="font-size:10px;color:#94a3b8;margin-top:7px">Velocidad montante: ${f1(PR.v_mont)} m/s · Re=${f0(PR.Re)} · f=${PR.f.toFixed(4)}</p>
+        </div>
+      </div>
+    </div>
+    <div class="nota">⚠ <strong>Cálculo simplificado Darcy-Weisbach.</strong> No sustituye al cálculo completo de la red en proyecto. Verificar presión mínima en <em>todos</em> los aparatos (no sólo el más desfavorable), presión máxima ≤ 500 kPa, y estabilidad de presión en simultáneo. Art. 2.1.3 CTE DB HS4.</div>
+  </div>
+
+  <!-- TABLA 4.2 -->
+  <div class="card">
+    <strong style="display:block;margin-bottom:9px">Tabla 4.2 DB HS4 — Diámetros mínimos de derivaciones individuales a los aparatos</strong>
+    <p style="font-size:11px;color:#64748b;margin-bottom:9px">Valores para uso privado residencial · La columna <em>v (Qmín)</em> muestra la velocidad en la derivación mínima al caudal mínimo del aparato (debe ser ≤ 2,0 m/s)</p>
+    <div class="twrap"><table>
+      <thead><tr>
+        <th class="thbl" style="text-align:left">Aparato sanitario</th>
+        <th class="thbl">Q mín. AF (l/s)</th>
+        <th class="thbl">Ø mín. deriv. AF (mm)</th>
+        <th class="thbl">Ø mín. deriv. ACS (mm)</th>
+        <th class="thbl">v a Qmín en Ø mín.</th>
+      </tr></thead>
+      <tbody>${t42}</tbody>
+    </table></div>
+    <div class="nota blue">Los diámetros de la Tabla 4.2 son <strong>mínimos normativos</strong>. En la práctica se adopta el diámetro inmediato superior que garantice v ≤ 2,0 m/s (recomendado) y v ≥ 0,5 m/s (para evitar depósito de partículas).</div>
+  </div>`;
+}
+
+/* ═══ RENDER HS5 ═══ */
+function RH5(C){
+  /* Pendiente ramal */
+  const pendRamOpts=[1,2,4].map(p=>`<option value="${p}"${S.pend_ram==p?' selected':''}>${p}% — ${p==1?'mín.':p==4?'máx.':''}</option>`).join('');
+  const bjC=C.mt.map(m=>{
+    const ok=!m.tUD||(m.da>0&&(!m.hasI||m.da>=110))&&!m.overflow;
+    const sc=m.tUD?(ok?'sok':m.overflow?'swarn':'swarn'):'sna';
+    return`<div class="bcard ${BJCL[m.b]||''}">
+      <h3>Bajante ${m.b}</h3>
+      <div class="kvr"><span>UD totales</span><span style="font-size:17px;font-weight:800">${m.tUD}</span></div>
+      <div class="kvr"><span>Con inodoros</span><span style="${m.hasI?'color:#dc2626;font-weight:700':''}">${m.tUD?(m.hasI?'SÍ ⚠':'NO'):'—'}</span></div>
+      <div class="kvr"><span>Ø calc. T.4.4</span><span>${m.tUD?m.dc+' mm':'—'}</span></div>
+      <div class="kvr"><span>Ø mín. inodoros</span><span>${m.hasI?'110 mm':'—'}</span></div>
+      <div class="kvr hl"><span>Ø ADOPTADO</span><span style="font-size:17px;font-weight:800">${m.tUD?m.da+' mm':'—'}</span></div>
+      ${m.overflow?`<div class="bstatus" style="background:#7c3aed;color:#fff;text-align:center;padding:5px;border-radius:6px;font-weight:700;font-size:11px;margin-top:8px">⚠ UD > límite T.4.4 — verificar</div>`:`<div class="bstatus ${sc}">${m.tUD?(ok?'✅ CUMPLE':'⚠ REVISAR'):'— Sin uso —'}</div>`}
+    </div>`;
+  }).join('');
+  /* Tabla ramales por local */
+  const ramRows=C.lc.map((l,i)=>{
+    const okR=!l.hasI||l.dram>=100;
+    const cls=l.ud?( okR?'ok':'warn' ):'num';
+    return`<tr>
+      <td class="num bld" style="color:#0f2a47">${l.pl}</td>
+      <td class="lft">${l.rf}</td>
+      <td class="num"><span class="badge ${BJBG[l.bj]||''}">Baj.${l.bj}</span></td>
+      <td class="cud">${l.ud}</td>
+      <td class="${l.hasI?'warn num':'num'}">${l.hasI?'SÍ':'NO'}</td>
+      <td class="${cls}" style="${!l.ud?'color:#94a3b8':''}">${l.ud?l.dram+' mm':'—'}</td>
+    </tr>`;
+  }).join('');
+  const t43rows=T43D.map((d,i)=>`<tr>
+    <td class="num bld" style="${i%2?'':'background:var(--llg)'}">${d}</td>
+    <td class="num" style="${i%2?'':'background:var(--llg)'}">${T43[1][d]}</td>
+    <td class="num" style="${i%2?'':'background:var(--llg)'}">${T43[2][d]}</td>
+    <td class="num" style="${i%2?'':'background:var(--llg)'}">${T43[4][d]}</td>
+  </tr>`).join('');
+  const t44rows=T44.map((r,i)=>`<tr>
+    <td class="num bld" style="${i%2?'':'background:var(--llg)'}">${r.d}</td>
+    <td class="num" style="${i%2?'':'background:var(--llg)'}">${r.l}</td>
+    <td class="num" style="${i%2?'':'background:var(--llg)'}">${r.g}</td>
+  </tr>`).join('');
+  const t45rows=(T45[S.pend]||T45[2]).map((r,i)=>`<tr>
+    <td class="num bld" style="${i%2?'':'background:var(--llg)'}">${r.d}</td>
+    <td class="num" style="${i%2?'':'background:var(--llg)'}">${r.u}</td>
+  </tr>`).join('');
+  document.getElementById('chs5').innerHTML=`
+  <div class="card">
+    <div class="chd gr"><h2>DB HS5 — Evacuación de Aguas Residuales</h2>
+      <p>Tabla 4.1 (UD) · Tabla 4.3 (ramales colectores) · Tabla 4.4 (bajantes) · Tabla 4.5 (colector horizontal)</p>
+    </div>
+    <div class="g8">${bjC}</div>
+    <div style="background:var(--llg);border:1px solid #86efac;border-radius:11px;padding:15px;margin-bottom:14px">
+      <strong style="color:var(--dg);display:block;margin-bottom:11px">Colector horizontal general — Tabla 4.5 DB HS5</strong>
+      <div class="g3">
+        <div class="ifield">
+          <label>Pendiente colector horizontal</label>
+          <select class="pend-sel" onchange="S.pend=parseInt(this.value);RA()">
+            <option value="1"${S.pend==1?' selected':''}>1% — mínimo colgados</option>
+            <option value="2"${S.pend==2?' selected':''}>2% — mínimo enterrados</option>
+            <option value="4"${S.pend==4?' selected':''}>4%</option>
+          </select>
+          <span class="print-val" style="font-weight:700">${S.pend}%</span>
+        </div>
+        <div class="mbox" style="background:#fff">
+          <span class="mlbl">UD totales edificio</span>
+          <span class="mval gr" style="font-size:26px">${C.TUD}</span>
+        </div>
+        <div class="mbox hgr">
+          <span class="mlbl" style="font-weight:700;color:var(--mg)">Ø COLECTOR HORIZONTAL</span>
+          <span class="mval gr" style="font-size:26px">${C.dColR} <span style="font-size:14px">mm</span></span>
+        </div>
+      </div>
+    </div>
+    <div class="nota">⚠ <strong>CTE DB HS5:</strong> Bajantes con inodoros → Ø mínimo <strong>110 mm</strong> (art. 4.1.2). Ø colector ≥ Ø mayor bajante. Pendiente mínima: colgados ≥1%, enterrados ≥2% (art. 3.3.1.4). Ventilación primaria obligatoria.</div>
+  </div>
+
+  <!-- RAMALES T4.3 -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:12px">
+      <div>
+        <strong style="font-size:14px;color:var(--dg)">Tabla 4.3 DB HS5 — Ramales colectores entre aparatos y bajante</strong>
+        <p style="font-size:11px;color:#64748b;margin-top:2px">Diámetro mínimo del ramal colector de cada local según sus UDs totales y la pendiente adoptada</p>
+      </div>
+      <div class="ifield" style="min-width:180px">
+        <label>Pendiente ramal colector</label>
+        <select onchange="S.pend_ram=parseInt(this.value);RA()">${pendRamOpts}</select>
+        <span class="print-val">${S.pend_ram}%</span>
+      </div>
+    </div>
+    <div class="twrap"><table>
+      <thead><tr>
+        <th class="thgr">Planta</th>
+        <th class="thgr" style="text-align:left">Local</th>
+        <th class="thgr">Bajante</th>
+        <th class="thgr">UD total local</th>
+        <th class="thgr">¿Inodoro?</th>
+        <th class="thgr">Ø ramal T.4.3 (mm)</th>
+      </tr></thead>
+      <tbody>${ramRows}</tbody>
+    </table></div>
+    <div class="nota green">Regla: Ramales con inodoros → Ø mínimo <strong>100 mm</strong>. Pendiente mínima del ramal: 1%. Las derivaciones individuales de cada aparato (sifón a bote sifónico o bajante) se dimensionan por Tabla 4.1 y con la Tabla 4.3 para el colector.</div>
+  </div>
+
+  <div class="g3">
+    <div class="card">
+      <strong style="display:block;margin-bottom:9px">Tabla 4.3 HS5 — Ramales colectores (UD máx.)</strong>
+      <div class="twrap"><table>
+        <thead><tr><th class="thgr">Ø (mm)</th><th class="thgr">Pend. 1%</th><th class="thgr">Pend. 2%</th><th class="thgr">Pend. 4%</th></tr></thead>
+        <tbody>${t43rows}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <strong style="display:block;margin-bottom:9px">Tabla 4.4 HS5 — Ø bajantes</strong>
+      <div class="twrap"><table>
+        <thead><tr><th class="thgr">Ø (mm)</th><th class="thgr">UDs ≤3p</th><th class="thgr">UDs &gt;3p</th></tr></thead>
+        <tbody>${t44rows}</tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <strong style="display:block;margin-bottom:9px">Tabla 4.5 HS5 — Colector (pend. ${S.pend}%)</strong>
+      <div class="twrap"><table>
+        <thead><tr><th class="thgr">Ø (mm)</th><th class="thgr">Máx. UDs</th></tr></thead>
+        <tbody>${t45rows}</tbody>
+      </table></div>
+    </div>
+  </div>`;
+}
+
+/* ═══ RENDER PLUVIAL ═══ */
+function RP(C){
+  const PLV=C.PLV;
+  const zonaOpts=Object.entries(ZPLUV).map(([k,v])=>`<option value="${k}"${S.pluv.zona===k?' selected':''}>${v.desc}</option>`).join('');
+  const areaRows=S.pluv.areas.map((a,i)=>`<tr>
+    <td class="lft" style="font-weight:600">${a.desc}</td>
+    <td class="num">${a.area} m²</td>
+    <td class="num">${f1(a.area*PLV.f)} m²</td>
+    <td class="num bld">BP-${a.bj}</td>
+    <td class="num no-print" style="white-space:nowrap">
+      <button class="btn btn-ed" onclick="editArea(${a.id})">✎</button>
+      <button class="btn btn-de" onclick="delArea(${a.id})" style="margin-left:3px">✕</button>
+    </td>
+  </tr>`).join('');
+  const bjRows=PLV.bjRes.map(b=>`
+    <div class="bcard" style="background:#e0f2fe;border-color:#7dd3fc;color:#0c4a6e">
+      <h3>Bajante Pluvial BP-${b.bj}</h3>
+      <div class="kvr"><span>Áreas asignadas</span><span>${b.areas.length}</span></div>
+      <div class="kvr"><span>Área total real</span><span style="font-weight:800">${f0(b.total)} m²</span></div>
+      <div class="kvr"><span>Área corregida (i=100)</span><span>${f0(b.sc)} m²</span></div>
+      <div class="kvr hl"><span>Ø canalón T.4.7</span><span style="font-size:16px;font-weight:800">${b.dcan} mm</span></div>
+      <div class="kvr hl"><span>Ø bajante T.4.8</span><span style="font-size:16px;font-weight:800">${b.dc} mm</span></div>
+    </div>`).join('');
+  const t47rows=Object.entries(T47).map(([p,row],i)=>`<tr>
+    <td class="num bld" style="${i%2?'':'background:#e0f2fe'}">${p}%</td>
+    ${T47D.map(d=>`<td class="num" style="${i%2?'':'background:#e0f2fe'}">${row[d]||'—'}</td>`).join('')}
+  </tr>`).join('');
+  const t48rows=T48.map((r,i)=>`<tr>
+    <td class="num bld" style="${i%2?'':'background:#e0f2fe'}">${r.d}</td>
+    <td class="num" style="${i%2?'':'background:#e0f2fe'}">${r.s}</td>
+    <td class="num ${S.pluv.zona}" style="${i%2?'':'background:#e0f2fe'}">${Math.round(r.s/PLV.f)}</td>
+  </tr>`).join('');
+  document.getElementById('cpluv').innerHTML=`
+  <div class="card">
+    <div class="chd te"><h2>DB HS5 — Red de Evacuación de Aguas Pluviales</h2>
+      <p>Tabla 4.7 (canalones) · Tabla 4.8 (bajantes pluviales) · Tabla 4.9 (colectores pluviales) · Corrección por zona pluviométrica (Anejo B)</p>
+    </div>
+    <div class="g3" style="align-items:start">
+      <div class="ifield">
+        <label>Zona pluviométrica (CTE HS5 Anejo B)</label>
+        <select onchange="S.pluv.zona=this.value;RA()">${zonaOpts}</select>
+        <span class="print-val">${S.pluv.zona} — ${PLV.zd.desc}</span>
+      </div>
+      <div class="mbox hte" style="margin:0">
+        <div><span class="mlbl" style="font-weight:700;color:var(--te)">Intensidad pluviométrica zona ${S.pluv.zona}</span>
+          <div class="mval" style="font-size:22px;color:var(--te)">${PLV.zd.i} mm/h</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:#64748b">Factor corrección f=i/100</div>
+          <div style="font-size:18px;font-weight:800;font-family:var(--mono);color:var(--te)">${PLV.f.toFixed(2)}</div>
+        </div>
+      </div>
+      <div>
+        <div class="g2" style="gap:8px">
+          <div class="ifield">
+            <label>Pendiente canalón (%)</label>
+            <select onchange="S.pluv.pend_can=parseFloat(this.value);RA()">
+              ${[0.5,1,2,4].map(p=>`<option value="${p}"${S.pluv.pend_can==p?' selected':''}>${p}%</option>`).join('')}
+            </select>
+          </div>
+          <div class="ifield">
+            <label>Pendiente colector pluvial (%)</label>
+            <select onchange="S.pluv.pend_col=parseInt(this.value);RA()">
+              ${[1,2,4].map(p=>`<option value="${p}"${S.pluv.pend_col==p?' selected':''}>${p}%</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card allow">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div>
+        <strong style="font-size:14px">Áreas de cubierta — asignación a bajante pluvial</strong>
+        <p style="font-size:11px;color:#64748b;margin-top:2px">Introduce cada área de cubierta en proyección horizontal y asígnala a la bajante pluvial correspondiente (BP-1, BP-2...)</p>
+      </div>
+      <button class="btn btn-add no-print" onclick="addArea()">+ Añadir área</button>
+    </div>
+    <div class="twrap"><table>
+      <thead><tr>
+        <th class="thte" style="text-align:left">Descripción cubierta</th>
+        <th class="thte">Área real (m²)</th>
+        <th class="thte">Área corregida (m²)<br><span style="font-size:9px">i=100 mm/h</span></th>
+        <th class="thte">Bajante pluvial</th>
+        <th class="thte no-print">Acción</th>
+      </tr></thead>
+      <tbody>${areaRows}
+        <tr>
+          <td class="hv lft">TOTAL</td>
+          <td class="hv num">${f0(PLV.totalArea)} m²</td>
+          <td class="hv num">${f0(PLV.sc_total)} m²</td>
+          <td class="hv num"></td><td class="hv no-print"></td>
+        </tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="g8">${bjRows}</div>
+
+  <div class="card">
+    <div class="mbox hte" style="margin-bottom:12px">
+      <div>
+        <span class="mlbl" style="font-weight:700;color:var(--te)">Ø COLECTOR PLUVIAL HORIZONTAL (pend. ${S.pluv.pend_col}%) — T.4.9</span>
+        <p style="font-size:10px;color:#475569;margin-top:3px">Área corregida total: ${f0(PLV.sc_total)} m² · Zona ${S.pluv.zona} (f=${PLV.f.toFixed(2)})</p>
+      </div>
+      <span class="mval" style="font-size:28px;color:var(--te)">${PLV.dColP} <span style="font-size:14px">mm</span></span>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="card">
+      <strong style="display:block;margin-bottom:9px">Tabla 4.7 HS5 — Canalones (m² cubierta para i=100 mm/h)</strong>
+      <div class="twrap"><table>
+        <thead><tr><th class="thte">Pendiente</th>${T47D.map(d=>`<th class="thte">Ø ${d}mm</th>`).join('')}</tr></thead>
+        <tbody>${t47rows}</tbody>
+      </table></div>
+      <p style="font-size:10px;color:#94a3b8;margin-top:6px">Multiplicar por f=i/100 para obtener la superficie máxima admisible en la zona elegida.</p>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <strong style="display:block;margin-bottom:9px">Tabla 4.8 HS5 — Bajantes pluviales</strong>
+        <div class="twrap"><table>
+          <thead><tr><th class="thte">Ø (mm)</th><th class="thte">m² (i=100)</th><th class="thte">m² zona ${S.pluv.zona} (i=${PLV.zd.i})</th></tr></thead>
+          <tbody>${t48rows}</tbody>
+        </table></div>
+      </div>
+      <div class="nota">Área corregida = Área real / f. Pendiente mínima canalones: 0,5%. Las tablas son para cubierta en proyección horizontal (no para cubiertas inclinadas sin corrección).</div>
+    </div>
+  </div>`;
+}
+
+/* ═══ RENDER RESUMEN ═══ */
+function RR(C){
+  const RA_=calcACS(); /* [M1] incluir HE4 en resumen */
+  const anyKO=C.mt.some(m=>m.tUD>0&&(m.hasI&&m.da<110||m.overflow));
+  const presOK=C.PR.ok_grif;
+  const he4KO=RA_.he4_ok==='ko';
+  const allOK=!anyKO&&presOK&&!he4KO;
+  const stClass=allOK?'ok':((anyKO||he4KO)?'warn':'part');
+  const stIco=allOK?'✅':(anyKO||he4KO)?'⚠️':'⚠️';
+  const stTxt=allOK?'Parámetros calculados dentro de normativa CTE'
+    :(anyKO?'REVISAR — Bajante(s) / presión con incumplimiento'
+    :he4KO?'REVISAR — HE4: contribución solar insuficiente'
+    :'REVISAR — Verificar presión disponible');
+  const bjRows=C.mt.map(m=>{
+    const ok=!m.tUD||(m.da>0&&(!m.hasI||m.da>=110));
+    return`<div class="bcard ${BJCL[m.b]||''}" style="display:flex;justify-content:space-between;align-items:center;padding:9px 13px;margin-bottom:5px">
+      <div><strong>Bajante ${m.b}</strong><span style="font-size:10.5px;margin-left:7px">${m.tUD} UD${m.hasI?' (con inodoros)':''}</span></div>
+      <span style="font-size:15px;font-weight:800">${m.tUD?m.da+' mm '+(ok?'✅':'⚠'):'N/A'}</span>
+    </div>`;
+  }).join('');
+  const vi=[
+    [true, `✅ Caudales mínimos Tabla 2.1 DB HS4 aplicados (uso: ${S.uso})`],
+    [true, `✅ Kv = ${S.uso==='privado'?'1/√(n−1)':S.uso==='publico'?'1/√n':'1/√(n−1) con mín.'} aplicado a ${C.TN} aparatos`],
+    [C.PR.ok_grif, `${C.PR.ok_grif?'✅':'⚠'} Presión disponible aparato más desfavorable: ${f1(C.PR.P_disp)} kPa (mín. 100 kPa grifos)`],
+    [C.PR.ok_cal, `${C.PR.ok_cal?'✅':'⚠'} Presión para calentadores: ${f1(C.PR.P_disp)} kPa (mín. 150 kPa)`],
+    [true, '✅ Diámetros mínimos derivaciones Tabla 4.2 DB HS4 consultados'],
+    [true, '✅ UDs Tabla 4.1 DB HS5 aplicados (privado/público diferenciados)'],
+    [true, `✅ Ramales colectores Tabla 4.3 DB HS5 calculados (pend. ${S.pend_ram}%)`],
+    [!anyKO, `${!anyKO?'✅':'⚠'} Diámetros bajantes Tabla 4.4 DB HS5 — regla 110mm inodoros`],
+    [true, `✅ Ø colector horizontal Tabla 4.5 DB HS5 (pend. ${S.pend}%): ${C.dColR} mm`],
+    [true, `✅ Red pluvial: zona ${S.pluv.zona} (i=${C.PLV.zd.i} mm/h) — colector ${C.PLV.dColP} mm`],
+    [RA_.he4_ok!=='ko', `${RA_.he4_ok==='ok'?'✅':RA_.he4_ok==='exento'?'ℹ️':'⚠'} HE4: ${RA_.he4_msg}`],
+    [RA_.rite[0].ok, `${RA_.rite[0].ok?'✅':'⚠'} RITE: T acumulación ${ACS.T_dist}°C (mín. 60°C)`],
+    [false,'⚠ Comprobación de presión máxima ≤ 500 kPa: verificar en proyecto'],
+    [false,'⚠ Ventilación primaria (prolongación bajante): verificar diseño de la instalación'],
+    [false,'⚠ Pendientes y cotas reales: verificar en planos de proyecto'],
+  ].map(([ok,t])=>`<div class="vi ${ok?'vok':'vwarn'}">${t}</div>`).join('');
+  document.getElementById('cres').innerHTML=`
+  <div class="card">
+    <div class="chd in"><h2>Resumen — Cumplimiento CTE DB HS4 · HS5 · HE4</h2>
+      <p>${S.edf} · ${S.np} plantas · Uso: ${S.uso} · ${S.locs.length} locales · ${C.TUD} UD · Zona pluvial ${S.pluv.zona} · Zona HE4 ${ACS.zona}</p>
+    </div>
+    <div class="gstat ${stClass}"><div class="ic">${stIco}</div><h2>${stTxt}</h2></div>
+    <div class="g2">
+      <div>
+        <strong style="display:block;margin-bottom:9px;color:#0f2a47">DB HS4 — Suministro de Agua</strong>
+        ${[['Q máx. AF',f3(C.TAF)+' l/s',''],['Q máx. ACS',f3(C.TACS)+' l/s',''],
+          ['N° aparatos totales',C.TN,''],['Kv ('+S.uso+')',f3(C.kv),''],
+          ['Qc AF de cálculo',f3(C.qAF)+' l/s','hbl'],['Qc ACS de cálculo',f3(C.qACS)+' l/s','hor'],
+          ['Ø teórico montante',f1(C.dtmm)+' mm',''],['Ø normalizado montante',C.dN+' mm','hgr'],
+          ['Presión disp. (peor caso)',f1(C.PR.P_disp)+' kPa',C.PR.ok_grif?'hgr':'hre'],
+        ].map(([k,v,cl])=>`<div class="mbox ${cl}"><span class="mlbl"${cl?` style="font-weight:700"`:''}>${k}</span><span class="mval" style="font-size:${cl?'17':'13'}px">${v}</span></div>`).join('')}
+      </div>
+      <div>
+        <strong style="display:block;margin-bottom:9px;color:var(--dg)">DB HS5 — Evacuación Residual</strong>
+        ${bjRows}
+        <div class="mbox hgr" style="margin-top:7px">
+          <span class="mlbl" style="font-weight:700;color:var(--mg)">Ø colector horizontal (${S.pend}%)</span>
+          <span class="mval gr" style="font-size:20px">${C.dColR} mm</span>
+        </div>
+        <div style="margin-top:14px">
+          <strong style="display:block;margin-bottom:9px;color:var(--te)">DB HS5 — Pluviales (Zona ${S.pluv.zona})</strong>
+          ${C.PLV.bjRes.map(b=>`<div class="mbox hte" style="margin-bottom:5px">
+            <span class="mlbl" style="color:var(--te)">BP-${b.bj}: ${f0(b.total)} m²</span>
+            <span style="font-weight:800;font-size:13px">Baj. ${b.dc}mm / Can. ${b.dcan}mm</span>
+          </div>`).join('')}
+          <div class="mbox hte" style="margin-top:5px">
+            <span class="mlbl" style="font-weight:700;color:var(--te)">Ø colector pluvial (${S.pluv.pend_col}%)</span>
+            <span class="mval" style="font-size:20px;color:var(--te)">${C.PLV.dColP} mm</span>
+          </div>
+        </div>
+        <!-- [M1] Bloque HE4 en resumen -->
+        <div style="margin-top:14px">
+          <strong style="display:block;margin-bottom:9px;color:#92400e">DB HE4 / RITE — ACS</strong>
+          <div class="mbox" style="background:${RA_.he4_ok==='ok'?'#d1fae5':RA_.he4_ok==='exento'?'#eff6ff':'#fee2e2'};border-color:${RA_.he4_ok==='ok'?'#6ee7b7':RA_.he4_ok==='exento'?'#93c5fd':'#f87171'}">
+            <span class="mlbl" style="font-weight:700">Estado HE4</span>
+            <span style="font-weight:800;font-size:13px;color:${RA_.he4_ok==='ok'?'#065f46':RA_.he4_ok==='exento'?'#1d4ed8':'#dc2626'}">${RA_.he4_ok==='ok'?'✅ CUMPLE':RA_.he4_ok==='exento'?'ℹ️ EXENTO':'⚠ NO CUMPLE'}</span>
+          </div>
+          ${[
+            ['Demanda ACS total',Math.round(RA_.dem_total)+' l/día',''],
+            ['% solar requerido',RA_.csol_req+'%','ham'],
+            ['% solar aportado',RA_.pct_real.toFixed(0)+'%',RA_.he4_ok==='ok'?'hgr':RA_.he4_ok==='exento'?'':RA_.pct_real>0?'hre':''],
+            ['T acumulación RITE',ACS.T_dist+'°C',RA_.rite[0].ok?'hgr':'hre'],
+          ].map(([k,v,cl])=>`<div class="mbox ${cl}" style="margin-top:4px"><span class="mlbl">${k}</span><span class="mval" style="font-size:13px">${v}</span></div>`).join('')}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <strong style="display:block;margin-bottom:11px">Verificaciones normativas</strong>
+    <div class="vgrid">${vi}</div>
+    <div class="nota" style="margin-top:11px">Herramienta orientativa. La responsabilidad del cumplimiento íntegro del CTE recae en el técnico proyectista. CTE DB HS4, HS5 y HE4 (actualización 2022).</div>
+  </div>
+  <div class="pftr">CTE DB HS4 / HS5 / HE4 · ${S.edf} · Calculadora de Instalaciones v3</div>`;
+}
+
+/* ═══ CRUD LOCALES ═══ */
+function AL(){
+  const id=S.nxt++;
+  const nl={id,pl:'PB',ti:'Baño',rf:'Local '+id,bj:BKEYS()[0]||'A',...AP.reduce((o,a)=>({...o,[a.k]:0}),{})};
+  S.locs.push(nl);OM(id);
+}
+function DL(id){if(confirm('¿Eliminar este local?')){S.locs=S.locs.filter(l=>l.id!==id);RA();}}
+function OM(id){
+  const l=S.locs.find(l=>l.id===id);if(!l)return;
+  S.editId=id;S.ef={...l};
+  document.getElementById('modal').classList.add('open');RM();
+}
+function CM(){document.getElementById('modal').classList.remove('open');S.editId=null;S.ef=null;}
+function SM(){const i=S.locs.findIndex(l=>l.id===S.editId);if(i>=0)S.locs[i]={...S.ef};CM();RA();}
+function RM(){
+  const f=S.ef;const u=cL(f);
+  const bkeys=BKEYS();
+  const apR=AP.map(a=>`<div class="arow">
+    <span class="aname">${a.lb}</span>
+    <div class="actr">
+      <button class="cbtn" onclick="MD('${a.k}')">−</button>
+      <input class="cinp" type="number" min="0" max="20" value="${f[a.k]||0}" id="ci-${a.k}" oninput="MS('${a.k}',Math.max(0,parseInt(this.value)||0))">
+      <button class="cbtn" onclick="MI('${a.k}')">+</button>
+    </div></div>`).join('');
+  document.getElementById('mbody').innerHTML=`<div class="mbody">
+    <div class="mgrid">
+      <div class="ifield"><label>Planta</label>
+        <select onchange="MS('pl',this.value)">${Array.from({length:S.np},(v,i)=>i===0?'PB':'P'+i).map(p=>`<option${f.pl===p?' selected':''}>${p}</option>`).join('')}</select></div><!-- [FIX M2] dinámico según nº plantas -->
+      <div class="ifield"><label>Tipo de local</label>
+        <select onchange="MS('ti',this.value)">${['Baño','Aseo','Lavandería','Cocina','Otro'].map(t=>`<option${f.ti===t?' selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="ifield"><label>Referencia</label>
+        <input type="text" value="${f.rf}" oninput="MS('rf',this.value)" placeholder="Ej: Baño 2a, Cocina P1..."></div>
+      <div class="ifield"><label>Bajante (HS5) / Montante (HS4)</label>
+        <select onchange="MS('bj',this.value)">${bkeys.map(b=>`<option value="${b}"${f.bj===b?' selected':''}>Bajante / Montante ${b}</option>`).join('')}</select></div>
+    </div>
+    <p style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">Aparatos sanitarios</p>
+    <div class="agrid">${apR}</div>
+    <div class="mtots">
+      <div class="mtitem"><div class="lbl">Total UD (HS5)</div><div class="val" style="color:var(--mg)" id="m-ud">${u.ud}</div></div>
+      <div class="mtitem"><div class="lbl">Total AF (l/s)</div><div class="val" style="color:#1e3a8a" id="m-af">${f3(u.af)}</div></div>
+      <div class="mtitem"><div class="lbl">Total ACS (l/s)</div><div class="val" style="color:var(--or)" id="m-acs">${f3(u.acs)}</div></div>
+    </div></div>
+    <div class="mftr">
+      <button class="btn" onclick="CM()" style="background:#e2e8f0;color:#374151">Cancelar</button>
+      <button class="btn btn-sv" onclick="SM()">✓ Guardar</button>
+    </div>`;
+}
+function UT(){
+  const u=cL(S.ef);
+  const e=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  e('m-ud',u.ud);e('m-af',f3(u.af));e('m-acs',f3(u.acs));
+}
+function MS(k,v){S.ef[k]=v;UT();}
+function MI(k){S.ef[k]=(S.ef[k]||0)+1;const i=document.getElementById('ci-'+k);if(i)i.value=S.ef[k];UT();}
+function MD(k){S.ef[k]=Math.max(0,(S.ef[k]||0)-1);const i=document.getElementById('ci-'+k);if(i)i.value=S.ef[k];UT();}
+
+/* ═══ CRUD ÁREAS PLUVIALES ═══ */
+function addArea(){
+  const desc=prompt('Descripción del área (ej. Cubierta bloque A):','Cubierta '+S.pluv.nxtArea);
+  if(!desc)return;
+  const areaStr=prompt('Área en proyección horizontal (m²):','80');
+  const area=parseFloat(areaStr);
+  if(isNaN(area)||area<=0){alert('Área no válida');return;}
+  const bj=parseInt(prompt('Bajante pluvial (número, ej. 1, 2, 3):','1'))||1;
+  S.pluv.areas.push({id:S.pluv.nxtArea,desc,area,bj:Math.max(1,bj)});
+  S.pluv.nxtArea++;RA();
+}
+function editArea(id){
+  const a=S.pluv.areas.find(x=>x.id===id);if(!a)return;
+  const desc=prompt('Descripción:',a.desc);if(desc===null)return;
+  const areaStr=prompt('Área (m²):',a.area);
+  const area=parseFloat(areaStr);if(isNaN(area)||area<=0)return;
+  const bj=parseInt(prompt('Bajante pluvial:',a.bj))||1;
+  a.desc=desc;a.area=area;a.bj=Math.max(1,bj);RA();
+}
+function delArea(id){if(confirm('¿Eliminar esta área?')){S.pluv.areas=S.pluv.areas.filter(a=>a.id!==id);RA();}}
+
+/* ═══ TABS ═══ */
+function ST(t){
+  S.tab=t;
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('sec-'+t)?.classList.add('on');
+  document.querySelector(`[data-t="${t}"]`)?.classList.add('on');
+}
+document.querySelectorAll('.tbtn').forEach(b=>b.addEventListener('click',()=>ST(b.dataset.t)));
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)CM();});
+
+/* ═══ RENDER ALL ═══ */
+function RA(){
+  // Sync nbaj to header input
+  document.getElementById('inp-nb').value=S.nbaj;
+  const C=CA();RD(C);RH4(C);RH5(C);RP(C);RACS();RR(C);
+}
+
+/* ═══ EXCEL EXPORT ═══ */
+async function exportXLSX(){
+  if(typeof ExcelJS==='undefined'){alert('ExcelJS cargando, intenta de nuevo.');return;}
+  const C=CA();
+  const wb=new ExcelJS.Workbook();
+  wb.creator='CTE HS4/HS5 v2';wb.created=new Date();
+
+  const fl=a=>({type:'pattern',pattern:'solid',fgColor:{argb:a}});
+  const fn=(b,c='FF000000',s=10)=>({bold:b,color:{argb:c},size:s,name:'Calibri'});
+  const al=(h='center',v='middle',w=false)=>({horizontal:h,vertical:v,wrapText:w});
+  const br=()=>{const t={style:'thin'};return{top:t,left:t,bottom:t,right:t};};
+  function sc(cell,f,font,align,nf){
+    if(f)cell.fill=fl(f);
+    if(font)cell.font=fn(font.b||false,font.c||'FF000000',font.s||10);
+    cell.alignment=align||al();cell.border=br();if(nf)cell.numFmt=nf;
+  }
+  function mhdr(ws,r,c1,c2,txt,fill){
+    ws.mergeCells(r,c1,r,c2);const cell=ws.getCell(r,c1);cell.value=txt;
+    sc(cell,fill,{b:true,c:'FFFFFFFF',s:11},al('left','middle',true));ws.getRow(r).height=22;
+  }
+
+  /* ── DATOS_ENTRADA ── */
+  const ws1=wb.addWorksheet('DATOS_ENTRADA',{views:[{state:'frozen',ySplit:2}]});
+  const NC=4+AP.length+4;
+  mhdr(ws1,1,1,NC,`CTE DB HS4/HS5 v2 | ${S.edf} | ${S.np} plantas | Uso: ${S.uso}`,'FF0F2A47');ws1.getRow(1).height=24;
+  ['Planta','Tipo','Referencia','Baj./Mont.',...AP.map(a=>a.lb),'Total UD','AF (l/s)','ACS (l/s)','Ø ramal (mm)'].forEach((h,i)=>{
+    const c=ws1.getCell(2,i+1);c.value=h;
+    const bg=i>=4&&i<4+AP.length?'FF2E75B6':i>=4+AP.length?'FF064E3B':'FF0F2A47';
+    sc(c,bg,{b:true,c:'FFFFFFFF',s:9},al('center','middle',true));
+  });ws1.getRow(2).height=36;
+  [8,13,22,10,...AP.map(()=>11),11,14,14,12].forEach((w,i)=>ws1.getColumn(i+1).width=w);
+  C.lc.forEach((l,ri)=>{
+    const r=ri+3,bg=ri%2?'FFFFFFFF':'FFF0F6FF';
+    [l.pl,l.ti,l.rf,l.bj].forEach((v,ci)=>{
+      const c=ws1.getCell(r,ci+1);c.value=v;
+      sc(c,ci===3?(BJFILL[l.bj]||bg):bg,{b:ci===3,s:10},ci>=2?al('left'):al());
+    });
+    AP.forEach((a,ai)=>{
+      const c=ws1.getCell(r,5+ai);c.value=l[a.k]||0;
+      sc(c,(l[a.k]||0)>0?'FFDBEAFE':bg,{b:(l[a.k]||0)>0,c:(l[a.k]||0)>0?'FF1E3A8A':'FFD1D5DB',s:10});c.numFmt='0';
+    });
+    const cols=[{v:l.ud,bg:'FFD1FAE5',c:'FF065F46',nf:'0'},{v:l.af,bg:'FFDBEAFE',c:'FF1E3A8A',nf:'0.000'},
+      {v:l.acs,bg:'FFFED7AA',c:'FF7C2D12',nf:'0.000'},{v:l.dram,bg:'FFD1FAE5',c:'FF065F46',nf:'0 "mm"'}];
+    cols.forEach(({v,bg:cbg,c:cc,nf},ci)=>{
+      const cell=ws1.getCell(r,5+AP.length+ci);cell.value=v;sc(cell,cbg,{b:true,c:cc,s:10});cell.numFmt=nf;
+    });ws1.getRow(r).height=16;
+  });
+  const tr=C.lc.length+3;ws1.mergeCells(tr,1,tr,4+AP.length);
+  const tm=ws1.getCell(tr,1);tm.value='TOTALES';sc(tm,'FF0F2A47',{b:true,c:'FFFFFFFF',s:11},al('right'));
+  [{v:C.TUD,nf:'0'},{v:C.TAF,nf:'0.000'},{v:C.TACS,nf:'0.000'},{v:'',nf:''}].forEach(({v,nf},i)=>{
+    const c=ws1.getCell(tr,5+AP.length+i);c.value=v;sc(c,'FF0F2A47',{b:true,c:'FFFFFFFF',s:11});c.numFmt=nf;
+  });ws1.getRow(tr).height=22;
+
+  /* ── HS4_SUMINISTRO ── */
+  const ws2=wb.addWorksheet('HS4_SUMINISTRO');
+  ws2.getColumn(1).width=36;[2,3,4,5,6,7,8].forEach(i=>ws2.getColumn(i).width=16);
+  let r2=1;
+  mhdr(ws2,r2,1,8,`CTE DB HS4 — SUMINISTRO | ${S.edf} | Uso: ${S.uso}`,'FF0F2A47');r2+=2;
+  mhdr(ws2,r2,1,8,'CAUDALES DE CÁLCULO POR MONTANTE — Tabla 2.1','FF2563EB');r2++;
+  ['Montante','Q máx.AF (l/s)','Q máx.ACS (l/s)','N° aparat.','Kv','Qc AF (l/s)','Qc ACS (l/s)'].forEach((h,i)=>{
+    sc(ws2.getCell(r2,i+1),'FF0F2A47',{b:true,c:'FFFFFFFF',s:9},al('center','middle',true));ws2.getCell(r2,i+1).value=h;
+  });ws2.getRow(r2).height=28;r2++;
+  C.mt.forEach(m=>{
+    ['Montante '+m.b,m.tAF,m.tACS,m.tN,m.kv,m.qAF,m.qACS].forEach((v,i)=>{
+      const c=ws2.getCell(r2,i+1);c.value=v;
+      sc(c,BJFILL[m.b]||'FFFFFFFF',{b:i===0||i>=5,s:10});if(i>=1)c.numFmt='0.000';
+    });ws2.getRow(r2).height=18;r2++;
+  });
+  ['TOTAL EDIFICIO',C.TAF,C.TACS,C.TN,C.kv,C.qAF,C.qACS].forEach((v,i)=>{
+    const c=ws2.getCell(r2,i+1);c.value=v;sc(c,'FF0F2A47',{b:true,c:'FFFFFFFF',s:11});if(i>=1)c.numFmt='0.000';
+  });ws2.getRow(r2).height=22;r2+=2;
+  mhdr(ws2,r2,1,4,'MONTANTE PRINCIPAL','FF1A4A7A');r2++;
+  [['Velocidad cálculo (m/s):',S.vel,'0.0'],['Qc AF de cálculo (l/s):',C.qAF,'0.000'],
+   ['Ø interior teórico (mm):',C.dtmm,'0.0'],['Ø normalizado (mm):',C.dN,'0']].forEach(([lb,v,nf])=>{
+    const c1=ws2.getCell(r2,1);c1.value=lb;sc(c1,'FFBDD7EE',{b:true,s:10},al('left'));
+    const c2=ws2.getCell(r2,2);c2.value=v;sc(c2,'FFD1FAE5',{b:true,c:'FF065F46',s:12});c2.numFmt=nf;
+    ws2.getRow(r2).height=20;r2++;
+  });r2++;
+  mhdr(ws2,r2,1,4,'PRESIÓN DISPONIBLE (peor caso)','FF1A4A7A');r2++;
+  [['Presión en acometida (kPa):',C.PR.P_disp+C.PR.dP_altura+C.PR.dP_mont+C.PR.dP_der+C.PR.dP_acc+C.PR.dP_cont,'0.0'],
+   ['ΔP altura (kPa):',C.PR.dP_altura,'0.0'],['ΔP fricción montante (kPa):',C.PR.dP_mont,'0.0'],
+   ['ΔP fricción derivación (kPa):',C.PR.dP_der,'0.0'],['ΔP accesorios (kPa):',C.PR.dP_acc,'0.0'],
+   ['P disponible en aparato (kPa):',C.PR.P_disp,'0.0'],
+   ['Estado grifos (mín. 100 kPa):',C.PR.ok_grif?'CUMPLE':'REVISAR','@'],
+   ['Estado calentadores (mín. 150 kPa):',C.PR.ok_cal?'CUMPLE':'REVISAR','@'],
+  ].forEach(([lb,v,nf])=>{
+    const isRes=lb.includes('Estado')||lb.includes('disponible');
+    const isOK=typeof v==='string'?v==='CUMPLE':v>=100;
+    const c1=ws2.getCell(r2,1);c1.value=lb;sc(c1,isRes?'FFBDD7EE':'FFEEF6FF',{b:isRes,s:10},al('left'));
+    const c2=ws2.getCell(r2,2);c2.value=v;
+    sc(c2,isRes?(isOK?'FFD1FAE5':'FFFEE2E2'):'FFDBEAFE',{b:isRes,c:isRes?(isOK?'FF065F46':'FFDC2626'):'FF1E3A8A',s:isRes?11:10});
+    if(nf!=='@')c2.numFmt=nf;ws2.getRow(r2).height=18;r2++;
+  });r2++;
+  mhdr(ws2,r2,1,5,'Tabla 4.2 DB HS4 — Diámetros mínimos derivaciones','FF2563EB');r2++;
+  ['Aparato','Q mín.AF (l/s)','Ø mín.deriv.AF (mm)','Ø mín.deriv.ACS (mm)','v a Qmín (m/s)'].forEach((h,i)=>{
+    sc(ws2.getCell(r2,i+1),'FF0F2A47',{b:true,c:'FFFFFFFF',s:9});ws2.getCell(r2,i+1).value=h;
+  });ws2.getRow(r2).height=18;r2++;
+  AP.forEach((a,i)=>{
+    const bg=i%2?'FFFFFFFF':'FFBDD7EE';
+    const v_af=a.af>0?(a.af/1000)/(Math.PI*(a.daf/1000)*(a.daf/1000)/4):0;
+    [a.lb,a.af,a.daf,a.dacs||'—',v_af>0?+v_af.toFixed(2):'—'].forEach((v,ci)=>{
+      const c=ws2.getCell(r2,ci+1);c.value=v;sc(c,bg,{s:9},ci===0?al('left'):al());
+      if(ci===1)c.numFmt='0.000';if(ci===4&&typeof v==='number')c.numFmt='0.00';
+    });ws2.getRow(r2).height=15;r2++;
+  });
+
+  /* ── HS5_EVACUACION ── */
+  const ws3=wb.addWorksheet('HS5_EVACUACION');
+  ws3.getColumn(1).width=32;[2,3,4,5,6,7,8].forEach(i=>ws3.getColumn(i).width=16);
+  let r3=1;
+  mhdr(ws3,r3,1,7,`CTE DB HS5 — EVACUACIÓN RESIDUAL | ${S.edf} | Pend.col.: ${S.pend}% | Pend.ram.: ${S.pend_ram}%`,'FF064E3B');r3+=2;
+  mhdr(ws3,r3,1,7,'BAJANTES — Tabla 4.4 DB HS5','FF065F46');r3++;
+  ['Bajante','UD totales','Inodoros','Ø calc.(mm)','Ø mín.inod.','Ø ADOPTADO','Estado'].forEach((h,i)=>{
+    sc(ws3.getCell(r3,i+1),'FF064E3B',{b:true,c:'FFFFFFFF',s:9},al('center','middle',true));ws3.getCell(r3,i+1).value=h;
+  });ws3.getRow(r3).height=28;r3++;
+  C.mt.forEach(m=>{
+    const ok=!m.tUD||(m.da>0&&(!m.hasI||m.da>=110));
+    ['Bajante '+m.b,m.tUD,m.hasI?'SÍ':'NO',m.dc||'—',m.hasI?110:'—',m.da||'—',!m.tUD?'Sin uso':(ok?'✅ CUMPLE':'⚠ REVISAR')].forEach((v,i)=>{
+      const c=ws3.getCell(r3,i+1);c.value=v;
+      const sf=!m.tUD?'FFE2E8F0':(ok?'FFD1FAE5':'FFFEE2E2');
+      sc(c,i===6?sf:(BJFILL[m.b]||'FFFFFFFF'),{b:i===0||i===5||i===6,c:i===6?(!m.tUD?'FF94A3B8':(ok?'FF065F46':'FFDC2626')):'FF000000',s:i===5?13:10});
+    });ws3.getRow(r3).height=20;r3++;
+  });r3++;
+  mhdr(ws3,r3,1,4,'RAMALES COLECTORES — Tabla 4.3 DB HS5','FF065F46');r3++;
+  ['Local','UD','Inodoros','Ø ramal (mm)'].forEach((h,i)=>{sc(ws3.getCell(r3,i+1),'FF064E3B',{b:true,c:'FFFFFFFF',s:9});ws3.getCell(r3,i+1).value=h;});ws3.getRow(r3).height=18;r3++;
+  C.lc.forEach((l,i)=>{
+    const ok=!l.hasI||l.dram>=100;const bg=i%2?'FFFFFFFF':'FFD1FAE5';
+    [l.rf,l.ud,l.hasI?'SÍ':'NO',l.ud?l.dram+' mm':'—'].forEach((v,ci)=>{
+      const c=ws3.getCell(r3,ci+1);c.value=v;
+      sc(c,ci===3?(ok?'FFD1FAE5':'FFFEE2E2'):bg,{s:9},ci===0?al('left'):al());
+    });ws3.getRow(r3).height=15;r3++;
+  });r3++;
+  mhdr(ws3,r3,1,2,'COLECTOR HORIZONTAL — Tabla 4.5 DB HS5','FF065F46');r3++;
+  [['UD totales edificio:',C.TUD,'0'],['Pendiente (%):',S.pend,'0'],['Ø colector (mm):',C.dColR,'0']].forEach(([lb,v,nf])=>{
+    const c1=ws3.getCell(r3,1);c1.value=lb;sc(c1,'FFD1FAE5',{b:true,s:10},al('left'));
+    const c2=ws3.getCell(r3,2);c2.value=v;sc(c2,lb.includes('Ø')?'FF064E3B':'FFD1FAE5',{b:true,c:lb.includes('Ø')?'FFFFFFFF':'FF065F46',s:lb.includes('Ø')?13:11});c2.numFmt=nf;
+    ws3.getRow(r3).height=20;r3++;
+  });
+
+  /* ── HS5_PLUVIAL ── */
+  const ws4=wb.addWorksheet('HS5_PLUVIAL');
+  ws4.getColumn(1).width=36;[2,3,4,5].forEach(i=>ws4.getColumn(i).width=18);
+  let r4=1;
+  const PLV=C.PLV;
+  mhdr(ws4,r4,1,5,`CTE DB HS5 — PLUVIALES | Zona ${S.pluv.zona}: i=${PLV.zd.i} mm/h | f=${PLV.f.toFixed(2)}`,'FF134E4A');r4+=2;
+  mhdr(ws4,r4,1,5,'ÁREAS DE CUBIERTA Y DIMENSIONADO','FF065F46');r4++;
+  ['Descripción','Área real (m²)','Área corr. i=100 (m²)','Bajante pluvial','Ø bajante pluvial (mm)'].forEach((h,i)=>{
+    sc(ws4.getCell(r4,i+1),'FF134E4A',{b:true,c:'FFFFFFFF',s:9});ws4.getCell(r4,i+1).value=h;
+  });ws4.getRow(r4).height=24;r4++;
+  S.pluv.areas.forEach((a,i)=>{
+    const bg=i%2?'FFFFFFFF':'FFCCFBF1';const sc2=a.area/PLV.f;const dbp=dBajPluv(sc2);
+    [a.desc,a.area,+sc2.toFixed(0),'BP-'+a.bj,dbp+' mm'].forEach((v,ci)=>{
+      const c=ws4.getCell(r4,ci+1);c.value=v;sc(c,bg,{s:9},ci===0?al('left'):al());
+    });ws4.getRow(r4).height=16;r4++;
+  });
+  ws4.mergeCells(r4,1,r4,3);ws4.getCell(r4,1).value='TOTAL';sc(ws4.getCell(r4,1),'FF134E4A',{b:true,c:'FFFFFFFF',s:11},al('right'));
+  ws4.getCell(r4,2).value=PLV.totalArea;sc(ws4.getCell(r4,2),'FF134E4A',{b:true,c:'FFFFFFFF',s:11});ws4.getRow(r4).height=20;r4+=2;
+  mhdr(ws4,r4,1,5,'BAJANTES PLUVIALES — Tabla 4.8 DB HS5','FF065F46');r4++;
+  PLV.bjRes.forEach((b,i)=>{
+    const bg=i%2?'FFFFFFFF':'FFCCFBF1';
+    ['BP-'+b.bj,b.total,+b.sc.toFixed(0),'Ø bajante: '+b.dc+' mm','Ø canalón: '+b.dcan+' mm'].forEach((v,ci)=>{
+      const c=ws4.getCell(r4,ci+1);c.value=v;sc(c,bg,{b:ci>=3,s:10},ci===0?al('left'):al());
+    });ws4.getRow(r4).height=18;r4++;
+  });r4++;
+  [['Pendiente colector pluvial (%):',S.pluv.pend_col,'0'],
+   ['Área total corregida (m²):',+PLV.sc_total.toFixed(0),'0'],
+   ['Ø COLECTOR PLUVIAL (mm):',PLV.dColP,'0']].forEach(([lb,v,nf])=>{
+    const c1=ws4.getCell(r4,1);c1.value=lb;sc(c1,'FFD1FAE5',{b:true,s:10},al('left'));
+    const c2=ws4.getCell(r4,2);c2.value=v;sc(c2,lb.includes('Ø')?'FF134E4A':'FFD1FAE5',{b:true,c:lb.includes('Ø')?'FFFFFFFF':'FF065F46',s:lb.includes('Ø')?13:11});c2.numFmt=nf;
+    ws4.getRow(r4).height=20;r4++;
+  });
+
+  /* ── RESUMEN_CTE ── */
+  const ws5=wb.addWorksheet('RESUMEN_CTE');
+  ws5.getColumn(1).width=48;ws5.getColumn(2).width=26;ws5.getColumn(3).width=20;
+  let r5=1;
+  mhdr(ws5,r5,1,3,'RESUMEN DE CUMPLIMIENTO — CTE DB HS4 y DB HS5 v2','FF312E81');r5++;
+  ws5.mergeCells(r5,1,r5,3);const wsub=ws5.getCell(r5,1);
+  wsub.value=`${S.edf} · ${S.np} plantas · Uso: ${S.uso} · ${S.locs.length} locales · ${C.TUD} UD · Zona pluvial ${S.pluv.zona}`;
+  sc(wsub,'FFE0E7FF',{s:10,c:'FF312E81'},al('left'));ws5.getRow(r5).height=18;r5+=2;
+  mhdr(ws5,r5,1,3,'DB HS4 — SUMINISTRO DE AGUA','FF0F2A47');r5++;
+  [['Q máx. AF total (l/s):',C.TAF,'0.000',false],['Q máx. ACS total (l/s):',C.TACS,'0.000',false],
+   ['N° total aparatos:',C.TN,'0',false],['Kv ('+S.uso+'):',C.kv,'0.000',false],
+   ['Qc AF de cálculo (l/s):',C.qAF,'0.000',true],['Qc ACS de cálculo (l/s):',C.qACS,'0.000',true],
+   ['Ø normalizado montante (mm):',C.dN,'0',true],
+   ['P disponible peor caso (kPa):',C.PR.P_disp,'0.0',true],
+  ].forEach(([lb,v,nf,hl],i)=>{
+    const c1=ws5.getCell(r5,1);c1.value=lb;sc(c1,i%2?'FFDEEAF1':'FFBDD7EE',{b:hl,s:10},al('left'));
+    const c2=ws5.getCell(r5,2);c2.value=v;
+    const isP=lb.includes('Pres');const pok=isP&&typeof v==='number'&&v>=100;
+    sc(c2,hl?(isP?(pok?'FFD1FAE5':'FFFEE2E2'):'FF0F2A47'):'FFDBEAFE',{b:hl,c:hl?(isP?(pok?'FF065F46':'FFDC2626'):'FFFFFFFF'):'FF1E3A8A',s:hl?12:10});c2.numFmt=nf;
+    ws5.getRow(r5).height=18;r5++;
+  });r5++;
+  mhdr(ws5,r5,1,3,'DB HS5 — EVACUACIÓN RESIDUAL','FF064E3B');r5++;
+  C.mt.forEach(m=>{
+    const ok=!m.tUD||(m.da>0&&(!m.hasI||m.da>=110));
+    const c1=ws5.getCell(r5,1);c1.value=`Bajante ${m.b} — ${m.tUD} UD${m.hasI?' (inodoros)':''}`;sc(c1,BJFILL[m.b]||'FFFFFFFF',{b:true,s:10},al('left'));
+    const c2=ws5.getCell(r5,2);c2.value=m.tUD?m.da+' mm':'Sin uso';sc(c2,BJFILL[m.b]||'FFFFFFFF',{b:true,s:12});
+    const c3=ws5.getCell(r5,3);c3.value=m.tUD?(ok?'✅ CUMPLE':'⚠ REVISAR'):'—';
+    sc(c3,!m.tUD?'FFE2E8F0':(ok?'FFD1FAE5':'FFFEE2E2'),{b:true,c:!m.tUD?'FF94A3B8':(ok?'FF065F46':'FFDC2626'),s:10});
+    ws5.getRow(r5).height=20;r5++;
+  });
+  ws5.mergeCells(r5,1,r5,2);ws5.getCell(r5,1).value=`Ø colector horizontal (${S.pend}%):`;
+  sc(ws5.getCell(r5,1),'FF064E3B',{b:true,c:'FFFFFFFF',s:11},al('left'));
+  ws5.getCell(r5,3).value=C.dColR+' mm';sc(ws5.getCell(r5,3),'FF064E3B',{b:true,c:'FFFFFFFF',s:13});ws5.getRow(r5).height=22;r5+=2;
+  mhdr(ws5,r5,1,3,'DB HS5 — EVACUACIÓN PLUVIAL','FF134E4A');r5++;
+  ws5.mergeCells(r5,1,r5,3);ws5.getCell(r5,1).value=`Zona ${S.pluv.zona} · i=${PLV.zd.i} mm/h · f=${PLV.f.toFixed(2)} · Área total: ${f0(PLV.totalArea)} m²`;
+  sc(ws5.getCell(r5,1),'FFCCFBF1',{s:10,c:'FF134E4A'},al('left'));ws5.getRow(r5).height=18;r5++;
+  PLV.bjRes.forEach(b=>{
+    const c1=ws5.getCell(r5,1);c1.value=`BP-${b.bj} · ${f0(b.total)} m²`;sc(c1,'FFCCFBF1',{b:true,s:10},al('left'));
+    const c2=ws5.getCell(r5,2);c2.value='Bajante: '+b.dc+' mm';sc(c2,'FFCCFBF1',{b:true,s:11});
+    const c3=ws5.getCell(r5,3);c3.value='Canalón: '+b.dcan+' mm';sc(c3,'FFCCFBF1',{b:true,s:10});
+    ws5.getRow(r5).height=18;r5++;
+  });
+  ws5.mergeCells(r5,1,r5,2);ws5.getCell(r5,1).value=`Ø colector pluvial (${S.pluv.pend_col}%):`;
+  sc(ws5.getCell(r5,1),'FF134E4A',{b:true,c:'FFFFFFFF',s:11},al('left'));
+  ws5.getCell(r5,3).value=PLV.dColP+' mm';sc(ws5.getCell(r5,3),'FF134E4A',{b:true,c:'FFFFFFFF',s:13});ws5.getRow(r5).height=22;
+
+  /* DOWNLOAD */
+  try{
+    const buf=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;
+    a.download=`CTE_HS4_HS5_v2_${S.edf.replace(/[^a-zA-Z0-9]/g,'_')}.xlsx`;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  }catch(err){console.error(err);alert('Error exportando: '+err.message);}
+}
+
+
+/* ═══════════════════════════════════════════════
+   MÓDULO ACS — CTE DB HE4 / RITE IT 1.2.4.3
+   ═══════════════════════════════════════════════ */
+
+/* ── Demanda de referencia HE4 Tabla 2.1 (l/día por unidad a 60°C) ── */
+const HE4_USOS=[
+  {k:'viv',      lb:'Vivienda unifamiliar / multifamiliar', ud:28, un:'persona', tip:'Número total de personas del edificio'},
+  {k:'hotel5',   lb:'Hotel 5★',                            ud:69, un:'cama',    tip:'Camas totales'},
+  {k:'hotel4',   lb:'Hotel 4★',                            ud:55, un:'cama',    tip:'Camas totales'},
+  {k:'hotel3',   lb:'Hotel 3★',                            ud:41, un:'cama',    tip:'Camas totales'},
+  {k:'hotel2',   lb:'Hotel 2★',                            ud:34, un:'cama',    tip:'Camas totales'},
+  {k:'hostal',   lb:'Hostal / Pensión',                    ud:28, un:'cama',    tip:'Camas totales'},
+  {k:'residencia',lb:'Residencia (mayores/estudiantes)',   ud:41, un:'persona', tip:'Plazas totales'},
+  {k:'hospital', lb:'Hospital / Clínica',                  ud:55, un:'cama',    tip:'Camas'},
+  {k:'camping',  lb:'Camping',                             ud:21, un:'persona', tip:'Plazas'},
+  {k:'escuela',  lb:'Escuela / Centro educativo',          ud:4,  un:'alumno',  tip:'Alumnos con ducha'},
+  {k:'gimnasio', lb:'Gimnasio',                            ud:21, un:'usuario', tip:'Usuarios/día pico'},
+  {k:'restaurante',lb:'Restaurante',                       ud:8,  un:'comida',  tip:'Comidas/día'},
+  {k:'oficinas', lb:'Oficinas',                            ud:2,  un:'persona', tip:'Trabajadores'},
+  {k:'cuartel',  lb:'Cuartel',                             ud:28, un:'persona', tip:'Ocupantes'},
+  {k:'fabrica',  lb:'Fábrica / Taller',                    ud:21, un:'persona', tip:'Trabajadores'},
+  {k:'vestuarios',lb:'Vestuarios / Duchas colectivas',     ud:21, un:'servicio',tip:'Servicios/día'},
+  {k:'lavanderia',lb:'Lavandería',                         ud:35, un:'kg ropa', tip:'kg ropa seca/día'},
+];
+
+/* ── Zonas climáticas HE4 (Anejo B) ── */
+const HE4_ZONAS={
+  I:  {H:12.5, label:'Zona I',  desc:'H<13,7 MJ/m²·día',  ej:'Oviedo, Santiago, Vitoria, S.Sebastián', cl:'zI'},
+  II: {H:14.4, label:'Zona II', desc:'13,7–15,1 MJ/m²·día',ej:'Bilbao, A Coruña, Burgos, Valladolid, León',cl:'zII'},
+  III:{H:15.9, label:'Zona III',desc:'15,1–16,6 MJ/m²·día',ej:'Madrid, Barcelona, Zaragoza, Palma, Pamplona',cl:'zIII'},
+  IV: {H:17.3, label:'Zona IV', desc:'16,6–18,0 MJ/m²·día',ej:'Sevilla, Valencia, Murcia, Badajoz, Alicante',cl:'zIV'},
+  V:  {H:19.0, label:'Zona V',  desc:'H≥18,0 MJ/m²·día',  ej:'Almería, Canarias, Ceuta, Melilla',cl:'zV'},
+};
+
+/* ── Contribución solar mínima HE4 Tabla 2.1 (%) ── */
+/* Filas: [≤50, 51-5000, >5000] l/día · Columnas: ZI..ZV */
+const HE4_CSOL_GAS=[
+  [30,30,40,50,60],  /* ≤ 50 l/día */
+  [30,40,50,60,70],  /* 51–5000 l/día */
+  [50,60,70,70,70],  /* > 5000 l/día */
+];
+/* Con apoyo eléctrico efecto Joule: +5% a cada celda */
+const HE4_CSOL_ELE=HE4_CSOL_GAS.map(row=>row.map(v=>Math.min(70,v+5)));
+
+function he4ContribMin(dem_ldia, zona, es_electrico){
+  const zIdx={'I':0,'II':1,'III':2,'IV':3,'V':4}[zona]??2;
+  const fila=dem_ldia<=50?0:dem_ldia<=5000?1:2;
+  return(es_electrico?HE4_CSOL_ELE:HE4_CSOL_GAS)[fila][zIdx];
+}
+
+/* ── Sistemas de generación ── */
+const GENS=[
+  {k:'sol_gas', lb:'Solar térmica + caldera gas condensación', ico:'☀️+🔥',
+   cl:'gc-sol', solar:true,  electrico:false,ren_gen:1.05,
+   desc:'Sistema solar activo + apoyo caldera gas condensación (η≥1,05). Cumplimiento HE4 habitual en residencial.',
+   he4:true, rite_ok:true, cop:null},
+  {k:'sol_bdc', lb:'Solar térmica + bomba de calor aerotérmica',ico:'☀️+♨️',
+   cl:'gc-bdc', solar:true,  electrico:false,ren_gen:3.0,
+   desc:'Solar térmica con apoyo BdC aerotérmica (COP≈2,5–4,0). Alta eficiencia. Computa como no-eléctrico a efectos HE4.',
+   he4:true, rite_ok:true, cop:3.0},
+  {k:'sol_ele', lb:'Solar térmica + apoyo eléctrico (efecto Joule)',ico:'☀️+⚡',
+   cl:'gc-sol', solar:true,  electrico:true, ren_gen:1.0,
+   desc:'Apoyo eléctrico resistivo. Penalización +5% en contribución solar mínima exigida. Solo viviendas aisladas.',
+   he4:true, rite_ok:true, cop:null},
+  {k:'bdc_air', lb:'Bomba de calor aerotérmica (sin solar)',     ico:'♨️',
+   cl:'gc-bdc', solar:false, electrico:false,ren_gen:2.5,
+   desc:'Bomba de calor aerotérmica tipo split o monobloc. COP≈2,5–3,5. Exenta de HE4 si COP≥2,5 (art. 2.1.1.b). Verificar.',
+   he4:false, rite_ok:true, cop:2.5, he4_exento:'COP≥2,5 → exento HE4 art. 2.1.1.b'},
+  {k:'gas_cond',lb:'Caldera gas condensación centralizada (sin solar)',ico:'🔥',
+   cl:'gc-gas', solar:false, electrico:false,ren_gen:1.05,
+   desc:'Caldera gas condensación (η>100%). Sin contribución solar: NO cumple HE4 salvo exención justificada (art. 2.1.1).',
+   he4:false, rite_ok:true, cop:null},
+  {k:'biomasa', lb:'Caldera de biomasa + solar térmica',          ico:'🪵+☀️',
+   cl:'gc-bio', solar:true,  electrico:false,ren_gen:0.85,
+   desc:'Biomasa certificada + captadores solares. La biomasa computa como energía renovable. CTE art. 2.1.1.c.',
+   he4:true, rite_ok:true, cop:null},
+  {k:'cogen',   lb:'Cogeneración / trigeneración',                ico:'⚙️',
+   cl:'gc-cog', solar:false, electrico:false,ren_gen:0.90,
+   desc:'Producción combinada calor-electricidad (η_total≥0,75). Posible exención HE4 art. 2.1.1 si justificado.',
+   he4:false, rite_ok:true, cop:null, he4_exento:'Posible exención por cogeneración (art. 2.1.1)'},
+  {k:'district',lb:'Red de calor urbana (district heating)',      ico:'🏙️',
+   cl:'gc-dis', solar:false, electrico:false,ren_gen:0.95,
+   desc:'Conexión a red de calor. Exenta de HE4 si la red usa ≥50% energías renovables o residuales (art. 2.1.1.d).',
+   he4:false, rite_ok:true, cop:null, he4_exento:'Exención si red usa ≥50% renovables/residuales (art. 2.1.1.d)'},
+];
+
+/* ── Aislamiento mínimo RITE IT 1.2.4.2.1 (mm) por diámetro y ubicación ── */
+const RITE_AISL={
+  interior:[ /* temperatura >60°C, interior edificio, sin retornos */
+    {d_max:20,  mm:20},{d_max:40,  mm:20},{d_max:60,  mm:30},
+    {d_max:90,  mm:30},{d_max:999, mm:30},
+  ],
+  exterior:[ /* exterior o locales no calefactados */
+    {d_max:20,  mm:30},{d_max:40,  mm:30},{d_max:60,  mm:40},
+    {d_max:90,  mm:40},{d_max:999, mm:40},
+  ],
+};
+
+/* ── Estado ACS ── */
+let ACS={
+  uso:'viv', nunidades:12, zona:'III',
+  gen:'sol_gas',
+  /* captadores */
+  eta_cap:0.45,    /* rendimiento global anual estimado del captador */
+  Tcold:10,        /* temperatura agua fría entrada (°C) */
+  Thot:60,         /* temperatura acumulación (°C) */
+  Vsolar_pct:0,    /* calculado */
+  /* RITE */
+  T_dist:60,       /* temperatura distribución */
+  T_punto:50,      /* temperatura en punto de consumo */
+  diam_mont:25,    /* diámetro montante ACS (mm) */
+};
+
+/* ── Cálculo ACS ── */
+function calcACS(){
+  const uso=HE4_USOS.find(u=>u.k===ACS.uso)||HE4_USOS[0];
+  const zona=HE4_ZONAS[ACS.zona]||HE4_ZONAS.III;
+  const gen=GENS.find(g=>g.k===ACS.gen)||GENS[0];
+  /* Demanda nominal a 60°C (referencia Tabla 2.1 CTE DB HE4) */
+  const dem_unit=uso.ud;
+  const dem_total=dem_unit*ACS.nunidades; /* l/día a 60°C — valor normativo de referencia */
+  /* [FIX E8] Corrección volumétrica cuando Thot ≠ 60°C (Nota Tabla 2.1 HE4):
+     Q' = Q_ref × (60−Tred)/(Tac−Tred) */
+  const dem_total_corr=(ACS.Thot!==60&&ACS.Thot>ACS.Tcold)
+    ?dem_total*(60-ACS.Tcold)/(ACS.Thot-ACS.Tcold)
+    :dem_total;
+  /* Energía de referencia siempre a 60°C para ser coherente con dem_total normativo */
+  const dem_kWh_dia=dem_total*4186*(60-ACS.Tcold)/(3600*1000); /* [FIX E8] kWh/día */
+  const dem_kWh_ano=dem_kWh_dia*365;
+  /* Contribución solar mínima requerida */
+  let csol_req=0, csol_min=0;
+  let he4_ok, he4_msg;
+  /* [FIX E7] Exención automática por demanda < 50 l/día (HE4 art. 2.1.1.a) */
+  if(dem_total<50){
+    he4_ok='exento';
+    he4_msg='Demanda < 50 l/día → exento de contribución solar mínima (HE4 art. 2.1.1.a)';
+    csol_req=0;
+  } else if(gen.he4_exento){
+    he4_ok='exento';
+    he4_msg=gen.he4_exento;
+    csol_req=0;
+  } else if(!gen.solar){
+    he4_ok='ko';
+    csol_req=0;
+    he4_msg='Sin captadores solares: exige justificación de exención (art. 2.1.1 HE4)';
+  } else {
+    csol_min=he4ContribMin(dem_total,ACS.zona,gen.electrico);
+    csol_req=csol_min;
+  }
+  /* Captadores necesarios (solo si hay solar) */
+  const G_dia=zona.H/3.6; /* kWh/m²·día */
+  const E_solar_req=dem_kWh_dia*csol_req/100;
+  const A_cap=G_dia>0&&gen.solar?(E_solar_req/(G_dia*ACS.eta_cap)):0;
+  /* Volumen acumulación usando dem_total_corr (volumen real a Thot) */
+  const V_acum=gen.solar?Math.max(A_cap*75, dem_total_corr*csol_req/100*1.5):0;
+  const E_sol_cap=gen.solar?A_cap*G_dia*ACS.eta_cap:0;
+  const pct_real=dem_kWh_dia>0?Math.min(100,E_sol_cap/dem_kWh_dia*100):0;
+  /* Completar estado HE4 para sistemas solares */
+  if(gen.solar&&he4_ok===undefined){
+    he4_ok=pct_real>=csol_req?'ok':'ko';
+    he4_msg=he4_ok==='ok'
+      ?`Contribución solar estimada ${pct_real.toFixed(0)}% ≥ ${csol_req}% exigido`
+      :`Contribución estimada ${pct_real.toFixed(0)}% < ${csol_req}% requerido — ampliar captadores`;
+  }
+  /* RITE verificaciones */
+  const rite=[
+    {ok:ACS.T_dist>=60,    txt:`Temperatura acumulación/distribución: ${ACS.T_dist}°C (mín. 60°C — prevención legionela RITE IT 1.2.4.3)`},
+    {ok:ACS.T_punto>=50,   txt:`Temperatura en punto de consumo: ${ACS.T_punto}°C (mín. 50°C normativo)${ACS.T_punto>55?' — ⚠ >55°C: riesgo escaldaduras, considerar TMV':''}`},/* [FIX E4] sólo mín. 50°C */
+    {ok:gen.ren_gen>=0.85, txt:`Rendimiento nominal generador: ${(gen.ren_gen*100).toFixed(0)}% ${gen.cop?'(COP='+gen.cop+')':''} (mín. 85% RITE IT 1.2.4.1)`},
+    {ok:true,              txt:`Aislamiento tuberías: DN${ACS.diam_mont}mm interior → ${aislACS(ACS.diam_mont,'interior')}mm, exterior → ${aislACS(ACS.diam_mont,'exterior')}mm (RITE IT 1.2.4.2)`},
+    {ok:ACS.T_dist<=70,    txt:`Temperatura distribución ≤70°C: ${ACS.T_dist}°C ${ACS.T_dist<=70?'✅':'— reducir para evitar escaldaduras'}`},
+  ];
+  return{uso,zona,gen,dem_unit,dem_total,dem_total_corr,dem_kWh_dia,dem_kWh_ano,
+    csol_req,csol_min,A_cap,V_acum,pct_real,he4_ok,he4_msg,rite,
+    G_dia,E_solar_req,E_sol_cap};
+}
+
+function aislACS(d,loc){
+  const rows=RITE_AISL[loc]||RITE_AISL.interior;
+  for(const r of rows)if(d<=r.d_max)return r.mm;
+  return 30;
+}
+
+/* ── Render ACS ── */
+function RACS(){
+  const R=calcACS();
+  const zona=R.zona;
+  const gen=R.gen;
+  /* zona selector */
+  const zonaOpts=Object.entries(HE4_ZONAS).map(([k,z])=>`
+    <option value="${k}"${ACS.zona===k?' selected':''}>${z.label} — ${z.ej.split(',')[0]}…</option>`).join('');
+  /* uso selector */
+  const usoOpts=HE4_USOS.map(u=>`<option value="${u.k}"${ACS.uso===u.k?' selected':''}>${u.lb} (${u.ud} l/día·${u.un})</option>`).join('');
+  /* gen cards */
+  const genCards=GENS.map(g=>`
+    <div class="gencard ${g.cl}${ACS.gen===g.k?' sel':''}" onclick="ACS.gen='${g.k}';RA()">
+      <div class="gc-ico">${g.ico}</div>
+      <h4>${g.lb}</h4>
+      <p>${g.desc}</p>
+    </div>`).join('');
+  /* HE4 status */
+  const he4Color=R.he4_ok==='ok'?'#15803d':R.he4_ok==='exento'?'#1d4ed8':'#dc2626';
+  const he4Bg=R.he4_ok==='ok'?'#f0fdf4':R.he4_ok==='exento'?'#eff6ff':'#fef2f2';
+  const he4Border=R.he4_ok==='ok'?'#4ade80':R.he4_ok==='exento'?'#93c5fd':'#f87171';
+  const pctW=Math.min(100,R.pct_real);
+  const pctReqW=Math.min(100,R.csol_req);
+  /* tabla HE4 */
+  const he4Table=['I','II','III','IV','V'].map((z,zi)=>{
+    const isZ=ACS.zona===z;
+    return`<td class="num${isZ?' bld':''}" style="${isZ?'background:#fef3c7;color:#78350f;font-weight:800':''}">
+      ${he4ContribMin(R.dem_total,z,gen.electrico)}%</td>`;
+  }).join('');
+  /* RITE rows */
+  const riteRows=R.rite.map(r=>`<div class="rite-row ${r.ok?'rite-ok':'rite-warn'}">
+    <span>${r.ok?'✅':'⚠️'} ${r.txt}</span></div>`).join('');
+  /* Captadores info */
+  const capInfo=gen.solar?`
+    <div class="g3" style="margin-bottom:14px">
+      <div class="mbox hbl"><span class="mlbl" style="font-weight:700">Superficie captadores estimada</span><span class="mval big" style="font-size:26px">${R.A_cap.toFixed(1)} m²</span></div>
+      <div class="mbox hgr"><span class="mlbl" style="font-weight:700">Volumen acumulación estimado</span><span class="mval gr" style="font-size:22px">${Math.round(R.V_acum)} l</span></div>
+      <div class="mbox ham"><span class="mlbl" style="font-weight:700">Energía solar estimada (año)</span><span class="mval am" style="font-size:18px">${(R.E_sol_cap*365/1000).toFixed(1)} MWh/año</span></div>
+    </div>
+    <div class="nota blue">Cálculo estimativo: A = Q_solar / (G·η) con G=${R.G_dia.toFixed(2)} kWh/m²·día (zona ${ACS.zona}), η=${(ACS.eta_cap*100).toFixed(0)}% (captador plano típico). <strong>El proyecto debe verificar con el método F-Chart o simulación horaria (TRNSYS, POLYSUN).</strong> Inclinación óptima: latitud−10° a latitud+15°. Volumen acumulación: 50–180 l/m² captador (recomendado 75 l/m²).</div>`
+  :`<div class="nota">${gen.he4_exento?'ℹ️ '+gen.he4_exento:'⚠ Sin captadores solares: verificar exención CTE HE4 art. 2.1.1'}</div>`;
+
+  document.getElementById('cacs').innerHTML=`
+  <div class="card">
+    <div class="chd" style="background:#92400e;print-color-adjust:exact">
+      <h2>ACS — Agua Caliente Sanitaria · DB HE4 / RITE IT 1.2.4.3</h2>
+      <p>Demanda según uso · Zonas climáticas solares · Contribución mínima HE4 · Dimensionado captadores · Verificaciones RITE</p>
+    </div>
+
+    <!-- DEMANDA -->
+    <div class="g2r" style="margin-bottom:14px">
+      <div>
+        <strong style="display:block;margin-bottom:10px;color:#0f2a47">Demanda de ACS — Tabla 2.1 DB HE4</strong>
+        <div class="demand-grid">
+          <div class="ditem">
+            <label>Tipo de uso del edificio</label>
+            <select onchange="ACS.uso=this.value;RA()">${usoOpts}</select>
+          </div>
+          <div class="ditem">
+            <label>${R.uso.tip||'Número de unidades'} (${R.uso.un})</label>
+            <input type="number" min="1" value="${ACS.nunidades}" oninput="ACS.nunidades=Math.max(1,parseInt(this.value)||1);RA()">
+          </div>
+          <div class="ditem">
+            <label>Temperatura ACS (°C) — referencia 60°C</label>
+            <input type="number" min="45" max="65" value="${ACS.Thot}" oninput="ACS.Thot=parseFloat(this.value)||60;RA()">
+          </div>
+          <div class="ditem">
+            <label>Temperatura agua fría (°C)</label>
+            <input type="number" min="5" max="25" value="${ACS.Tcold}" oninput="ACS.Tcold=parseFloat(this.value)||10;RA()">
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="mbox hbl"><span class="mlbl">Demanda unitaria (Tabla 2.1)</span><span class="mval" style="font-size:17px">${R.dem_unit} l/día·${R.uso.un}</span></div>
+        <div class="mbox"><span class="mlbl">Nº ${R.uso.un}s</span><span class="mval" style="font-size:17px">${ACS.nunidades}</span></div>
+        <div class="mbox hbl"><span class="mlbl" style="font-weight:700">Demanda total ACS (60°C ref.)</span><span class="mval big">${Math.round(R.dem_total)} l/día</span></div>
+        ${R.dem_total_corr!==R.dem_total?`<div class="mbox hor"><span class="mlbl">Volumen corregido a ${ACS.Thot}°C</span><span class="mval" style="font-size:15px;color:var(--or)">${Math.round(R.dem_total_corr)} l/día</span></div>`:''}
+        <div class="mbox hgr"><span class="mlbl" style="font-weight:700">Energía ACS anual</span><span class="mval gr" style="font-size:18px">${(R.dem_kWh_ano/1000).toFixed(2)} MWh/año</span></div>
+      </div>
+    </div>
+
+    <!-- ZONA -->
+    <div class="g2" style="margin-bottom:14px">
+      <div>
+        <strong style="display:block;margin-bottom:10px;color:#0f2a47">Zona climática solar — Anejo B CTE HE4</strong>
+        <div class="ifield" style="margin-bottom:10px">
+          <label>Seleccionar zona (según emplazamiento del edificio)</label>
+          <select onchange="ACS.zona=this.value;RA()">${zonaOpts}</select>
+        </div>
+        <div class="${zona.cl} zsol" style="margin-bottom:8px">
+          <span style="font-size:22px">☀️</span>
+          <div><div>${zona.label} — ${zona.desc}</div><div style="font-size:10px;opacity:.75">${zona.ej}</div></div>
+        </div>
+        <div class="mbox"><span class="mlbl">Radiación H_dia media</span><span class="mval" style="font-size:16px">${zona.H} MJ/m²·día (${R.G_dia.toFixed(2)} kWh/m²·día)</span></div>
+      </div>
+      <div>
+        <strong style="display:block;margin-bottom:10px;color:#0f2a47">Contribución solar mínima requerida — Tabla 2.1 HE4</strong>
+        <div class="twrap"><table style="font-size:11.5px">
+          <thead><tr>
+            <th class="thbl">Demanda (l/día)</th>
+            <th class="thbl">Zona I</th><th class="thbl">Zona II</th><th class="thbl">Zona III</th><th class="thbl">Zona IV</th><th class="thbl">Zona V</th>
+          </tr></thead>
+          <tbody>
+            ${[['≤ 50 l/día',0],['51 – 5.000 l/día',1],['> 5.000 l/día',2]].map(([lb,fi])=>{
+              const isRow=(fi===0&&R.dem_total<=50)||(fi===1&&R.dem_total>50&&R.dem_total<=5000)||(fi===2&&R.dem_total>5000);
+              return`<tr><td class="lft${isRow?' bld':''}" style="${isRow?'background:#fef3c7':''}">${lb}</td>
+              ${['I','II','III','IV','V'].map((z,zi)=>{
+                const isZ=ACS.zona===z,val=he4ContribMin(fi===0?0:fi===1?100:6000,z,gen.electrico);
+                return`<td class="num${isRow&&isZ?' bld':''}" style="${isRow&&isZ?'background:#fcd34d;color:#78350f':isRow?'background:#fef9c3':''}">${val}%</td>`;
+              }).join('')}</tr>`;
+            }).join('')}
+          </tbody>
+        </table></div>
+        <p style="font-size:10px;color:#94a3b8;margin-top:5px">Con apoyo eléctrico efecto Joule: +5% en cada celda. Captadores certificados (ISO 9806 o equivalente).</p>
+        <div class="mbox ham" style="margin-top:10px">
+          <span class="mlbl" style="font-weight:700;color:#78350f">% solar REQUERIDO (su edificio)</span>
+          <span class="mval am" style="font-size:28px">${R.csol_req}%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SISTEMA DE GENERACIÓN -->
+  <div class="card">
+    <strong style="display:block;margin-bottom:12px;font-size:14px;color:#0f2a47">Sistema de generación — Selecciona el tipo de instalación</strong>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:9px;margin-bottom:14px">
+      ${genCards}
+    </div>
+    <div class="nota blue">
+      <strong>Exenciones HE4 art. 2.1.1:</strong> a) Demanda &lt; 50 l/día · b) Captadores cubiertos &lt; 20% · c) Uso de otras FER que cubran el % mínimo · d) Suministro por red de calor con ≥50% renovables · e) BdC con COP≥2,5 · f) Proceso industrial incompatible · g) Edificio histórico protegido.
+    </div>
+  </div>
+
+  <!-- CUMPLIMIENTO HE4 + CAPTADORES -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <strong style="font-size:14px;color:#0f2a47">Verificación DB HE4 — ${gen.lb}</strong>
+      <div style="padding:9px 16px;border-radius:10px;border:2px solid ${he4Border};background:${he4Bg};font-weight:800;font-size:14px;color:${he4Color}">
+        ${R.he4_ok==='ok'?'✅ CUMPLE HE4':R.he4_ok==='exento'?'ℹ️ POSIBLE EXENCIÓN':'⚠️ NO CUMPLE HE4'}
+      </div>
+    </div>
+    ${gen.solar?`
+    <div class="g2" style="margin-bottom:12px">
+      <div>
+        <div class="ifield" style="margin-bottom:10px">
+          <label>Rendimiento global anual estimado del captador (%)</label>
+          <input type="number" step="1" min="20" max="65" value="${(ACS.eta_cap*100).toFixed(0)}"
+            oninput="ACS.eta_cap=Math.min(0.65,Math.max(0.20,(parseInt(this.value)||45)/100));RA()">
+          <p>Captador plano: 35–50% · Captador tubos vacío: 45–60% (incluye pérdidas sistema)</p>
+        </div>
+        <div class="mbox"><span class="mlbl">% solar mínimo requerido</span><span class="mval am">${R.csol_req}%</span></div>
+        <div class="mbox"><span class="mlbl">Energía solar diaria necesaria</span><span class="mval" style="font-size:14px">${R.E_solar_req.toFixed(2)} kWh/día</span></div>
+        <div class="mbox"><span class="mlbl">Radiación disponible (zona ${ACS.zona})</span><span class="mval" style="font-size:14px">${R.G_dia.toFixed(2)} kWh/m²·día</span></div>
+      </div>
+      <div>
+        <p style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px">% solar aportado vs. requerido:</p>
+        <div class="pct-bar">
+          <div class="pct-fill need" style="width:${pctReqW}%">${R.csol_req}% requerido</div>
+        </div>
+        <div class="pct-bar">
+          <div class="pct-fill ${R.pct_real>=R.csol_req?'ok':'warn'}" style="width:${pctW}%">
+            ${R.pct_real.toFixed(0)}% aportado</div>
+        </div>
+        <p style="font-size:10px;color:#94a3b8;margin-top:6px">${R.he4_msg}</p>
+      </div>
+    </div>`:``}
+    ${capInfo}
+  </div>
+
+  <!-- RITE -->
+  <div class="card">
+    <strong style="display:block;margin-bottom:12px;font-size:14px;color:#0f2a47">Verificaciones RITE IT 1.2.4 — Instalaciones de ACS</strong>
+    <div class="g2" style="margin-bottom:12px">
+      <div>
+        <div class="ifield" style="margin-bottom:8px">
+          <label>Temperatura distribución / acumulación (°C)</label>
+          <input type="number" step="1" min="50" max="80" value="${ACS.T_dist}"
+            oninput="ACS.T_dist=parseFloat(this.value)||60;RA()">
+          <p>RITE IT 1.2.4.3: ≥60°C en acumulación · ≥50°C en suministro</p>
+        </div>
+        <div class="ifield" style="margin-bottom:8px">
+          <label>Temperatura en punto de consumo (°C)</label>
+          <input type="number" step="1" min="38" max="60" value="${ACS.T_punto}"
+            oninput="ACS.T_punto=parseFloat(this.value)||50;RA()">
+          <p>Recomendado 50–55°C · &lt;50°C riesgo legionela · &gt;55°C riesgo escaldaduras</p>
+        </div>
+        <div class="ifield">
+          <label>DN montante ACS (mm) — para aislamiento</label>
+          <input type="number" step="1" min="10" max="110" value="${ACS.diam_mont}"
+            oninput="ACS.diam_mont=parseInt(this.value)||25;RA()">
+        </div>
+      </div>
+      <div>${riteRows}
+        <div class="rite-row rite-info" style="margin-top:8px">
+          ℹ️ Circuito de retorno ACS obligatorio si longitud &gt;15 m (RITE IT 1.2.4.3.1)
+        </div>
+        <div class="rite-row rite-info">
+          ℹ️ Válvula de mezcla termostática (TMV) en grifo si T distribución &gt;50°C con usuarios vulnerables
+        </div>
+        <div class="rite-row rite-info">
+          ℹ️ Tratamiento antilegionela: mantenimiento periódico, limpieza y desinfección (RD 487/2022)
+        </div>
+      </div>
+    </div>
+    <div class="nota">
+      <strong>Tabla IT 1.2.4.2.1 RITE — Aislamiento mínimo tuberías ACS:</strong>
+      En interior del edificio (T&gt;60°C): DN≤20→20mm, DN20-40→20mm, DN40-60→30mm, DN&gt;60→30mm.
+      En exterior / bajo rasante: +10mm adicionales. Material: coquilla elastomérica λ≤0,040 W/m·K o equivalente certificado.
+    </div>
+  </div>
+
+  <!-- TABLA REFERENCIA DEMANDAS -->
+  <div class="card">
+    <strong style="display:block;margin-bottom:9px">Tabla 2.1 DB HE4 — Demanda de referencia de ACS por uso</strong>
+    <div class="twrap"><table>
+      <thead><tr>
+        <th class="thbl" style="text-align:left">Tipo de uso</th>
+        <th class="thbl">Litros ACS/día</th>
+        <th class="thbl">Por unidad</th>
+      </tr></thead>
+      <tbody>
+        ${HE4_USOS.map((u,i)=>`<tr>
+          <td class="lft${ACS.uso===u.k?' bld':''}" style="${ACS.uso===u.k?'background:#fef9c3':''}${i%2?'':'background:#f8fafc;'}">${u.lb}</td>
+          <td class="num bld" style="${ACS.uso===u.k?'background:#fef9c3':''}${i%2?'':'background:#f8fafc;'}">${u.ud}</td>
+          <td class="num" style="${ACS.uso===u.k?'background:#fef9c3':''}${i%2?'':'background:#f8fafc;'}">${u.un}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+    <div class="nota green" style="margin-top:9px">
+      La demanda de referencia se define a 60°C. Para temperatura de acumulación diferente, corregir: Q' = Q × (60−Tred)/(Tac−Tred). Temperatura de red (agua fría): varía 5–20°C según zona climática y época del año (consultar Anejo B CTE HE4 o IDAE).
+    </div>
+  </div>`;
+}
+
+/* ═══ INIT ═══ */
+RA();
+
+</script>
+</body>
+</html>

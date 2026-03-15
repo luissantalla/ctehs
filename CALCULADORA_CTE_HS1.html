@@ -1,0 +1,2723 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTE DB HS1 · Verificador de Cerramientos</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+:root {
+  --bg: #f5f7fa;
+  --surface: #ffffff;
+  --surface2: #eef1f6;
+  --surface3: #e4e9f0;
+  --border: #d0d8e4;
+  --border2: #b8c5d6;
+  --accent: #c07a0a;
+  --accent2: #e8960e;
+  --blue: #2570c8;
+  --blue2: #3d8ef0;
+  --green: #15a07a;
+  --green2: #1bbf8f;
+  --red: #d94040;
+  --purple: #7055c8;
+  --orange: #c85a20;
+  --text: #3a4a5c;
+  --text2: #5a6f85;
+  --text3: #8da0b5;
+  --bright: #1a2535;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+  --cond: 'Barlow Condensed', sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+/* ── HEADER ── */
+header{
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 40px;
+  display:flex;align-items:center;gap:16px;
+  height:54px;position:sticky;top:0;z-index:100;
+}
+.hbadge{background:var(--accent);color:#000;font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;letter-spacing:1.5px;}
+.htitle{font-family:var(--cond);font-size:20px;font-weight:700;color:var(--bright);letter-spacing:.5px;}
+.hsubt{font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:auto;letter-spacing:.5px;}
+.hsubt span{color:var(--accent);margin-left:8px;}
+
+/* ── NAV ── */
+nav{
+  background:var(--surface);
+  border-bottom:2px solid var(--border);
+  padding:0 40px;
+  display:flex;gap:0;
+  overflow-x:auto;
+}
+.ntab{
+  padding:12px 22px;
+  font-family:var(--cond);font-size:14px;font-weight:600;
+  color:var(--text2);cursor:pointer;letter-spacing:.8px;text-transform:uppercase;
+  border-bottom:3px solid transparent;margin-bottom:-2px;
+  transition:color .15s,border-color .15s;white-space:nowrap;
+}
+.ntab:hover{color:var(--text);}
+.ntab.active{color:var(--accent2);border-bottom-color:var(--accent);}
+
+/* ── LAYOUT ── */
+main{max-width:1140px;margin:0 auto;padding:32px 40px 80px;}
+.section{display:none;}
+.section.active{display:block;}
+
+.section-head{margin-bottom:28px;}
+.section-head h2{font-family:var(--cond);font-size:30px;font-weight:800;color:var(--bright);letter-spacing:.3px;margin-bottom:4px;}
+.section-head p{font-size:13px;color:var(--text2);line-height:1.6;max-width:600px;}
+.sref{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--accent);background:rgba(232,160,26,.1);padding:3px 10px;margin-top:8px;letter-spacing:.5px;}
+
+.wizard{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start;}
+
+/* ── CARD ── */
+.card{background:var(--surface);border:1px solid var(--border);padding:20px;margin-bottom:16px;}
+.card:last-child{margin-bottom:0;}
+.ctitle{
+  font-family:var(--mono);font-size:10px;font-weight:700;
+  color:var(--accent);letter-spacing:2px;text-transform:uppercase;
+  margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;
+}
+.ctitle::before{content:'';display:block;width:3px;height:12px;background:var(--accent);}
+
+/* ── RADIO OPTIONS ── */
+.rg{display:flex;flex-direction:column;gap:6px;margin-bottom:16px;}
+.ro{
+  display:flex;align-items:flex-start;gap:10px;padding:10px 12px;
+  background:var(--bg);border:1px solid var(--border);
+  cursor:pointer;transition:border-color .12s,background .12s;
+}
+.ro:hover{border-color:var(--border2);background:var(--surface2);}
+.ro.sel{border-color:var(--accent);background:rgba(232,160,26,.07);}
+.ro input[type=radio]{accent-color:var(--accent);margin-top:2px;flex-shrink:0;cursor:pointer;}
+.rl{font-size:13px;color:var(--bright);font-weight:500;line-height:1.3;}
+.rd{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.4;}
+
+/* ── FIELD ── */
+.field{margin-bottom:16px;}
+.flabel{display:block;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.field select{
+  width:100%;background:var(--bg);border:1px solid var(--border);
+  color:var(--bright);padding:9px 12px;font-family:var(--sans);font-size:13px;
+  appearance:none;cursor:pointer;
+}
+.field select:focus{outline:none;border-color:var(--accent);}
+.fhint{font-size:11px;color:var(--text3);margin-top:5px;line-height:1.4;}
+
+/* ── DERIVED VALUE ── */
+.derived{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 14px;background:rgba(34,201,150,.07);
+  border:1px solid rgba(34,201,150,.2);
+  font-family:var(--mono);font-size:12px;color:var(--green2);
+  margin-top:4px;
+}
+.derived::before{content:'→';color:var(--green);}
+
+/* ── GRADO DISPLAY ── */
+.grado-box{
+  display:flex;align-items:center;gap:20px;
+  padding:18px 22px;background:var(--surface2);
+  border:1px solid var(--border2);margin-bottom:16px;
+  border-left:4px solid var(--accent);
+}
+.gn{font-family:var(--mono);font-size:56px;font-weight:700;color:var(--accent);line-height:1;}
+.gi h3{font-family:var(--cond);font-size:17px;font-weight:700;color:var(--bright);}
+.gi p{font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:3px;}
+.gi small{font-family:var(--mono);font-size:10px;color:var(--text3);display:block;margin-top:4px;}
+
+/* ── SOLUTION CARDS ── */
+.sol{
+  padding:13px 14px;background:var(--bg);border:1px solid var(--border);
+  margin-bottom:8px;cursor:pointer;transition:all .12s;
+}
+.sol:hover{border-color:var(--blue);}
+.sol.sel{border-color:var(--blue);background:rgba(61,142,240,.06);}
+.sol-comps{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;}
+.cbadge{
+  font-family:var(--mono);font-size:12px;font-weight:700;
+  padding:3px 9px;border-radius:2px;
+}
+.bR{background:rgba(180,50,50,.09);color:#a83030;border:1px solid rgba(180,50,50,.22);}
+.bB{background:rgba(30,100,210,.09);color:#1a5fa8;border:1px solid rgba(30,100,210,.22);}
+.bC{background:rgba(15,140,100,.09);color:#0d7a5e;border:1px solid rgba(15,140,100,.22);}
+.bH{background:rgba(180,120,10,.09);color:#8a5c08;border:1px solid rgba(180,120,10,.22);}
+.bJ{background:rgba(100,70,200,.09);color:#5a35b0;border:1px solid rgba(100,70,200,.22);}
+.bN{background:rgba(170,80,20,.09);color:#8a4010;border:1px solid rgba(170,80,20,.22);}
+.bI{background:rgba(30,100,210,.09);color:#1a5fa8;border:1px solid rgba(30,100,210,.22);}
+.bD{background:rgba(15,130,90,.09);color:#0a6e4a;border:1px solid rgba(15,130,90,.22);}
+.bP{background:rgba(100,70,200,.09);color:#5a35b0;border:1px solid rgba(100,70,200,.22);}
+.bV{background:rgba(232,120,20,.09);color:#b85e00;border:1px solid rgba(232,120,20,.22);}
+.bS{background:rgba(130,80,30,.09);color:#7a4a10;border:1px solid rgba(130,80,30,.22);}
+.sol-desc{font-size:11px;color:var(--text2);}
+.sol-num{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:5px;}
+
+/* ── COMPONENT LEGEND ── */
+.legitem{
+  display:flex;gap:12px;padding:10px 0;
+  border-bottom:1px solid var(--border);align-items:flex-start;
+}
+.legitem:last-child{border-bottom:none;}
+.legcode{font-family:var(--mono);font-size:12px;font-weight:700;min-width:36px;padding-top:1px;}
+.legt strong{font-size:12px;color:var(--bright);display:block;margin-bottom:2px;}
+.legt p{font-size:11px;color:var(--text2);line-height:1.5;}
+
+/* ── LAYERS (cubiertas) ── */
+.layer{
+  display:flex;align-items:stretch;gap:12px;padding:11px 14px;
+  background:var(--bg);border:1px solid var(--border);margin-bottom:6px;
+}
+.layer-num{
+  font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text3);
+  min-width:20px;text-align:center;padding-top:2px;
+}
+.layer-color{width:4px;border-radius:2px;flex-shrink:0;}
+.layer-info{}
+.lcode{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);margin-bottom:2px;}
+.lname{font-size:13px;color:var(--bright);font-weight:500;margin-bottom:2px;}
+.ldesc{font-size:11px;color:var(--text2);line-height:1.4;}
+.layer-arrow{display:block;text-align:center;color:var(--border2);font-size:12px;margin:2px 0;}
+
+/* ── CONDITION ITEMS ── */
+.conditem{
+  display:flex;gap:10px;padding:9px 12px;
+  background:var(--bg);border:1px solid var(--border);margin-bottom:6px;align-items:flex-start;
+}
+.condcheck{color:var(--green);font-size:14px;flex-shrink:0;margin-top:1px;}
+.condtext strong{font-size:12px;color:var(--bright);display:block;margin-bottom:1px;}
+.condtext p{font-size:11px;color:var(--text2);line-height:1.4;}
+
+/* ── JUSTIFICATION ── */
+.just-panel{display:none;margin-top:16px;}
+.just-panel.vis{display:block;}
+.just-text{
+  font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--text);
+  background:var(--bg);border:1px solid var(--border);padding:16px;
+  white-space:pre-wrap;margin:12px 0;max-height:320px;overflow-y:auto;
+}
+.just-text .jkw{color:var(--accent2);}
+.just-text .jref{color:var(--blue2);}
+
+/* ── BUTTONS ── */
+.btn{
+  padding:10px 22px;font-family:var(--cond);font-size:13px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;cursor:pointer;border:none;transition:all .15s;
+}
+.btn-prim{background:var(--accent);color:#000;}
+.btn-prim:hover{background:var(--accent2);}
+.btn-sec{background:transparent;color:var(--blue2);border:1px solid var(--blue);padding:9px 20px;}
+.btn-sec:hover{background:rgba(61,142,240,.1);}
+.btn-full{width:100%;margin-top:4px;}
+
+/* ── INFO BOX ── */
+.infobox{
+  padding:10px 14px;background:rgba(61,142,240,.07);
+  border-left:3px solid var(--blue);font-size:11px;color:var(--text);
+  line-height:1.6;margin-bottom:14px;
+}
+
+/* ── NO RESULT ── */
+.nores{
+  padding:48px 24px;text-align:center;color:var(--text3);font-size:12px;
+  border:1px dashed var(--border);font-family:var(--mono);
+}
+.nores-icon{font-size:28px;margin-bottom:10px;opacity:.3;}
+
+/* ── REFERENCE TABLE ── */
+.reftable{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono);}
+.reftable th{
+  background:var(--surface2);padding:8px 12px;color:var(--accent);
+  font-weight:700;text-align:left;border:1px solid var(--border);font-size:11px;letter-spacing:.5px;
+}
+.reftable td{padding:8px 12px;border:1px solid var(--border);color:var(--text);}
+.reftable tr:hover td{background:var(--surface2);}
+.reftable .hl td{background:rgba(232,160,26,.08);color:var(--accent2);font-weight:700;}
+.reftable .g1{color:#1a8c3a;} .reftable .g2{color:#5a8820;}
+.reftable .g3{color:#8a6c10;} .reftable .g4{color:#a04010;}
+.reftable .g5{color:#c02020;}
+
+/* ── PROVINCE GRID ── */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill, minmax(180px,1fr));gap:4px;}
+.pitem{
+  padding:5px 8px;background:var(--bg);border:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:center;font-size:11px;
+  font-family:var(--mono);
+}
+.pname{color:var(--text);}
+.pzone{font-weight:700;}
+.pz1{color:#1a8c3a;} .pz2{color:#5a8820;} .pz3{color:#8a6c10;} .pz4{color:#a04010;} .pz5{color:#c02020;}
+.pe1{color:#1a8c3a;} .pe2{color:#8a6c10;} .pe3{color:#c02020;}
+
+/* ── TWO COL ── */
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+/* ── TOOLTIP ── */
+.tip{position:relative;display:inline-block;}
+.tip .tiptext{
+  display:none;position:absolute;bottom:125%;left:0;background:var(--surface3);
+  border:1px solid var(--border2);padding:6px 10px;font-size:10px;color:var(--text);
+  width:220px;line-height:1.5;z-index:10;font-family:var(--sans);
+}
+.tip:hover .tiptext{display:block;}
+
+/* ── WARN BOX ── */
+.warnbox{
+  padding:10px 14px;background:rgba(232,160,26,.06);
+  border-left:3px solid var(--accent);font-size:11px;color:var(--text2);
+  line-height:1.6;margin-top:12px;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:820px){
+  header{padding:0 20px;}
+  nav{padding:0 20px;}
+  main{padding:20px;}
+  .wizard{grid-template-columns:1fr;}
+  .twocol{grid-template-columns:1fr;}
+}
+
+/* Copy success */
+.copy-ok{color:var(--green);font-family:var(--mono);font-size:11px;margin-left:10px;opacity:0;transition:opacity .3s;}
+.copy-ok.show{opacity:1;}
+
+/* ── SUMMARY / PRINT ── */
+.summary-header{
+  display:flex;justify-content:space-between;align-items:flex-end;
+  padding:20px 24px;background:var(--surface);
+  border:1px solid var(--border);border-bottom:3px solid var(--accent);
+  margin-bottom:20px;
+}
+.summary-header h2{font-family:var(--cond);font-size:28px;font-weight:800;color:var(--bright);letter-spacing:.3px;}
+.summary-header .smeta{font-family:var(--mono);font-size:10px;color:var(--text3);text-align:right;line-height:1.8;}
+.sum-section{border:1px solid var(--border);background:var(--surface);margin-bottom:14px;overflow:hidden;}
+.sum-sec-head{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);
+}
+.sum-sec-title{font-family:var(--cond);font-size:16px;font-weight:700;color:var(--bright);}
+.sum-sec-badge{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 10px;margin-left:auto;}
+.sbadge-ok{background:rgba(15,140,100,.1);color:var(--green);border:1px solid rgba(15,140,100,.25);}
+.sbadge-pend{background:rgba(180,120,10,.1);color:var(--accent);border:1px solid rgba(180,120,10,.25);}
+.sum-body{padding:14px 16px;}
+.sum-row{display:flex;gap:8px;font-size:12px;margin-bottom:7px;align-items:baseline;}
+.sum-row:last-child{margin-bottom:0;}
+.sum-lbl{font-family:var(--mono);font-size:10px;color:var(--text3);min-width:190px;flex-shrink:0;text-transform:uppercase;letter-spacing:.5px;}
+.sum-val{color:var(--bright);font-size:12px;}
+.sum-val strong{color:var(--accent);font-family:var(--mono);font-size:13px;}
+.sum-comps{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.sum-nodata{font-family:var(--mono);font-size:11px;color:var(--text3);padding:4px 0;font-style:italic;}
+.sum-divider{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.btn-print{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 22px;
+  font-family:var(--cond);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;background:var(--accent);color:#fff;border:none;transition:all .15s;
+}
+.btn-print:hover{background:var(--accent2);}
+.btn-export{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 20px;
+  font-family:var(--cond);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;background:transparent;color:var(--blue2);border:1px solid var(--blue);transition:all .15s;
+}
+.btn-export:hover{background:rgba(37,112,200,.07);}
+.sum-actions{display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;align-items:center;}
+.sum-notice{
+  padding:12px 16px;background:rgba(37,112,200,.05);
+  border-left:3px solid var(--blue2);font-size:11px;color:var(--text2);
+  line-height:1.6;margin-top:20px;font-family:var(--mono);
+}
+.sum-footer{
+  text-align:center;padding:14px;font-family:var(--mono);font-size:10px;
+  color:var(--text3);border-top:1px solid var(--border);margin-top:20px;letter-spacing:.5px;
+}
+.sum-progress{
+  display:flex;gap:6px;align-items:center;padding:10px 14px;
+  background:var(--surface2);border:1px solid var(--border);margin-bottom:20px;
+  font-family:var(--mono);font-size:11px;color:var(--text2);
+}
+.sum-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.dot-ok{background:var(--green);}
+.dot-pend{background:var(--border2);}
+
+/* ── ENHANCED SUMMARY ELEMENTS ── */
+.sum-dtable{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
+.sum-dtable td{padding:6px 12px;border:1px solid var(--border);vertical-align:top;}
+.sum-dtable td:first-child{
+  font-family:var(--mono);font-size:10px;color:var(--text3);
+  background:var(--surface2);width:200px;text-transform:uppercase;letter-spacing:.5px;
+  font-weight:700;
+}
+.sum-dtable td:last-child{color:var(--bright);}
+.sum-grade-row{display:flex;gap:12px;margin-bottom:16px;}
+.sum-grade-box{
+  flex:1;display:flex;align-items:center;gap:14px;
+  padding:14px 18px;border:2px solid;background:var(--surface);
+}
+.sum-grade-num{font-family:var(--mono);font-size:46px;font-weight:700;line-height:1;flex-shrink:0;}
+.sum-grade-lbl{font-size:11px;color:var(--text2);line-height:1.5;}
+.sum-grade-lbl strong{display:block;font-size:13px;color:var(--bright);margin-bottom:3px;}
+.sum-grade-lbl small{font-family:var(--mono);font-size:10px;color:var(--text3);}
+.sum-subsec{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+.sum-subsec-title{
+  font-family:var(--mono);font-size:10px;font-weight:700;
+  color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;
+}
+.sum-comp-item{margin-bottom:12px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);}
+.sum-comp-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.sum-comp-head strong{font-size:12px;color:var(--bright);}
+.sum-comp-desc{font-size:11px;color:var(--text2);line-height:1.6;padding-left:4px;border-left:2px solid var(--border2);}
+.sum-just-pre{
+  font-family:var(--mono);font-size:10px;line-height:1.8;
+  background:var(--bg);border:1px solid var(--border);
+  padding:14px 16px;white-space:pre-wrap;color:var(--text);
+  margin-top:8px;max-height:none;
+}
+.sum-layer-item{display:flex;gap:10px;padding:8px 12px;background:var(--bg);border:1px solid var(--border);margin-bottom:4px;}
+.sum-layer-num{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text3);min-width:20px;padding-top:2px;}
+.sum-layer-bar{width:3px;border-radius:2px;flex-shrink:0;}
+.sum-layer-body .lcode{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--accent);margin-bottom:2px;}
+.sum-layer-body .lname{font-size:12px;font-weight:500;color:var(--bright);margin-bottom:2px;}
+.sum-layer-body .ldesc{font-size:10px;color:var(--text2);line-height:1.5;}
+.sum-cond-item{display:flex;gap:8px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);margin-bottom:4px;}
+.sum-cond-item .condcheck{color:var(--green);font-size:13px;flex-shrink:0;}
+.sum-cond-item strong{font-size:11px;color:var(--bright);display:block;margin-bottom:1px;}
+.sum-cond-item p{font-size:10px;color:var(--text2);line-height:1.4;}
+.btn-rtf{
+  display:inline-flex;align-items:center;gap:8px;padding:9px 20px;
+  font-family:var(--cond);font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  cursor:pointer;background:transparent;color:var(--green2);border:1px solid var(--green);transition:all .15s;
+}
+.btn-rtf:hover{background:rgba(21,160,122,.07);}
+
+/* ── MAP ── */
+#map-container{position:relative;margin-bottom:16px;}
+#map-search-wrap{display:flex;gap:6px;margin-bottom:8px;}
+#map-search{
+  flex:1;background:var(--bg);border:1px solid var(--border);
+  color:var(--bright);padding:9px 12px;font-family:var(--sans);font-size:13px;
+}
+#map-search:focus{outline:none;border-color:var(--accent);}
+#map-search-btn{
+  padding:9px 16px;background:var(--accent);color:#000;border:none;
+  font-family:var(--cond);font-size:12px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;cursor:pointer;transition:background .15s;white-space:nowrap;
+}
+#map-search-btn:hover{background:var(--accent2);}
+#map-leaflet{height:260px;border:1px solid var(--border2);background:var(--surface2);}
+#map-result{
+  margin-top:8px;padding:10px 14px;
+  background:rgba(34,201,150,.06);border:1px solid rgba(34,201,150,.2);
+  font-family:var(--mono);font-size:11px;color:var(--text);display:none;
+}
+#map-result .mr-loc{font-weight:700;color:var(--green2);margin-bottom:5px;font-size:12px;}
+#map-result .mr-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:4px;}
+#map-result .mr-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;font-size:11px;font-weight:700;
+}
+#map-result .mr-warn{
+  margin-top:6px;padding:6px 10px;background:rgba(232,160,26,.1);
+  border-left:2px solid var(--accent);font-size:10px;color:var(--text2);
+}
+#map-searching{display:none;font-family:var(--mono);font-size:11px;color:var(--text3);padding:6px 0;text-align:center;}
+.leaflet-container{font-family:var(--sans)!important;}
+@media print {
+  header,nav,.sum-actions,.section:not(#resumen){display:none!important;}
+  #resumen{display:block!important;}
+  body{background:#fff!important;}
+  .sum-section{break-inside:avoid;border:1px solid #bbb!important;}
+  .summary-header{border:2px solid #333!important;}
+  main{padding:10px 20px!important;max-width:100%!important;}
+  .sum-just-pre{max-height:none!important;background:#f8f8f8!important;border:1px solid #ccc!important;}
+  .sum-comp-item,.sum-layer-item,.sum-cond-item{background:#f8f8f8!important;border:1px solid #ccc!important;}
+  .sum-dtable td:first-child{background:#eee!important;}
+  .sum-grade-box{background:#fff!important;}
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbadge">CTE</div>
+  <div class="htitle">DB HS1 — Protección frente a la Humedad</div>
+  <div class="hsubt">Verificador normativo<span>v2024</span></div>
+</header>
+
+<nav>
+  <div class="ntab active" onclick="showSec('fachadas',this)">⬚ Fachadas</div>
+  <div class="ntab" onclick="showSec('muros',this)">▤ Muros s/terreno</div>
+  <div class="ntab" onclick="showSec('cubiertas',this)">△ Cubiertas</div>
+  <div class="ntab" onclick="showSec('suelos',this)">▭ Suelos</div>
+  <div class="ntab" onclick="showSec('referencia',this)">⊞ Referencia</div>
+  <div class="ntab" onclick="showSec('resumen',this);buildSummary()">⎙ Resumen PDF</div>
+</nav>
+
+<main>
+
+<!-- ═══════════ FACHADAS ═══════════ -->
+<section class="section active" id="fachadas">
+  <div class="section-head">
+    <h2>Fachadas</h2>
+    <p>Determinación del grado de impermeabilidad mínimo y comprobación de las soluciones constructivas admisibles.</p>
+    <span class="sref">HS1 § 2.3 · Tabla 2.5 · Tabla 2.6 · Tabla 2.7</span>
+  </div>
+  <div class="wizard">
+    <!-- LEFT: INPUTS -->
+    <div>
+      <div class="card">
+        <div class="ctitle">1 — Localización del municipio</div>
+        <div class="infobox">Busque el municipio o haga clic en el mapa. Las zonas pluviométrica y eólica se asignan automáticamente según el Apéndice B del CTE DB HS1.</div>
+        <div id="map-container">
+          <div id="map-search-wrap">
+            <input id="map-search" type="text" placeholder="Escriba municipio o provincia…" onkeydown="if(event.key==='Enter')mapSearch()">
+            <button id="map-search-btn" onclick="mapSearch()">Buscar</button>
+          </div>
+          <div id="map-searching">Buscando…</div>
+          <div id="map-leaflet"></div>
+          <div id="map-result">
+            <div class="mr-loc" id="mr-loc-text">—</div>
+            <div class="mr-row">
+              <span class="mr-badge" id="mr-pluv" style="background:rgba(232,160,26,.1);color:#8a5c08;border:1px solid rgba(232,160,26,.25);">P —</span>
+              <span class="mr-badge" id="mr-eol"  style="background:rgba(37,112,200,.1);color:#1a5fa8;border:1px solid rgba(37,112,200,.25);">E —</span>
+            </div>
+            <div id="mr-pluv-desc" style="font-size:11px;color:var(--text2);margin-top:4px;display:none;"></div>
+            <div id="mr-eol-desc"  style="font-size:11px;color:var(--text2);margin-top:2px;display:none;"></div>
+            <div class="mr-warn" id="mr-warn" style="display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ctitle">2 — Exposición al viento</div>
+        <div class="field">
+          <label class="flabel">Clase de entorno (E)</label>
+          <div class="rg" id="rg-entorno">
+            <div class="ro" onclick="selR('entorno','E0',this)">
+              <input type="radio" name="entorno" value="E0">
+              <div><div class="rl">E0 — Sin protección</div>
+              <div class="rd">Terreno llano sin obstáculos apreciables en un radio ≥ 1 km (campo abierto, frente marítimo, primer frente costero)</div></div>
+            </div>
+            <div class="ro" onclick="selR('entorno','E1',this)">
+              <input type="radio" name="entorno" value="E1">
+              <div><div class="rl">E1 — Con protección</div>
+              <div class="rd">Zona urbana con edificios o arboledas próximos que reducen la velocidad del viento</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel">Altura del punto más alto del cerramiento</label>
+          <select id="sel-alt" onchange="calcFachada()">
+            <option value="">— Seleccionar altura —</option>
+            <option value="15">H ≤ 15 m</option>
+            <option value="40">15 m &lt; H ≤ 40 m</option>
+            <option value="99">H &gt; 40 m</option>
+          </select>
+          <div class="fhint">Medida desde la rasante exterior del terreno.</div>
+        </div>
+        <div id="div-exp" style="display:none;padding-top:8px;">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3);letter-spacing:.5px;margin-bottom:4px;">GRADO DE EXPOSICIÓN AL VIENTO (Tabla 2.6)</div>
+          <div class="derived" id="disp-exp"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: RESULTS -->
+    <div id="res-fachadas">
+      <div class="nores" id="nores-fachadas">
+        <div class="nores-icon">◎</div>
+        Complete los parámetros de exposición para obtener el grado de impermeabilidad mínimo y las soluciones constructivas válidas.
+      </div>
+      <div id="rp-fachadas" style="display:none;">
+        <div class="grado-box">
+          <div class="gn" id="gnum-fachadas">—</div>
+          <div class="gi">
+            <h3>Grado de impermeabilidad mínimo</h3>
+            <p id="gparam-fachadas">—</p>
+            <small>Tabla 2.5 · CTE DB HS1</small>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Soluciones constructivas admisibles <span style="font-size:9px;color:var(--text3)">(Tabla 2.7)</span></div>
+          <div class="infobox">Seleccione una solución para ver la descripción detallada de cada componente y generar la justificación normativa.</div>
+          <div class="warnbox" style="margin-bottom:10px;">⚑ Nota normativa: Cuando la fachada sea de <strong>una sola hoja</strong>, debe sustituirse C1 por C2 en todas las soluciones — CTE DB HS1 Tabla 2.7 nota (1).</div>
+          <div id="sols-fachadas"></div>
+        </div>
+        <div class="card" id="leg-fachadas" style="display:none;">
+          <div class="ctitle">Descripción de componentes seleccionados</div>
+          <div id="legcont-fachadas"></div>
+        </div>
+        <div class="just-panel" id="jp-fachadas">
+          <div class="card">
+            <div class="ctitle">Justificación normativa generada</div>
+            <div class="just-text" id="jt-fachadas"></div>
+            <button class="btn btn-sec" onclick="copyJ('jt-fachadas',this)">📋 Copiar texto</button>
+            <span class="copy-ok" id="ck-jt-fachadas">¡Copiado!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ MUROS ═══════════ -->
+<section class="section" id="muros">
+  <div class="section-head">
+    <h2>Muros en contacto con el terreno</h2>
+    <p>Grado de impermeabilidad y sistema de impermeabilización según presencia de agua y permeabilidad del terreno.</p>
+    <span class="sref">HS1 § 2.2 · Tabla 2.1 · Tabla 2.2 · Tabla 2.3</span>
+  </div>
+  <div class="wizard">
+    <div>
+      <div class="card">
+        <div class="ctitle">Condiciones del terreno</div>
+        <div class="field">
+          <label class="flabel">Presencia de agua</label>
+          <div class="rg" id="rg-agua">
+            <div class="ro" onclick="selR('agua','baja',this)">
+              <input type="radio" name="agua" value="baja">
+              <div><div class="rl">Baja</div>
+              <div class="rd">Nivel freático a más de 2 m por encima del suelo inferior del edificio. Sin agua apreciable.</div></div>
+            </div>
+            <div class="ro" onclick="selR('agua','media',this)">
+              <input type="radio" name="agua" value="media">
+              <div><div class="rl">Media</div>
+              <div class="rd">Nivel freático entre 1 m y 2 m por encima del suelo inferior del edificio.</div></div>
+            </div>
+            <div class="ro" onclick="selR('agua','alta',this)">
+              <input type="radio" name="agua" value="alta">
+              <div><div class="rl">Alta</div>
+              <div class="rd">Nivel freático a 1 m o menos por encima del suelo inferior. Agua permanente o presión hidrostática.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel">Coeficiente de permeabilidad del terreno (Ks)</label>
+          <div class="rg" id="rg-permeab">
+            <div class="ro" onclick="selR('permeab','k1',this)">
+              <input type="radio" name="permeab" value="k1">
+              <div><div class="rl">Alta — Ks ≥ 10⁻² cm/s</div>
+              <div class="rd">Gravas, arenas gruesas, rellenos granulares. El agua drena con gran facilidad.</div></div>
+            </div>
+            <div class="ro" onclick="selR('permeab','k2',this)">
+              <input type="radio" name="permeab" value="k2">
+              <div><div class="rl">Media — 10⁻⁵ &lt; Ks &lt; 10⁻² cm/s</div>
+              <div class="rd">Arenas finas, arenas limosas, gravas sucias. Permeabilidad intermedia.</div></div>
+            </div>
+            <div class="ro" onclick="selR('permeab','k3',this)">
+              <input type="radio" name="permeab" value="k3">
+              <div><div class="rl">Baja — Ks ≤ 10⁻⁵ cm/s</div>
+              <div class="rd">Arcillas, limos, margas. El agua tiende a acumularse contra el muro.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel">Tipo de muro</label>
+          <div class="rg" id="rg-tmuro">
+            <div class="ro" onclick="selR('tmuro','flexo',this)">
+              <input type="radio" name="tmuro" value="flexo">
+              <div><div class="rl">Flexorresistente</div>
+              <div class="rd">Hormigón armado in-situ, muros de sótano convencionales.</div></div>
+            </div>
+            <div class="ro" onclick="selR('tmuro','gravitatorio',this)">
+              <input type="radio" name="tmuro" value="gravitatorio">
+              <div><div class="rl">Gravitatorio</div>
+              <div class="rd">Fábrica de ladrillo, bloque de hormigón, mampostería. Trabajo a compresión.</div></div>
+            </div>
+            <div class="ro" onclick="selR('tmuro','pantalla',this)">
+              <input type="radio" name="tmuro" value="pantalla">
+              <div><div class="rl">Pantalla</div>
+              <div class="rd">Pantalla de pilotes, pantalla de hormigón continuo hincada en el terreno.</div></div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-prim btn-full" onclick="calcMuro()">Calcular</button>
+      </div>
+    </div>
+    <div id="res-muros">
+      <div class="nores" id="nores-muros">
+        <div class="nores-icon">◎</div>
+        Defina las condiciones del terreno y pulse Calcular para obtener el grado de impermeabilidad mínimo.
+      </div>
+      <div id="rp-muros" style="display:none;">
+        <div class="grado-box">
+          <div class="gn" id="gnum-muros">—</div>
+          <div class="gi">
+            <h3>Grado de impermeabilidad mínimo</h3>
+            <p id="gparam-muros">—</p>
+            <small>Tabla 2.1 · CTE DB HS1</small>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Soluciones constructivas admisibles <span style="font-size:9px;color:var(--text3)">(Tabla 2.2)</span></div>
+          <div class="infobox">El sistema de impermeabilización del muro debe incluir los componentes indicados en cada solución.</div>
+          <div id="sols-muros"></div>
+        </div>
+        <div class="card" id="leg-muros" style="display:none;">
+          <div class="ctitle">Descripción de componentes seleccionados</div>
+          <div id="legcont-muros"></div>
+        </div>
+        <div class="just-panel" id="jp-muros">
+          <div class="card">
+            <div class="ctitle">Justificación normativa generada</div>
+            <div class="just-text" id="jt-muros"></div>
+            <button class="btn btn-sec" onclick="copyJ('jt-muros',this)">📋 Copiar texto</button>
+            <span class="copy-ok" id="ck-jt-muros">¡Copiado!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CUBIERTAS ═══════════ -->
+<section class="section" id="cubiertas">
+  <div class="section-head">
+    <h2>Cubiertas</h2>
+    <p>Composición de capas, condiciones de cada elemento y pendientes mínimas según tipo de cubierta y uso previsto.</p>
+    <span class="sref">HS1 § 2.4 · Tabla 2.10 · Tabla 2.11 · Tabla 2.12</span>
+  </div>
+  <div class="wizard">
+    <div>
+      <div class="card">
+        <div class="ctitle">Tipo y uso de la cubierta</div>
+        <div class="field">
+          <label class="flabel">Tipo de cubierta</label>
+          <div class="rg" id="rg-tcub">
+            <div class="ro" onclick="selR('tcub','plana',this)">
+              <input type="radio" name="tcub" value="plana">
+              <div><div class="rl">Plana</div><div class="rd">Pendiente &lt; 5% (≈ 2,86°). Evacuación mediante canalones o bajantes interiores.</div></div>
+            </div>
+            <div class="ro" onclick="selR('tcub','inclinada',this)">
+              <input type="radio" name="tcub" value="inclinada">
+              <div><div class="rl">Inclinada</div><div class="rd">Pendiente ≥ 5%. Con cobertura de teja, chapa, pizarra, etc.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel">Uso previsto</label>
+          <div class="rg" id="rg-ucub">
+            <div class="ro" onclick="selR('ucub','no-trans',this)">
+              <input type="radio" name="ucub" value="no-trans">
+              <div><div class="rl">No transitable</div><div class="rd">Acceso solo para mantenimiento esporádico. Sin solado transitable.</div></div>
+            </div>
+            <div class="ro" onclick="selR('ucub','trans-priv',this)">
+              <input type="radio" name="ucub" value="trans-priv">
+              <div><div class="rl">Transitable peatonal privado</div><div class="rd">Terraza de vivienda o uso privado con tránsito de personas.</div></div>
+            </div>
+            <div class="ro" onclick="selR('ucub','trans-pub',this)">
+              <input type="radio" name="ucub" value="trans-pub">
+              <div><div class="rl">Transitable peatonal público</div><div class="rd">Cubierta de uso público, zona comunitaria intensa.</div></div>
+            </div>
+            <div class="ro" onclick="selR('ucub','jardin',this)">
+              <input type="radio" name="ucub" value="jardin">
+              <div><div class="rl">Ajardinada (verde)</div><div class="rd">Con sustrato vegetal y plantaciones. Cubierta ecológica.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field" id="f-disp-cub">
+          <label class="flabel">Disposición de la impermeabilización</label>
+          <div class="rg" id="rg-disp">
+            <div class="ro" onclick="selR('disp','conv',this)">
+              <input type="radio" name="disp" value="conv">
+              <div><div class="rl">Convencional</div><div class="rd">Impermeabilización sobre el aislamiento. Sistema clásico.</div></div>
+            </div>
+            <div class="ro" onclick="selR('disp','inv',this)">
+              <input type="radio" name="disp" value="inv">
+              <div><div class="rl">Invertida</div><div class="rd">Aislamiento sobre la impermeabilización (protege la lámina de choques térmicos). Requiere XPS.</div></div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-prim btn-full" onclick="calcCubierta()">Ver composición requerida</button>
+      </div>
+    </div>
+    <div id="res-cubiertas">
+      <div class="nores" id="nores-cubiertas">
+        <div class="nores-icon">◎</div>
+        Defina el tipo y uso de la cubierta para obtener la composición de capas y condiciones normativas.
+      </div>
+      <div id="rp-cubiertas" style="display:none;">
+        <div class="card">
+          <div class="ctitle">Composición de capas — de abajo a arriba</div>
+          <div class="infobox">El orden de las capas es prescriptivo. Las flechas indican la secuencia constructiva.</div>
+          <div id="layers-cont"></div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Condiciones normativas clave</div>
+          <div id="conds-cont"></div>
+        </div>
+        <div class="just-panel vis" id="jp-cubiertas">
+          <div class="card">
+            <div class="ctitle">Justificación normativa generada</div>
+            <div class="just-text" id="jt-cubiertas"></div>
+            <button class="btn btn-sec" onclick="copyJ('jt-cubiertas',this)">📋 Copiar texto</button>
+            <span class="copy-ok" id="ck-jt-cubiertas">¡Copiado!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SUELOS ═══════════ -->
+<section class="section" id="suelos">
+  <div class="section-head">
+    <h2>Suelos en contacto con el terreno</h2>
+    <p>Grado de impermeabilidad y composición de capas para suelos en contacto con el terreno.</p>
+    <span class="sref">HS1 § 2.2.3 · Tabla 2.3 · Tabla 2.4</span>
+  </div>
+  <div class="wizard">
+    <div>
+      <div class="card">
+        <div class="ctitle">Condiciones del suelo</div>
+        <div class="field">
+          <label class="flabel">Presencia de agua (igual criterio que muros)</label>
+          <div class="rg" id="rg-sagua">
+            <div class="ro" onclick="selR('sagua','baja',this)">
+              <input type="radio" name="sagua" value="baja">
+              <div><div class="rl">Baja</div><div class="rd">Cara inferior del suelo por encima del nivel freático.</div></div>
+            </div>
+            <div class="ro" onclick="selR('sagua','media',this)">
+              <input type="radio" name="sagua" value="media">
+              <div><div class="rl">Media</div><div class="rd">Cara inferior del suelo a la misma profundidad que el nivel freático o a menos de 2 m por debajo.</div></div>
+            </div>
+            <div class="ro" onclick="selR('sagua','alta',this)">
+              <input type="radio" name="sagua" value="alta">
+              <div><div class="rl">Alta</div><div class="rd">Cara inferior del suelo a 2 m o más por debajo del nivel freático.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel">Permeabilidad del terreno</label>
+          <div class="rg" id="rg-spermeab">
+            <div class="ro" onclick="selR('spermeab','alta',this)">
+              <input type="radio" name="spermeab" value="alta">
+              <div><div class="rl">Alta — Ks &gt; 10⁻⁵ cm/s</div><div class="rd">Gravas, arenas gruesas, arenas finas.</div></div>
+            </div>
+            <div class="ro" onclick="selR('spermeab','baja',this)">
+              <input type="radio" name="spermeab" value="baja">
+              <div><div class="rl">Baja — Ks ≤ 10⁻⁵ cm/s</div><div class="rd">Arcillas, limos, margas.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel">Tipo de muro del edificio</label>
+          <div class="rg" id="rg-smuro">
+            <div class="ro" onclick="selR('smuro','flexo',this)">
+              <input type="radio" name="smuro" value="flexo">
+              <div><div class="rl">Flexorresistente o de gravedad</div><div class="rd">Hormigón armado in situ, muro de fábrica, muro de gravedad.</div></div>
+            </div>
+            <div class="ro" onclick="selR('smuro','pantalla',this)">
+              <input type="radio" name="smuro" value="pantalla">
+              <div><div class="rl">Pantalla</div><div class="rd">Pantalla de hormigón, pantalla de pilotes, muro berlinés.</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel">Tipo de suelo</label>
+          <div class="rg" id="rg-tsuelo">
+            <div class="ro" onclick="selR('tsuelo','solera',this)">
+              <input type="radio" name="tsuelo" value="solera">
+              <div><div class="rl">Solera</div><div class="rd">Losa de hormigón apoyada directamente sobre el terreno compactado.</div></div>
+            </div>
+            <div class="ro" onclick="selR('tsuelo','placa',this)">
+              <input type="radio" name="tsuelo" value="placa">
+              <div><div class="rl">Placa (cimentación)</div><div class="rd">Losa de cimentación que transmite cargas al terreno. Mayor espesor y armado que la solera.</div></div>
+            </div>
+            <div class="ro" onclick="selR('tsuelo','elevado',this)">
+              <input type="radio" name="tsuelo" value="elevado">
+              <div><div class="rl">Suelo elevado</div><div class="rd">Forjado sanitario separado del terreno por cámara de aire (encofrado perdido, muros de ventilación).</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <label class="flabel">Tipo de intervención en el terreno</label>
+          <div class="rg" id="rg-tinterv">
+            <div class="ro" onclick="selR('tinterv','subbase',this)">
+              <input type="radio" name="tinterv" value="subbase">
+              <div><div class="rl">Sub-base</div><div class="rd">Se dispone capa granular de sub-base (zahorra, grava) bajo el suelo.</div></div>
+            </div>
+            <div class="ro" onclick="selR('tinterv','inyecciones',this)">
+              <input type="radio" name="tinterv" value="inyecciones">
+              <div><div class="rl">Inyecciones</div><div class="rd">Se realizan inyecciones de consolidación o impermeabilización en el terreno.</div></div>
+            </div>
+            <div class="ro" onclick="selR('tinterv','sininterv',this)">
+              <input type="radio" name="tinterv" value="sininterv">
+              <div><div class="rl">Sin intervención</div><div class="rd">No se realiza ninguna intervención previa en el terreno.</div></div>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-prim btn-full" onclick="calcSuelo()">Calcular</button>
+      </div>
+    </div>
+    <div id="res-suelos">
+      <div class="nores" id="nores-suelos">
+        <div class="nores-icon">◎</div>
+        Defina las condiciones del terreno y el tipo de suelo para obtener el grado de impermeabilidad y la composición de capas.
+      </div>
+      <div id="rp-suelos" style="display:none;">
+        <div class="grado-box">
+          <div class="gn" id="gnum-suelos">—</div>
+          <div class="gi">
+            <h3>Grado de impermeabilidad mínimo</h3>
+            <p id="gparam-suelos">—</p>
+            <small>Tabla 2.3 · CTE DB HS1</small>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Composición de capas requerida</div>
+          <div id="layers-suelos"></div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Condiciones normativas</div>
+          <div id="conds-suelos"></div>
+        </div>
+        <div class="just-panel vis" id="jp-suelos">
+          <div class="card">
+            <div class="ctitle">Justificación normativa</div>
+            <div class="just-text" id="jt-suelos"></div>
+            <button class="btn btn-sec" onclick="copyJ('jt-suelos',this)">📋 Copiar texto</button>
+            <span class="copy-ok" id="ck-jt-suelos">¡Copiado!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ REFERENCIA ═══════════ -->
+<section class="section" id="referencia">
+  <div class="section-head">
+    <h2>Tablas de referencia normativa</h2>
+    <p>Extracto de las principales tablas del CTE DB HS1 para consulta rápida.</p>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="ctitle">Tabla 2.5 — Grado de impermeabilidad mínimo de fachadas</div>
+    <table class="reftable">
+      <thead><tr><th>Zona pluviométrica</th><th class="g1">V1 — Exposición baja</th><th class="g3">V2 — Exposición media</th><th class="g5">V3 — Exposición alta</th></tr></thead>
+      <tbody>
+        <tr><td>I</td><td class="g1">1</td><td class="g2">2</td><td class="g3">3</td></tr>
+        <tr><td>II</td><td class="g2">2</td><td class="g3">3</td><td class="g4">4</td></tr>
+        <tr><td>III</td><td class="g3">3</td><td class="g4">4</td><td class="g5">5</td></tr>
+        <tr><td>IV</td><td class="g4">4</td><td class="g5">5</td><td class="g5">5</td></tr>
+        <tr><td>V</td><td class="g5">5</td><td class="g5">5</td><td class="g5">5</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="ctitle">Tabla 2.6 — Grado de exposición al viento</div>
+    <table class="reftable">
+      <thead><tr><th>Zona eólica</th><th>Entorno</th><th>H ≤ 15 m</th><th>15 &lt; H ≤ 40 m</th><th>H &gt; 40 m</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td>E0</td><td>V1</td><td>V2</td><td>V3</td></tr>
+        <tr><td>A</td><td>E1</td><td>V1</td><td>V1</td><td>V2</td></tr>
+        <tr><td>B</td><td>E0</td><td>V2</td><td>V2</td><td>V3</td></tr>
+        <tr><td>B</td><td>E1</td><td>V1</td><td>V2</td><td>V2</td></tr>
+        <tr><td>C</td><td>E0</td><td>V3</td><td>V3</td><td>V3</td></tr>
+        <tr><td>C</td><td>E1</td><td>V2</td><td>V2</td><td>V3</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="ctitle">Tabla 2.1 — Grado de impermeabilidad mínimo de muros</div>
+    <table class="reftable">
+      <thead><tr><th>Presencia de agua</th><th>Ks &gt; 10⁻⁵ cm/s (alta)</th><th>Ks &lt; 10⁻⁵ cm/s (baja)</th></tr></thead>
+      <tbody>
+        <tr><td>Baja</td><td class="g1">1</td><td class="g1">1</td></tr>
+        <tr><td>Media</td><td class="g3">2</td><td class="g1">1</td></tr>
+        <tr><td>Alta</td><td class="g4">3</td><td class="g3">2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="ctitle">Tabla 2.3 — Grado de impermeabilidad mínimo de suelos</div>
+    <table class="reftable">
+      <thead><tr><th>Presencia de agua</th><th>Ks &gt; 10⁻⁵ cm/s (alta)</th><th>Ks &lt; 10⁻⁵ cm/s (baja)</th></tr></thead>
+      <tbody>
+        <tr><td>Baja</td><td class="g1">1</td><td class="g1">1</td></tr>
+        <tr><td>Media</td><td class="g3">2</td><td class="g1">1</td></tr>
+        <tr><td>Alta</td><td class="g4">3</td><td class="g3">2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="twocol" style="margin-bottom:20px;">
+    <div class="card">
+      <div class="ctitle">Códigos de componentes — Fachadas (Tabla 2.7)</div>
+      <div id="full-legend-fachadas"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Códigos de componentes — Muros s/terreno (Tabla 2.2)</div>
+      <div id="full-legend-muros"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="ctitle">Zonas climáticas por provincia (referencia Apéndice B)</div>
+    <div style="margin-bottom:10px;font-size:11px;color:var(--text2);">
+      P = Zona pluviométrica &nbsp;|&nbsp; E = Zona eólica
+    </div>
+    <div class="pgrid" id="province-grid"></div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle">Pendientes mínimas de cubiertas (Tabla 2.10)</div>
+    <table class="reftable">
+      <thead><tr><th>Tipo de cobertura</th><th>Pendiente mínima</th><th>Pendiente máxima rec.</th></tr></thead>
+      <tbody>
+        <tr><td>Teja curva o mixta</td><td>30%</td><td>—</td></tr>
+        <tr><td>Teja plana</td><td>40%</td><td>—</td></tr>
+        <tr><td>Pizarra</td><td>60%</td><td>—</td></tr>
+        <tr><td>Zinc, cobre, plomo (juntas alzadas)</td><td>7%</td><td>—</td></tr>
+        <tr><td>Chapa de acero, aluminio (juntas alzadas)</td><td>7%</td><td>—</td></tr>
+        <tr><td>Panel sándwich</td><td>7%</td><td>—</td></tr>
+        <tr><td>Lámina impermeabilizante (cubierta plana)</td><td>1%</td><td>5% (transitable)</td></tr>
+        <tr><td>Cubierta ajardinada</td><td>1%</td><td>3%</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ RESUMEN / PDF ═══════════ -->
+<section class="section" id="resumen">
+  <div id="sum-content">
+    <!-- Built dynamically by buildSummary() -->
+  </div>
+</section>
+
+</main>
+
+<script>
+// ══════════ DATA ══════════
+
+const COMP_FACHADAS = {
+  R1:{label:'R1',name:'Resistencia a filtración del revestimiento exterior — Baja',color:'bR',
+    desc:'Revestimiento exterior continuo de mortero ordinario (espesor ≥ 10 mm), o revestimiento discontinuo sin cámara con junta de mortero ordinario (cerámica vista, piedra natural). Proporciona una primera barrera de resistencia baja frente a la penetración de agua.'},
+  R2:{label:'R2',name:'Resistencia a filtración del revestimiento exterior — Media',color:'bR',
+    desc:'Revestimiento exterior continuo de mortero de cemento o cal (espesor ≥ 15 mm), aplicado en al menos dos capas o monocapa con áridos seleccionados. Mortero M7,5 mínimo o revoco de cal grasa. Incluye aplacados cerámicos con junta sellada.'},
+  R3:{label:'R3',name:'Resistencia a filtración del revestimiento exterior — Alta',color:'bR',
+    desc:'Revestimiento exterior continuo de espesor ≥ 20 mm, aplicado en dos o más capas con malla de fibra de vidrio de refuerzo antiálcali embebida, o mortero impermeabilizante monocomponente. La última capa debe ser hidrófuga.'},
+  B1:{label:'B1',name:'Barrera contra la penetración de agua — Baja',color:'bB',
+    desc:'Constituida por la propia cámara de aire sin ventilar entre el revestimiento exterior y la hoja interior. La resistencia a la filtración la proporciona el conjunto constructivo, no un elemento específico. Mínimo 3 cm de cámara.'},
+  B2:{label:'B2',name:'Barrera contra la penetración de agua — Media',color:'bB',
+    desc:'Cámara de aire sin ventilar entre revestimiento y hoja interior, rellenada parcialmente con material no higroscópico (lana mineral, XPS). El material de relleno actúa como freno pero no como impermeabilizante absoluto.'},
+  B3:{label:'B3',name:'Barrera contra la penetración de agua — Alta',color:'bB',
+    desc:'Lámina impermeabilizante continua (bituminosa LBM, PVC, TPO, EPDM) adherida al soporte resistente, con solapes ≥ 10 cm soldados o termosoldados, o capa de mortero impermeabilizante de espesor ≥ 30 mm. Garantiza la estanqueidad aunque el revestimiento exterior falle.'},
+  C1:{label:'C1',name:'Cámara de aire no ventilada',color:'bC',
+    desc:'Cámara de aire entre el revestimiento exterior y la hoja interior, sin conexión con el exterior. Su función es retener el agua que penetra a través del revestimiento y evitar que llegue a la hoja interior. Anchura ≥ 3 cm.'},
+  C2:{label:'C2',name:'Cámara de aire ventilada',color:'bC',
+    desc:'Cámara de aire ventilada al exterior mediante aberturas en la parte superior (salida de aire caliente) e inferior (entrada de aire) del cerramiento. Superficie de ventilación mínima: 1.500 cm²/m lineal de fachada. La cara interior de la cámara lleva lámina impermeable para proteger la hoja interior. Es la solución más eficaz.'},
+  H1:{label:'H1',name:'Hidrofugación del soporte',color:'bH',
+    desc:'Tratamiento del soporte resistente (ladrillo, bloque, hormigón) con producto hidrófugo de silicona, siloxano, ester silícico o similar en solución acuosa o disolvente. Se aplica a brocha, rodillo o pulverizador en 1-2 manos, garantizando la penetración y el rechazo del agua sin obstruir los poros del material. Persistencia mínima comprobada 10 años.'},
+  J1:{label:'J1',name:'Juntas de mortero ordinario',color:'bJ',
+    desc:'Juntas de la obra de fábrica (ladrillo, bloque) ejecutadas con mortero ordinario (M5 o M7,5) sin tratamiento especial. Las juntas deben ser completas y sin oquedades. Admisible solo para grados de impermeabilidad bajos.'},
+  J2:{label:'J2',name:'Juntas de resistencia media',color:'bJ',
+    desc:'Juntas de mortero mejorado (M10 mínimo) o juntas dobles. Alternativamente: junta ordinaria + rejuntado posterior con lechada de cemento sin retracción o con mortero elástico de relleno. Se garantiza así la continuidad de la junta sin grietas ni oquedades.'},
+  J3:{label:'J3',name:'Juntas selladas con sellante elastomérico',color:'bJ',
+    desc:'Juntas entre piezas selladas con masilla elastomérica de poliuretano, poliurea, silicona neutra o polisulfuro, de clase F25 mínimo (movimiento admisible ±25%). Incluye imprimación adherente del soporte, filete de sellante y rodillo de apoyo de fondo de junta. Durabilidad garantizada ≥ 20 años.'},
+  N1:{label:'N1',name:'Revestimiento interior de resistencia baja',color:'bN',
+    desc:'Revestimiento interior continuo de mortero de yeso (guarnecido + enlucido) o mortero de cemento de espesor ≥ 10 mm, sin tratamiento impermeabilizante específico. Proporciona resistencia mínima al paso de humedad procedente del interior.'},
+  N2:{label:'N2',name:'Revestimiento interior de resistencia media',color:'bN',
+    desc:'Revestimiento interior continuo de mortero de cemento con aditivo hidrofugante (espesor ≥ 15 mm), o azulejo cerámico con junta sellada (cocina, baño). Impide el paso de la humedad interior y protege el soporte de la condensación superficial.'},
+  N3:{label:'N3',name:'Revestimiento interior de resistencia alta',color:'bN',
+    desc:'Revestimiento interior continuo de mortero impermeabilizante bicomponente (espesor ≥ 20 mm) o pintura impermeabilizante elastomérica en dos capas sobre revestimiento de mortero. Actúa como barrera de vapor y capa de impermeabilización interior de alta eficacia.'}
+};
+
+// Componentes MUROS — códigos exactos CTE DB HS1 Tabla 2.2
+const COMP_MUROS = {
+  // C) Constitución del muro
+  C1:{label:'C1',name:'Hormigón hidrófugo in situ',color:'bC',
+    desc:'Cuando el muro se construya in situ debe utilizarse hormigón con aditivo hidrófugo. Reduce la permeabilidad del hormigón endurecido y limita la absorción capilar. Se aplica a muros de hormigón ejecutados in situ (no a prefabricados ni a fábrica).'},
+  C2:{label:'C2',name:'Hormigón de consistencia fluida in situ',color:'bC',
+    desc:'Cuando el muro se construya in situ debe utilizarse hormigón de consistencia fluida (cono ≥ 15 cm). Garantiza el correcto llenado del encofrado sin coqueras, imprescindible en muros pantalla de hormigón continuo.'},
+  C3:{label:'C3',name:'Fábrica con materiales hidrofugados',color:'bC',
+    desc:'Cuando el muro sea de fábrica deben utilizarse bloques o ladrillos hidrofugados y mortero hidrófugo. Los materiales hidrofugados reducen la absorción capilar de la fábrica y limitan la filtración difusa de agua.'},
+  // I) Impermeabilización
+  I1:{label:'I1',name:'Impermeabilización con lámina o productos líquidos',color:'bI',
+    desc:'La impermeabilización se realiza mediante lámina impermeabilizante (bituminosa LBM, PVC, EPDM) o mediante la aplicación in situ de productos líquidos impermeabilizantes (polímeros acrílicos, caucho acrílico, resinas sintéticas o poliéster). En muros pantalla construidos con excavación, la impermeabilización se consigue con lodos bentoníticos.'},
+  I2:{label:'I2',name:'Lámina impermeabilizante adherida interiormente',color:'bI',
+    desc:'Si se impermeabiliza el muro interiormente, la lámina debe ser adherida al soporte. La adherencia es necesaria para que la lámina soporte la presión hidrostática negativa (empuje del agua desde el exterior hacia el interior).'},
+  I3:{label:'I3',name:'Protección de la impermeabilización exterior',color:'bI',
+    desc:'Si se impermeabiliza exteriormente con lámina adherida, debe disponerse una capa antipunzonamiento en su cara exterior. Si la lámina no es adherida, deben colocarse dos capas separadoras. Protege la lámina de daños durante el relleno y de agresiones mecánicas del terreno.'},
+  // D) Drenaje
+  D1:{label:'D1',name:'Capa drenante',color:'bD',
+    desc:'Capa drenante en el trasdós del muro: lámina nodular de HDPE con geotextil filtrante incorporado, o capa de grava lavada (Ø 20-40 mm) con geotextil separador. Permite que el agua del terreno escurra libremente hacia la base sin presionar el muro.'},
+  D2:{label:'D2',name:'Tubo drenante en la base del muro',color:'bD',
+    desc:'Tubo drenante perforado (PVC corrugado DN 110 mínimo) colocado en la parte inferior de la capa drenante, en la base del muro con pendiente hacia la arqueta de recogida. Recoge y conduce el agua drenada.'},
+  D3:{label:'D3',name:'Arqueta de recogida a pie de muro',color:'bD',
+    desc:'Arqueta de recogida a pie del muro que recibe el agua conducida por el tubo drenante. Permite su evacuación hacia la red de saneamiento y posibilita el mantenimiento del sistema de drenaje.'},
+  D4:{label:'D4',name:'Canaleta de recogida en encuentro muro-suelo',color:'bD',
+    desc:'Canaleta de recogida dispuesta en el encuentro de la cara inferior del muro con el suelo o con la solera del local. Recoge el agua que ha atravesado el muro parcialmente estanco y la conduce al sistema de evacuación.'},
+  D5:{label:'D5',name:'Red de evacuación de aguas',color:'bD',
+    desc:'Red de evacuación del agua recogida en la canaleta, que la conduce al exterior o a la red de saneamiento del edificio.'},
+  // V) Ventilación
+  V1:{label:'V1',name:'Ventilación de la cámara de aire',color:'bV',
+    desc:'Ventilación de la cámara de aire que se forma entre el trasdós del muro y el trasdosado interior (tabique palomero o trasdosado). La ventilación permite el secado por evaporación de la humedad que penetra a través del muro. Requiere aberturas de entrada y salida de aire.'}
+};
+
+// Tabla 2.5 - Grado de impermeabilidad mínimo fachadas
+const GRADO_FAC = {
+  I:  {V1:1,V2:2,V3:3},
+  II: {V1:2,V2:3,V3:4},
+  III:{V1:3,V2:4,V3:5},
+  IV: {V1:4,V2:5,V3:5},
+  V:  {V1:5,V2:5,V3:5}
+};
+
+// Tabla 2.6 - Grado de exposición al viento
+const EXP_VIENTO = {
+  'A_E0':{15:'V1',40:'V2',99:'V3'},
+  'A_E1':{15:'V1',40:'V1',99:'V2'},
+  'B_E0':{15:'V2',40:'V2',99:'V3'},
+  'B_E1':{15:'V1',40:'V2',99:'V2'},
+  'C_E0':{15:'V3',40:'V3',99:'V3'},
+  'C_E1':{15:'V2',40:'V2',99:'V3'}
+};
+
+// Tabla 2.7 - Soluciones fachada (datos exactos CTE DB HS1)
+// Nota (1): Cuando la fachada sea de una sola hoja, debe utilizarse C2 en lugar de C1.
+const SOLS_FAC = {
+  1:[
+    // Con revestimiento exterior
+    {id:'f1a',c:['R1','C1'],
+     d:'[Con rev. exterior] Revestimiento exterior bajo + cámara de aire no ventilada'},
+    // Sin revestimiento exterior
+    {id:'f1b',c:['C1','J1','N1'],
+     d:'[Sin rev. exterior] Cámara no ventilada + juntas de mortero ordinario + revestimiento interior bajo'}
+  ],
+  2:[
+    // Con revestimiento exterior (ídem grado 1, cumple también ≤2)
+    {id:'f2a',c:['R1','C1'],
+     d:'[Con rev. exterior] Revestimiento exterior bajo + cámara de aire no ventilada'},
+    // Sin revestimiento exterior — 4 soluciones alternativas
+    {id:'f2b',c:['B1','C1','J1','N1'],
+     d:'[Sin rev. exterior] Barrera baja + cámara no ventilada + juntas ordinarias + revest. interior bajo'},
+    {id:'f2c',c:['C2','H1','J1','N1'],
+     d:'[Sin rev. exterior] Cámara ventilada + hidrofugación + juntas ordinarias + revest. interior bajo'},
+    {id:'f2d',c:['C2','J2','N2'],
+     d:'[Sin rev. exterior] Cámara ventilada + juntas de resistencia media + revest. interior medio'},
+    {id:'f2e',c:['C1','H1','J2','N2'],
+     d:'[Sin rev. exterior] Cámara no ventilada + hidrofugación + juntas resistencia media + revest. interior medio'}
+  ],
+  3:[
+    // Con revestimiento exterior — 2 soluciones
+    {id:'f3a',c:['R1','B1','C1'],
+     d:'[Con rev. exterior] Revestimiento bajo + barrera baja + cámara no ventilada'},
+    {id:'f3b',c:['R1','C2'],
+     d:'[Con rev. exterior] Revestimiento exterior bajo + cámara ventilada'},
+    // Sin revestimiento exterior — 4 soluciones
+    {id:'f3c',c:['B2','C1','J1','N1'],
+     d:'[Sin rev. exterior] Barrera media + cámara no ventilada + juntas ordinarias + revest. interior bajo'},
+    {id:'f3d',c:['B1','C2','H1','J1','N1'],
+     d:'[Sin rev. exterior] Barrera baja + cámara ventilada + hidrofugación + juntas ordinarias + revest. interior bajo'},
+    {id:'f3e',c:['B1','C2','J2','N2'],
+     d:'[Sin rev. exterior] Barrera baja + cámara ventilada + juntas resistencia media + revest. interior medio'},
+    {id:'f3f',c:['B1','C1','H1','J2','N2'],
+     d:'[Sin rev. exterior] Barrera baja + cámara no ventilada + hidrofugación + juntas resistencia media + revest. interior medio'}
+  ],
+  4:[
+    // Con revestimiento exterior — 3 soluciones
+    {id:'f4a',c:['R1','B2','C1'],
+     d:'[Con rev. exterior] Revestimiento bajo + barrera media + cámara no ventilada'},
+    {id:'f4b',c:['R1','B1','C2'],
+     d:'[Con rev. exterior] Revestimiento bajo + barrera baja + cámara ventilada'},
+    {id:'f4c',c:['R2','C1'],
+     d:'[Con rev. exterior] Revestimiento exterior medio + cámara no ventilada'},
+    // Sin revestimiento exterior — 3 soluciones
+    {id:'f4d',c:['B2','C2','H1','J1','N1'],
+     d:'[Sin rev. exterior] Barrera media + cámara ventilada + hidrofugación + juntas ordinarias + revest. interior bajo'},
+    {id:'f4e',c:['B2','C2','J2','N2'],
+     d:'[Sin rev. exterior] Barrera media + cámara ventilada + juntas resistencia media + revest. interior medio'},
+    {id:'f4f',c:['B2','C1','H1','J2','N2'],
+     d:'[Sin rev. exterior] Barrera media + cámara no ventilada + hidrofugación + juntas resistencia media + revest. interior medio'}
+  ],
+  5:[
+    // Con revestimiento exterior — 4 soluciones
+    {id:'f5a',c:['R3','C1'],
+     d:'[Con rev. exterior] Revestimiento exterior alto + cámara no ventilada'},
+    {id:'f5b',c:['B3','C1'],
+     d:'[Con rev. exterior] Lámina impermeabilizante (barrera alta) + cámara no ventilada'},
+    {id:'f5c',c:['R1','B2','C2'],
+     d:'[Con rev. exterior] Revestimiento bajo + barrera media + cámara ventilada'},
+    {id:'f5d',c:['R2','B1','C1'],
+     d:'[Con rev. exterior] Revestimiento medio + barrera baja + cámara no ventilada'},
+    // Sin revestimiento exterior — 1 solución
+    {id:'f5e',c:['B3','C1'],
+     d:'[Sin rev. exterior] Lámina impermeabilizante (barrera alta) + cámara no ventilada'}
+  ]
+};
+
+// Tabla 2.1 - Grado impermeabilidad mínimo MUROS
+// 3 niveles de permeabilidad según CTE DB HS1
+const GRADO_MURO = {
+  //             k1=Ks≥10⁻²  k2=10⁻⁵<Ks<10⁻²  k3=Ks≤10⁻⁵
+  alta:  {k1:5, k2:5, k3:4},
+  media: {k1:3, k2:2, k3:2},
+  baja:  {k1:1, k2:1, k3:1}
+};
+
+// Tabla 2.2 - Condiciones de las soluciones de muro
+// Por tipo de muro y tipo de impermeabilización.
+// null = solución no aceptable (celda sombreada en la tabla)
+// [] = no se exige ninguna condición (celda en blanco)
+// Objetos con {c, nota} para soluciones con restricción de número de sótanos
+const SOLS_MURO = {
+  gravedad:{
+    1:{
+      interior:{c:['I2','D1','D5'],d:'Impermeabilización interior con lámina adherida + capa drenante + red de evacuación'},
+      exterior:{c:['I2','I3','D1','D5'],d:'Impermeabilización exterior con lámina + antipunzonamiento + capa drenante + red evacuación'},
+      parcial:{c:['V1'],d:'Cámara de aire ventilada (muro parcialmente estanco)'}
+    },
+    2:{
+      interior:{c:['C3','I1','D1','D3'],nota:'No aceptable para más de 3 sótanos',d:'Fábrica hidrofugada + impermeabilización + capa drenante + arqueta'},
+      exterior:{c:['I1','I3','D1','D3'],d:'Impermeabilización exterior + antipunzonamiento + capa drenante + arqueta'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    },
+    3:{
+      interior:{c:['C3','I1','D1','D3'],nota:'No aceptable para más de 3 sótanos',d:'Fábrica hidrofugada + impermeabilización + capa drenante + arqueta'},
+      exterior:{c:['I1','I3','D1','D3'],d:'Impermeabilización exterior + antipunzonamiento + capa drenante + arqueta'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    },
+    4:{
+      interior:null,
+      exterior:{c:['I1','I3','D1','D3'],d:'Impermeabilización exterior + antipunzonamiento + capa drenante + arqueta'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    },
+    5:{
+      interior:null,
+      exterior:{c:['I1','I3','D1','D2','D3'],d:'Impermeabilización exterior + antipunzonamiento + capa drenante + tubo drenante + arqueta'},
+      parcial:{c:['D4','V1'],nota:'No aceptable para más de 1 sótano',d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    }
+  },
+  flexo:{
+    1:{
+      interior:{c:['C1','I2','D1','D5'],d:'Hormigón hidrófugo + lámina adherida interior + capa drenante + red evacuación'},
+      exterior:{c:['I2','I3','D1','D5'],d:'Lámina exterior + antipunzonamiento + capa drenante + red evacuación'},
+      parcial:{c:['V1'],d:'Cámara de aire ventilada (muro parcialmente estanco)'}
+    },
+    2:{
+      interior:{c:['C1','C3','I1','D1','D3'],d:'Hormigón hidrófugo + fábrica hidrofugada + impermeabilización + drenante + arqueta'},
+      exterior:{c:['I1','I3','D1','D3'],d:'Impermeabilización exterior + antipunzonamiento + capa drenante + arqueta'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    },
+    3:{
+      interior:{c:['C1','C3','I1','D1','D3'],nota:'No aceptable para más de 2 sótanos',d:'Hormigón hidrófugo + fábrica hidrofugada + impermeabilización + drenante + arqueta'},
+      exterior:{c:['I1','I3','D1','D3'],d:'Impermeabilización exterior + antipunzonamiento + capa drenante + arqueta'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    },
+    4:{
+      interior:null,
+      exterior:{c:['I1','I3','D1','D3'],d:'Impermeabilización exterior + antipunzonamiento + capa drenante + arqueta'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    },
+    5:{
+      interior:null,
+      exterior:{c:['I1','I3','D1','D2','D3'],d:'Impermeabilización exterior + antipunzonamiento + drenante + tubo drenante + arqueta'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    }
+  },
+  pantalla:{
+    1:{
+      interior:{c:['C2','I2','D1','D5'],d:'Hormigón fluido + lámina adherida interior + capa drenante + red evacuación'},
+      exterior:{c:['C2','I2','D1','D5'],d:'Hormigón fluido + lámina exterior + capa drenante + red evacuación'},
+      parcial:{c:[],d:'No se exige condición para muro pantalla grado 1 parcialmente estanco'}
+    },
+    2:{
+      interior:{c:['C1','C2','I1'],d:'Hormigón hidrófugo + hormigón fluido + impermeabilización'},
+      exterior:{c:['C2','I1'],d:'Hormigón de consistencia fluida + impermeabilización'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    },
+    3:{
+      interior:{c:['C1','C2','I1'],d:'Hormigón hidrófugo + hormigón fluido + impermeabilización'},
+      exterior:{c:['C2','I1'],d:'Hormigón de consistencia fluida + impermeabilización'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    },
+    4:{
+      interior:{c:['C1','C2','I1'],d:'Hormigón hidrófugo + hormigón fluido + impermeabilización'},
+      exterior:{c:['C2','I1'],d:'Hormigón de consistencia fluida + impermeabilización'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    },
+    5:{
+      interior:{c:['C1','C2','I1'],d:'Hormigón hidrófugo + hormigón fluido + impermeabilización'},
+      exterior:{c:['C2','I1'],d:'Hormigón de consistencia fluida + impermeabilización'},
+      parcial:{c:['D4','V1'],d:'Canaleta en encuentro muro-suelo + cámara ventilada'}
+    }
+  }
+};
+
+// Tabla 2.3 - Grado de impermeabilidad mínimo SUELOS
+// Solo 2 niveles de permeabilidad (a diferencia de muros que tiene 3)
+const GRADO_SUELO = {
+  //             Ks>10⁻⁵  Ks≤10⁻⁵
+  alta:  {alta:5, baja:4},
+  media: {alta:4, baja:3},
+  baja:  {alta:2, baja:1}
+};
+
+// Componentes SUELOS — códigos exactos CTE DB HS1 Tabla 2.4
+const COMP_SUELOS = {
+  C1:{label:'C1',name:'Hormigón hidrófugo de elevada compacidad',color:'bC',
+    desc:'El suelo construido in situ debe emplear hormigón hidrófugo de elevada compacidad. Reduce la permeabilidad y la absorción capilar del elemento estructural, siendo la primera barrera contra la humedad.'},
+  C2:{label:'C2',name:'Hormigón de retracción moderada',color:'bC',
+    desc:'El suelo construido in situ debe utilizar hormigón de retracción moderada. Limita la fisuración por retracción del hormigón joven, que podría generar vías de entrada de agua.'},
+  C3:{label:'C3',name:'Hidrofugación complementaria de la superficie',color:'bC',
+    desc:'Hidrofugación complementaria del suelo mediante la aplicación de un producto líquido colmatador de poros sobre la superficie terminada. Cierra la porosidad superficial y reduce la absorción de humedad.'},
+  I1:{label:'I1',name:'Impermeabilización exterior bajo el suelo',color:'bI',
+    desc:'El suelo se impermeabiliza exteriormente mediante la disposición de una lámina sobre la capa base de regulación del terreno, antes de hormigonar. Si la lámina es adherida, debe disponerse una capa antipunzonamiento encima.'},
+  I2:{label:'I2',name:'Impermeabilización interior sobre el suelo',color:'bI',
+    desc:'La lámina impermeabilizante se coloca en la cara interior (superior) del suelo. Si no es adherida, deben colocarse capas separadoras.'},
+  D1:{label:'D1',name:'Capa drenante bajo el suelo',color:'bD',
+    desc:'Capa drenante bajo el suelo: lámina nodular de HDPE con geotextil filtrante, o capa de grava lavada con geotextil. Evacúa el agua del terreno antes de que contacte con el elemento de suelo.'},
+  D2:{label:'D2',name:'Lámina filtrante del terreno',color:'bD',
+    desc:'Lámina geotextil filtrante que impide que las partículas finas del terreno migren y colmaten la capa drenante, manteniendo su eficacia a largo plazo.'},
+  D3:{label:'D3',name:'Tubo drenante de recogida',color:'bD',
+    desc:'Tubo drenante perforado en la base de la capa drenante para la recogida y conducción del agua hacia el sistema de evacuación.'},
+  D4:{label:'D4',name:'Sistema de evacuación de aguas',color:'bD',
+    desc:'Sistema de evacuación del agua recogida por el drenaje (arqueta, bomba de achique o red de saneamiento). Obligatorio cuando no es posible la evacuación por gravedad.'},
+  S1:{label:'S1',name:'Sellado de juntas entre suelo y muro',color:'bS',
+    desc:'Sellado de la junta entre el suelo y el muro con banda elástica embebida en el hormigón a ambos lados de la junta (suelo y muro hormigonados in situ), o mediante perfil expansivo en junta con muro prefabricado o pantalla.'},
+  S2:{label:'S2',name:'Continuidad de la impermeabilización en encuentros',color:'bS',
+    desc:'La impermeabilización del suelo debe ser continua con la del muro en el encuentro entre ambos elementos. Se garantiza mediante el solape o soldadura de las láminas y los refuerzos en ángulos y esquinas.'},
+  S3:{label:'S3',name:'Protección y terminación de la impermeabilización',color:'bS',
+    desc:'La lámina impermeabilizante debe protegerse mecánicamente con capa de mortero de regularización, geotextil de protección, o capa de hormigón de limpieza, según su posición.'},
+  P1:{label:'P1',name:'Solera impermeabilizada por el exterior (bajo la solera)',color:'bP',
+    desc:'La solera se impermeabiliza por su cara exterior (inferior), colocando la lámina entre el terreno y el hormigón, de forma que la presión del agua empuje la lámina contra la solera reforzando la estanqueidad.'},
+  P2:{label:'P2',name:'Terminación superficial hidrófuga de la solera',color:'bP',
+    desc:'La cara superior de la solera recibe un tratamiento hidrófugo superficial (colmatador de poros o pintura impermeabilizante) que actúa como segunda barrera contra la humedad ascendente.'},
+  V1:{label:'V1',name:'Cámara de aire ventilada bajo el suelo elevado',color:'bV',
+    desc:'Ventilación de la cámara de aire que separa el suelo del terreno en los suelos elevados (forjado sanitario). Requiere aberturas de ventilación en los muros perimetrales para renovación del aire y secado de la humedad.'}
+};
+
+// Tabla 2.4 - Condiciones de las soluciones de suelo
+// SOLS_SUELO[tipo_muro][tipo_suelo][tipo_interv][grado]
+// null = solución no aceptable (celda sombreada)
+// [] = no se exige condición (celda en blanco)
+const SOLS_SUELO = {
+  // ─── Muro flexorresistente o de gravedad ───
+  flexo:{
+    elevado:{
+      subbase:{
+        1:[],
+        2:['C2'],
+        3:['I2','S1','S3','V1'],
+        4:['I2','S1','S3','V1'],
+        5:['I2','S1','S3','V1','D3']
+      },
+      inyecciones:{
+        1:[],
+        2:[],
+        3:['I2','S1','S3','V1'],
+        4:['I2','S1','S3','V1'],
+        5:['I2','P1','S1','S3','V1','D3']
+      },
+      sininterv:{
+        1:['V1'],
+        2:['V1'],
+        3:['I2','S1','S3','V1','D3','D4'],
+        4:['I2','S1','S3','V1','D4'],
+        5:null
+      }
+    },
+    solera:{
+      subbase:{
+        1:['D1'],
+        2:['C2','C3'],
+        3:['C1','C2','C3','I2','D1','D2','S1','S2','S3'],
+        4:['C2','C3','I2','D1','D2','P2','S1','S2','S3'],
+        5:['C2','C3','I2','D1','D2','P2','S1','S2','S3']
+      },
+      inyecciones:{
+        1:[],
+        2:['C2','C3','D1'],
+        3:['C1','C2','C3','I2','D1','D2','S1','S2','S3'],
+        4:['C2','C3','I2','D1','D2','P2','S1','S2','S3'],
+        5:['C2','C3','I1','I2','D1','D2','P1','P2','S2','S3']
+      },
+      sininterv:{
+        1:['C2','C3','D1'],
+        2:['C2','C3','D1'],
+        3:['C1','C2','C3','I2','D1','D2','S1','S2','S3'],
+        4:['I1','I2','D1','D2','D3','D4','P1','P2','S1','S2','S3'],
+        5:null
+      }
+    },
+    placa:{
+      subbase:{
+        1:[],
+        2:['C2','C3'],
+        3:['C1','C2','C3','I2','D1','D2','S1','S2','S3'],
+        4:['C2','C3','I2','D1','D2','P2','S1','S2','S3'],
+        5:['C2','C3','D1','D2','I2','P2','S1','S2','S3']
+      },
+      inyecciones:{
+        1:['D1'],
+        2:['C2','C3','D1'],
+        3:['C1','C2','C3','I2','D1','D2','S1','S2','S3'],
+        4:['C2','C3','I2','D1','D2','P2','S1','S2','S3'],
+        5:['C2','C3','I1','I2','D1','D2','P1','P2','S2','S3']
+      },
+      sininterv:{
+        1:['C2','C3','D1'],
+        2:['C2','C3','D1'],
+        3:['C1','C2','I2','D1','D2','S1','S2','S3'],
+        4:['C2','C3','I2','D1','D2','D3','D4','P1','S2','S3'],
+        5:['C1','C2','C3','I1','I2','D1','D2','D3','D4','P1','P2','S2','S3']
+      }
+    }
+  },
+  // ─── Muro pantalla ───
+  pantalla:{
+    elevado:{
+      subbase:{
+        1:[],
+        2:[],
+        3:['S3','V1'],
+        4:['S3','V1'],
+        5:['S3','V1']
+      },
+      inyecciones:{
+        1:[],
+        2:[],
+        3:['S3','V1'],
+        4:['D4','S3','V1'],
+        5:['D3','D4','S3','V1']
+      },
+      sininterv:{
+        1:['V1'],
+        2:['V1'],
+        3:['S3','V1'],
+        4:['D3','D4','S3','V1'],
+        5:null
+      }
+    },
+    solera:{
+      subbase:{
+        1:['D1'],
+        2:[],
+        3:['C1','C2','C3','D1','P2','S2','S3'],
+        4:['C1','C3','I1','D1','S2','S3'],
+        5:['C2','C3','D1','P2','S2','S3']
+      },
+      inyecciones:{
+        1:[],
+        2:['C2','C3'],
+        3:['C1','C2','C3','D1','D4','P2','S2','S3'],
+        4:['C2','C3','D1','S2','S3'],
+        5:['C2','C3','D1','P2','S2','S3']
+      },
+      sininterv:{
+        1:['C2','C3','D1'],
+        2:['C2','C3','D1'],
+        3:['C1','C2','C3','D1','D2','P2','S2','S3'],
+        4:['C2','C3','D1','S2','S3'],
+        5:['I1','D1','D2','P2','S2','S3']
+      }
+    },
+    placa:{
+      subbase:{
+        1:[],
+        2:[],
+        3:['C1','C2','C3','D1','D4','P2','S2','S3'],
+        4:['C2','C3','S3','D2','S2','S3'],
+        5:['C2','C3','P2','S2','S3']
+      },
+      inyecciones:{
+        1:[],
+        2:['C2','C3','D1'],
+        3:['C1','C2','C3','D1','D2','P2','S2','S3'],
+        4:['C2','C3','D2','S2','S3'],
+        5:['C2','C3','P2','S2','S3']
+      },
+      sininterv:{
+        1:['C2','C3','D1'],
+        2:['C2','C3','D1'],
+        3:['C1','C2','C3','D1','D2','D3','D4','P2','S2','S3'],
+        4:['I1','D1','D4','P1','S2','S3'],
+        5:['I1','D1','D2','D3','D4','P1','P2','S2','S3']
+      }
+    }
+  }
+};
+
+// ══════════ CUBIERTA DATA ══════════
+const CUBIERTAS_DATA = {
+  'plana-no-trans-conv':{
+    title:'Cubierta plana no transitable · Convencional',
+    ref:'HS1 § 2.4.2 · Tabla 2.12',
+    layers:[
+      {n:1,code:'SR',name:'Soporte resistente',color:'#8B7355',desc:'Forjado de hormigón armado, losa maciza o nervada. Pendiente según formación.'},
+      {n:2,code:'BV',name:'Barrera de vapor',color:'#4a9eff',desc:'Lámina de polietileno 0,15 mm o emulsión asfáltica. OBLIGATORIA cuando la HR interior supere el 70% (piscinas, cocinas industriales, lavanderías). Recomendable en cualquier caso.'},
+      {n:3,code:'FP',name:'Formación de pendientes',color:'#9e9e9e',desc:'Hormigón aligerado con árido volcánico o perlita, mortero de cemento aireado o casetones cerámicos. Pendiente mínima 1% hacia los puntos de recogida. Máximo 5% para uso no transitable.'},
+      {n:4,code:'AT',name:'Aislamiento térmico',color:'#ffd54f',desc:'XPS, EPS, lana mineral (MW) o PIR, según cálculo CTE DB HE. Espesor según zona climática. Densidad mínima 25 kg/m³ (EPS) o 30 kg/m³ (MW).'},
+      {n:5,code:'CS',name:'Capa separadora inferior',color:'#b0bec5',desc:'Geotextil de poliéster o PP de 100-150 g/m² entre aislamiento e impermeabilización. Evita incompatibilidades químicas y punzonamiento.'},
+      {n:6,code:'IMP',name:'Impermeabilización',color:'#ef5350',desc:'LBM-40/G-FP (betún modificado SBS + armadura FP). Una sola capa suficiente para no transitable. Solapes ≥ 10 cm soldados. Refuerzos en encuentros con paramentos y en sumideros.'},
+      {n:7,code:'CS',name:'Capa separadora superior',color:'#b0bec5',desc:'Geotextil de protección 150-200 g/m² entre lámina y capa de protección.'},
+      {n:8,code:'CP',name:'Capa de protección',color:'#78909c',desc:'Grava rodada lavada Ø 16-32 mm, espesor ≥ 50 mm. O baldosas de hormigón sobre lecho de gravilla. Protege la lámina de UV, impactos y dilataciones térmicas.'}
+    ],
+    conds:[
+      {t:'Pendiente mínima',d:'1% hacia sumideros o canalones. Recomendable 2-3% para drenaje ágil.'},
+      {t:'Sumideros',d:'Con campana de recogida y cazoleta de sellado. Distancia ≤ 15 m entre sumideros. Refuerzo de lámina en 50 cm de radio.'},
+      {t:'Encuentro con paramento',d:'La lámina sube al menos 20 cm sobre el nivel de la capa de protección. Remate con perfil metálico o tapajuntas.'},
+      {t:'Juntas de dilatación',d:'Cada 15 m o en cambios de dirección. La lámina forma un pliegue suficiente para absorber el movimiento.'},
+      {t:'Ventilación',d:'Incorporar aspiradores estáticos o dinámicos en cubiertas con área > 100 m² para evitar ampollamiento.'}
+    ]
+  },
+  'plana-no-trans-inv':{
+    title:'Cubierta plana no transitable · Invertida',
+    ref:'HS1 § 2.4.2 · Tabla 2.12',
+    layers:[
+      {n:1,code:'SR',name:'Soporte resistente',color:'#8B7355',desc:'Forjado de hormigón. Las pendientes pueden ser estructurales o formadas.'},
+      {n:2,code:'FP',name:'Formación de pendientes',color:'#9e9e9e',desc:'Mínimo 1%. En sistema invertido puede hacerse con el propio hormigón estructural.'},
+      {n:3,code:'IMP',name:'Impermeabilización',color:'#ef5350',desc:'LBM-40/G-FP adherida directamente al soporte. Al estar protegida por el aislamiento, queda al abrigo de los choques térmicos — esta es la gran ventaja del sistema invertido.'},
+      {n:4,code:'CS',name:'Capa separadora / filtrante inferior',color:'#b0bec5',desc:'Geotextil de 150-200 g/m² entre impermeabilización y aislamiento. Permite que el agua circule libremente hacia los sumideros.'},
+      {n:5,code:'AT',name:'Aislamiento térmico',color:'#ffd54f',desc:'Obligatoriamente XPS (poliestireno extruido), único aislante resistente al agua permanente. El espesor se calcula con corrección por enfriamiento debajo del aislante (Δu o método ETAG 031). La densidad mínima depende de la carga de la capa de protección.'},
+      {n:6,code:'CF',name:'Capa filtrante superior',color:'#b0bec5',desc:'Geotextil de 200 g/m² sobre el aislamiento. Impide que los finos de la capa de protección obstruyan la circulación del agua.'},
+      {n:7,code:'CP',name:'Capa de protección',color:'#78909c',desc:'Grava rodada ≥ 50 mm, o losas de hormigón sobre plots (mín. 50 kg/m²) para mantener el XPS en posición. El peso debe verificarse contra la flotación del aislante.'}
+    ],
+    conds:[
+      {t:'Aislante obligatorio',d:'Solo XPS. El EPS, MW o PIR no son aptos en sistema invertido por su captación de agua.'},
+      {t:'Corrección de espesor por lluvia',d:'El espesor del XPS calculado según HE1 debe incrementarse un 10-20% o calcularse según ETAG 031 para compensar el enfriamiento por el agua que escurre bajo el aislante.'},
+      {t:'Pendiente mínima',d:'1% garantizando que el agua llega siempre a los sumideros y no queda retenida bajo el aislante.'},
+      {t:'Peso de protección',d:'Verificar que el peso de la capa de protección (grava o losas) es suficiente para evitar el desplazamiento del XPS por flotación.'},
+      {t:'No requiere barrera de vapor',d:'En sistema invertido la impermeabilización actúa también como barrera de vapor al estar directamente sobre el soporte.'}
+    ]
+  },
+  'plana-trans-priv-conv':{
+    title:'Cubierta plana transitable peatonal privada · Convencional',
+    ref:'HS1 § 2.4.2',
+    layers:[
+      {n:1,code:'SR',name:'Soporte resistente',color:'#8B7355',desc:'Forjado dimensionado para cargas de uso peatonal (mínimo 2 kN/m²).'},
+      {n:2,code:'BV',name:'Barrera de vapor',color:'#4a9eff',desc:'Lámina de PE de 0,15 mm o emulsión asfáltica. Recomendable siempre en terraza habitable.'},
+      {n:3,code:'FP',name:'Formación de pendientes',color:'#9e9e9e',desc:'Pendiente mínima 1%, máxima recomendable 3% (mayor pendiente dificulta el tránsito). Hormigón aligerado o mortero de pendiente.'},
+      {n:4,code:'AT',name:'Aislamiento térmico',color:'#ffd54f',desc:'XPS de alta densidad (≥ 30 kg/m³), EPS-200, PIR o similar. Espesor según CTE DB HE1. Debe soportar las cargas del solado.'},
+      {n:5,code:'CS',name:'Capa separadora',color:'#b0bec5',desc:'Geotextil ≥ 150 g/m².'},
+      {n:6,code:'IMP',name:'Impermeabilización',color:'#ef5350',desc:'Doble lámina recomendada para uso transitable: LBM-30/G-FP + LBM-40/G-FP. Primera capa no adherida (flotante), segunda adherida. Solapes en la misma vertical ≥ 15 cm. Refuerzos meticulosos en sumideros y encuentros.'},
+      {n:7,code:'CS',name:'Capa separadora',color:'#b0bec5',desc:'Geotextil de protección ≥ 200 g/m². Separa la lámina del solado.'},
+      {n:8,code:'CP',name:'Solado',color:'#78909c',desc:'Baldosas de hormigón o cerámica exterior sobre lecho de mortero de agarre (espesor ≥ 3 cm), o sobre plots regulables separados ≥ 5 mm con junta abierta de drenaje. Material antideslizante clase 3 (R11) mínimo en zonas húmedas.'}
+    ],
+    conds:[
+      {t:'Pendiente',d:'Mínimo 1%, máximo 3% para garantizar evacuación sin dificultar el tránsito.'},
+      {t:'Sistema de evacuación',d:'Sumideros sifónicos con rejilla antirreflejo. Canalón perimetral si el sistema es de junta abierta. Comprobación hidráulica obligatoria.'},
+      {t:'Solado',d:'Resistencia al deslizamiento mínima clase R11 (baldosa antideslizante). Juntas de dilatación del solado cada 4-5 m, coincidentes con las de la impermeabilización.'},
+      {t:'Encuentro con fachada',d:'La impermeabilización debe subir al menos 20 cm sobre el solado terminado. El rodapié garantiza la estanqueidad en este punto crítico.'},
+      {t:'Acceso',d:'Si hay acceso regular: prever puerta o ventana sin umbral, con el nivel del solado a ≥ 15 cm por debajo del interior para evitar entrada de agua.'}
+    ]
+  },
+  'plana-jardin-conv':{
+    title:'Cubierta plana ajardinada (verde) · Convencional',
+    ref:'HS1 § 2.4.2 · UNE-EN ISO 11925',
+    layers:[
+      {n:1,code:'SR',name:'Soporte resistente',color:'#8B7355',desc:'Losa de hormigón armado calculada para soportar el peso del sustrato saturado. Extensiva: +100-150 kg/m². Intensiva: +300-700 kg/m². Verificar el forjado con ingeniero estructural.'},
+      {n:2,code:'BV',name:'Barrera de vapor',color:'#4a9eff',desc:'Lámina de polietileno o emulsión asfáltica. Necesaria siempre en cubiertas ajardinadas por la permanente presencia de humedad.'},
+      {n:3,code:'FP',name:'Formación de pendientes',color:'#9e9e9e',desc:'Pendiente mínima 1%, máxima recomendable 3% para mantener el sustrato vegetal en posición. Hormigón aligerado.'},
+      {n:4,code:'AT',name:'Aislamiento térmico',color:'#ffd54f',desc:'XPS o PIR de alta densidad. Espesor según CTE DB HE1 con corrección por sistema invertido si procede.'},
+      {n:5,code:'IMP-AR',name:'Impermeabilización antirraíces',color:'#ef5350',desc:'Sistema bicapa con tratamiento antirraíces: LBM de betún oxidado + LBM con armadura de FV antirraíces certificada (CEN/TR 15787) — o lámina de polietileno de alta densidad HDPE de 2 mm. Las raíces de vegetación, especialmente árboles, pueden perforar láminas no protegidas. Solapes ≥ 20 cm termosoldados.'},
+      {n:6,code:'CD',name:'Capa drenante',color:'#2dd4a0',desc:'Lámina nodular HDPE con nódulos ≥ 20 mm, resistencia a compresión ≥ 150 kN/m², con geotextil filtrante ≥ 150 g/m² incorporado en la cara superior. Capacidad de almacenamiento de agua ≥ 7 l/m² para el riego natural. Tubo drenante en el perímetro.'},
+      {n:7,code:'CF',name:'Capa filtrante',color:'#b0bec5',desc:'Geotextil de alta resistencia ≥ 200 g/m² entre drenaje y sustrato. Evita que los finos del sustrato colmaten los nódulos de drenaje.'},
+      {n:8,code:'SV',name:'Sustrato vegetal',color:'#66bb6a',desc:'Mezcla inerte y orgánica de baja densidad (ρ seco ≤ 750 kg/m³): pómez + lava + arena + materia orgánica. Extensiva: 8-15 cm (sedum, musgo). Semiintensiva: 15-30 cm. Intensiva: ≥ 30 cm (arbustos, árboles pequeños). Verificar ETAG 033 o UNE 41500.'}
+    ],
+    conds:[
+      {t:'Impermeabilización antirraíces',d:'Certificación obligatoria según CEN/TR 15787. Las láminas ordinarias sin tratamiento antirraíces no son válidas en cubiertas ajardinadas.'},
+      {t:'Carga estructural',d:'Verificar con estudio geotécnico y cálculo estructural la capacidad portante del forjado para el peso del sistema completo saturado de agua.'},
+      {t:'Mantenimiento',d:'Prever acceso para mantenimiento. La cubierta extensiva requiere inspección anual, la intensiva un mantenimiento mensual o trimestral.'},
+      {t:'Riego',d:'Cubierta extensiva: puede ser solo por lluvia. Intensiva: instalar red de riego por goteo. Prever contador independiente.'},
+      {t:'Sumideros',d:'Con filtros de gruesos y arqueta de limpieza accesible. No cubrir sumideros con sustrato: usar protección perimetral de grava.'}
+    ]
+  },
+  'inclinada-no-trans-conv':{
+    title:'Cubierta inclinada · Convencional',
+    ref:'HS1 § 2.4.3 · Tabla 2.10',
+    layers:[
+      {n:1,code:'SR',name:'Estructura portante',color:'#8B7355',desc:'Cerchas, pórticos o viguetas de madera, acero o hormigón. Cálculo estructural según CTE DB SE.'},
+      {n:2,code:'AT',name:'Aislamiento térmico',color:'#ffd54f',desc:'Lana mineral (MW) o PIR entre cabios, bajo tablero o sobre tablero. Espesor según zona climática CTE DB HE1. Evitar puentes térmicos en encuentros.'},
+      {n:3,code:'TB',name:'Tablero / soporte de lámina',color:'#a1887f',desc:'Tablero de OSB, madera o panel rígido como soporte de la lámina. Alternativamente: correas metálicas.'},
+      {n:4,code:'LT',name:'Lámina transpirable o asfáltica',color:'#ef5350',desc:'Membrana transpirable (Sd < 0,02 m) bajo rastrel en cubierta ventilada. O lámina asfáltica LBM (no oxidada, para fijación mecánica) como capa de impermeabilización bajo rastreles en sistema no ventilado.'},
+      {n:5,code:'RA',name:'Rastreles y contrarastreles',color:'#795548',desc:'Rastrel inferior de madera o aluminio (25-30 mm) para crear cámara ventilada entre lámina y cobertura. El contrarastrel en dirección perpendicular recibe la cobertura.'},
+      {n:6,code:'COB',name:'Cobertura',color:'#f97316',desc:'Teja cerámica curva (pendiente ≥ 30%), teja plana (≥ 40%), pizarra (≥ 60%), chapa metálica con juntas alzadas (≥ 7%), panel sándwich (≥ 7%). La pendiente mínima es función del material — ver Tabla 2.10 HS1.'}
+    ],
+    conds:[
+      {t:'Pendiente mínima',d:'Ver Tabla 2.10 HS1 para cada material. No hay solución normativa para incumplir la pendiente mínima: hay que rediseñar la cubierta.'},
+      {t:'Ventilación bajo cubierta',d:'Imprescindible en cubierta inclinada habitable. La cámara ventilada entre lámina transpirable y cobertura evacua la humedad. Entrada de aire en alero y salida en cumbrera (sección libre ≥ 1/500 de la proyección horizontal).'},
+      {t:'Encuentro en cumbrera',d:'La lámina transpirable sube a ambos lados y se solapa en cumbrera con mínimo 25 cm de cada lado. Remate con pieza de cumbrera ventilada.'},
+      {t:'Alero',d:'Pieza de remate de alero con apertura de ventilación ≥ 1 cm². Sin obstruir con aislante el paso de aire.'},
+      {t:'Limahoyas y limatesas',d:'Piezas especiales o solución de zinc/cobre/plomo. Refuerzo de lámina. Zona de mayor riesgo de filtración.'}
+    ]
+  }
+};
+
+// ══════════ STATE ══════════
+const S = {
+  fachadas:{zpluv:null,zeol:null,entorno:null,altura:null},
+  muros:{agua:null,permeab:null,tmuro:null},
+  cubiertas:{tcub:null,ucub:null,disp:null},
+  suelos:{sagua:null,spermeab:null,tsuelo:null,smuro:null,tinterv:null},
+  selSol:{fachadas:null,muros:null}
+};
+
+// ══════════ NAVIGATION ══════════
+function showSec(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ══════════ RADIO SELECTION ══════════
+function selR(name,val,el){
+  document.querySelectorAll(`[name="${name}"]`).forEach(r=>{
+    r.closest('.ro').classList.remove('sel');
+  });
+  el.classList.add('sel');
+  el.querySelector('input[type=radio]').checked=true;
+
+  // Update state
+  const map={
+    zpluv:'fachadas.zpluv',zeol:'fachadas.zeol',entorno:'fachadas.entorno',
+    agua:'muros.agua',permeab:'muros.permeab',tmuro:'muros.tmuro',
+    tcub:'cubiertas.tcub',ucub:'cubiertas.ucub',disp:'cubiertas.disp',
+    sagua:'suelos.sagua',spermeab:'suelos.spermeab',tsuelo:'suelos.tsuelo',
+    smuro:'suelos.smuro',tinterv:'suelos.tinterv'
+  };
+  if(map[name]){
+    const [sec,key]=map[name].split('.');
+    S[sec][key]=val;
+  }
+  // Auto-calc for fachadas
+  if(['zpluv','zeol','entorno'].includes(name)) calcFachada();
+}
+
+// ══════════ FACHADAS ══════════
+// calcFachada is defined further below (map-based version)
+
+// ══════════ MUROS ══════════
+// ══════════ MUROS ══════════
+function calcMuro(){
+  const {agua,permeab,tmuro}=S.muros;
+  if(!agua||!permeab||!tmuro){
+    alert('Por favor, seleccione todos los parámetros del terreno antes de calcular.');
+    return;
+  }
+  const grado=GRADO_MURO[agua][permeab];
+  const murotipo={flexo:'flexorresistente',gravitatorio:'de gravedad',pantalla:'pantalla'}[tmuro];
+  const permLabels={k1:'alta (Ks ≥ 10⁻² cm/s)',k2:'media (10⁻⁵ < Ks < 10⁻² cm/s)',k3:'baja (Ks ≤ 10⁻⁵ cm/s)'};
+
+  document.getElementById('nores-muros').style.display='none';
+  document.getElementById('rp-muros').style.display='block';
+  document.getElementById('gnum-muros').textContent=grado;
+  document.getElementById('gparam-muros').textContent=
+    `Presencia de agua ${agua} · Permeabilidad ${permLabels[permeab]} · Muro ${murotipo}`;
+
+  // Map UI value to SOLS_MURO key
+  const tipoKey={flexo:'flexo',gravitatorio:'gravedad',pantalla:'pantalla'}[tmuro];
+  const gradoData=SOLS_MURO[tipoKey][grado];
+
+  // Build selectable solution cards for the 3 imp types
+  const typeLabels={
+    interior:'Impermeabilización por el interior',
+    exterior:'Impermeabilización por el exterior',
+    parcial:'Muro parcialmente estanco'
+  };
+  const sols=[];
+  ['interior','exterior','parcial'].forEach((tipo,idx)=>{
+    const sol=gradoData[tipo];
+    if(sol===null) return; // shaded — not acceptable
+    const comps=Array.isArray(sol)?sol:sol.c;
+    const nota=Array.isArray(sol)?null:sol.nota;
+    const desc=Array.isArray(sol)?null:sol.d;
+    if(comps.length===0&&!nota) return; // blank — no condition required
+    sols.push({
+      id:`m${grado}${tipo}`,
+      c:comps,
+      d:(desc||(typeLabels[tipo]))+( nota?` ⚠ ${nota}`:'' ),
+      tipo,
+      nota
+    });
+  });
+
+  SOLSTORE['muros']={sols,params:{agua,permeab,tmuro,grado,tipoKey}};
+  const cont=document.getElementById('sols-muros');
+  cont.innerHTML='';
+  if(sols.length===0){
+    cont.innerHTML='<div class="infobox">Para los parámetros indicados no existen soluciones constructivas aceptables según la Tabla 2.2 del CTE DB HS1.</div>';
+    return;
+  }
+  sols.forEach((sol,i)=>{
+    const badges=sol.c.map(c=>'<span class="cbadge b'+c[0]+'">'+c+'</span>').join('');
+    const div=document.createElement('div');
+    div.className='sol';
+    div.id='sol-muros-'+sol.id;
+    div.innerHTML=
+      '<div class="sol-num">'+typeLabels[sol.tipo]+'</div>'+
+      '<div class="sol-comps">'+badges+'</div>'+
+      '<div class="sol-desc">'+sol.d+'</div>';
+    div.addEventListener('click',()=>selectSol('muros',sol.id));
+    cont.appendChild(div);
+  });
+}
+
+// ══════════ CUBIERTAS ══════════
+function calcCubierta(){
+  const {tcub,ucub,disp}=S.cubiertas;
+  if(!tcub||!ucub||!disp){
+    alert('Por favor, seleccione todos los parámetros de la cubierta.');
+    return;
+  }
+  // Map to data key
+  let key='';
+  if(tcub==='inclinada'){key='inclinada-no-trans-conv';}
+  else if(ucub==='no-trans')key=`plana-no-trans-${disp==='inv'?'inv':'conv'}`;
+  else if(ucub==='trans-priv')key='plana-trans-priv-conv';
+  else if(ucub==='trans-pub')key='plana-trans-priv-conv'; // same layers, different conds
+  else if(ucub==='jardin')key='plana-jardin-conv';
+  else key='plana-no-trans-conv';
+
+  const data=CUBIERTAS_DATA[key]||CUBIERTAS_DATA['plana-no-trans-conv'];
+
+  document.getElementById('nores-cubiertas').style.display='none';
+  document.getElementById('rp-cubiertas').style.display='block';
+
+  // Render layers
+  const lc=document.getElementById('layers-cont');
+  lc.innerHTML='<div style="font-family:var(--mono);font-size:11px;color:var(--accent);margin-bottom:12px;">'+data.title+' · '+data.ref+'</div>';
+  data.layers.forEach((l,i)=>{
+    lc.innerHTML+=`
+      <div class="layer">
+        <div class="layer-num">${l.n}</div>
+        <div class="layer-color" style="background:${l.color}"></div>
+        <div class="layer-info">
+          <div class="lcode">${l.code}</div>
+          <div class="lname">${l.name}</div>
+          <div class="ldesc">${l.desc}</div>
+        </div>
+      </div>
+      ${i<data.layers.length-1?'<div class="layer-arrow">↑</div>':''}
+    `;
+  });
+
+  // Render conditions
+  const cc=document.getElementById('conds-cont');
+  cc.innerHTML='';
+  data.conds.forEach(c=>{
+    cc.innerHTML+=`
+      <div class="conditem">
+        <div class="condcheck">✓</div>
+        <div class="condtext"><strong>${c.t}</strong><p>${c.d}</p></div>
+      </div>
+    `;
+  });
+
+  // Justification
+  genJustCubierta(data,{tcub,ucub,disp});
+}
+
+function genJustCubierta(data,params){
+  const date=new Date().toLocaleDateString('es-ES');
+  const uso={
+    'no-trans':'sin uso (acceso para mantenimiento)',
+    'trans-priv':'transitable peatonal privado',
+    'trans-pub':'transitable peatonal público',
+    'jardin':'ajardinada (cubierta verde)'
+  }[params.ucub]||params.ucub;
+  const tipo=params.tcub==='inclinada'?'inclinada':'plana';
+
+  let txt=`JUSTIFICACIÓN NORMATIVA — CTE DB HS1 Protección frente a la humedad
+Fecha de verificación: ${date}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ELEMENTO: CUBIERTA
+${data.title}
+Referencia normativa: ${data.ref}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DESCRIPCIÓN DEL SISTEMA
+Cubierta ${tipo} de uso ${uso}, con disposición ${params.disp==='inv'?'invertida (aislamiento sobre impermeabilización)':'convencional (impermeabilización sobre aislamiento)'}.
+
+COMPOSICIÓN DE CAPAS (de abajo a arriba):
+${data.layers.map(l=>`  ${String(l.n).padStart(2,'0')}. [${l.code}] ${l.name}`).join('\n')}
+
+VERIFICACIÓN DE CONDICIONES NORMATIVAS:
+${data.conds.map(c=>`  ✓ ${c.t}: ${c.d}`).join('\n')}
+
+CONCLUSIÓN:
+La cubierta descrita cumple con las prescripciones del Documento Básico
+CTE DB HS1 "Protección frente a la humedad", Sección 2.4 (Cubiertas),
+satisfaciendo todos los requisitos de impermeabilización, drenaje y
+composición de capas establecidos por la normativa vigente.
+
+Verificado conforme a: CTE DB HS1 · Real Decreto 314/2006 y modificaciones.`;
+
+  document.getElementById('jt-cubiertas').textContent=txt;
+}
+
+// ══════════ SUELOS ══════════
+function calcSuelo(){
+  const {sagua,spermeab,tsuelo,smuro,tinterv}=S.suelos;
+  if(!sagua||!spermeab||!tsuelo||!smuro||!tinterv){
+    alert('Por favor, seleccione todos los parámetros del suelo antes de calcular.');
+    return;
+  }
+  const grado=GRADO_SUELO[sagua][spermeab];
+
+  document.getElementById('nores-suelos').style.display='none';
+  document.getElementById('rp-suelos').style.display='block';
+  document.getElementById('gnum-suelos').textContent=grado;
+
+  const permTxt=spermeab==='alta'?'alta (Ks > 10⁻⁵ cm/s)':'baja (Ks ≤ 10⁻⁵ cm/s)';
+  const tsuelo_label={solera:'solera',placa:'placa',elevado:'suelo elevado'}[tsuelo];
+  const smuro_label={flexo:'flexorresistente/gravedad',pantalla:'pantalla'}[smuro];
+  const tinterv_label={subbase:'sub-base',inyecciones:'inyecciones en terreno',sininterv:'sin intervención en terreno'}[tinterv];
+  document.getElementById('gparam-suelos').textContent=
+    `Presencia de agua ${sagua} · Permeabilidad ${permTxt} · ${tsuelo_label} · Muro ${smuro_label} · ${tinterv_label}`;
+
+  // Lookup Tabla 2.4
+  const muros_data = SOLS_SUELO[smuro];
+  const suelo_data = muros_data && muros_data[tsuelo];
+  const interv_data = suelo_data && suelo_data[tinterv];
+  const comps = interv_data ? interv_data[grado] : null;
+
+  const lc = document.getElementById('layers-suelos');
+  const cc = document.getElementById('conds-suelos');
+  lc.innerHTML='';
+  cc.innerHTML='';
+
+  if(comps===null){
+    lc.innerHTML='<div class="warnbox">⚠ Solución no aceptable según la Tabla 2.4 del CTE DB HS1 para estos parámetros (celda sombreada). Modifique el tipo de intervención en el terreno o el tipo de muro.</div>';
+  } else if(comps.length===0){
+    lc.innerHTML='<div class="infobox">✓ Para estos parámetros no se exige ninguna condición constructiva específica (grado ' + grado + ', Tabla 2.4 CTE DB HS1).</div>';
+  } else {
+    // Show required components as cards
+    lc.innerHTML='<div style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:10px;letter-spacing:1px;">CONDICIONES REQUERIDAS — TABLA 2.4 CTE DB HS1</div>';
+    const badges = comps.map(c=>'<span class="cbadge b'+c[0]+'">'+c+'</span>').join('');
+    lc.innerHTML += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">'+badges+'</div>';
+    comps.forEach(code=>{
+      const comp=COMP_SUELOS[code];
+      if(!comp)return;
+      lc.innerHTML+=`<div class="conditem">
+        <div class="condcheck"><span class="cbadge b${code[0]}" style="font-size:10px;">${code}</span></div>
+        <div class="condtext"><strong>${comp.name}</strong><p>${comp.desc}</p></div>
+      </div>`;
+    });
+  }
+
+  // Justification text
+  const date=new Date().toLocaleDateString('es-ES');
+  const compsTxt=comps===null?'SOLUCIÓN NO ACEPTABLE':
+    comps.length===0?'No se exige condición específica':
+    comps.join(' + ');
+
+  document.getElementById('jt-suelos').textContent=
+`JUSTIFICACIÓN NORMATIVA — CTE DB HS1 Protección frente a la humedad
+Fecha de verificación: ${date}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ELEMENTO: SUELO EN CONTACTO CON EL TERRENO
+Referencia normativa: CTE DB HS1 § 2.2 · Tabla 2.3 · Tabla 2.4
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DATOS DE PARTIDA
+  • Presencia de agua: ${sagua} (Tabla 2.3)
+  • Coeficiente de permeabilidad: ${permTxt}
+  • Tipo de muro: ${smuro_label}
+  • Tipo de suelo: ${tsuelo_label}
+  • Intervención en terreno: ${tinterv_label}
+
+GRADO DE IMPERMEABILIDAD MÍNIMO (Tabla 2.3): ${grado}
+
+CONDICIONES CONSTRUCTIVAS REQUERIDAS (Tabla 2.4):
+  ${compsTxt}
+${comps&&comps.length>0?'\nDESCRIPCIÓN DE CADA CONDICIÓN:\n'+comps.map(c=>{const cp=COMP_SUELOS[c];return cp?`  [${c}] ${cp.name}: ${cp.desc}`:''}).filter(Boolean).join('\n'):''}
+
+CONCLUSIÓN:
+La solución de suelo adoptada cumple con las prescripciones del CTE DB HS1
+§ 2.2 "Suelos", satisfaciendo el grado de impermeabilidad ${grado} determinado
+en la Tabla 2.3 y las condiciones constructivas de la Tabla 2.4 para el
+tipo de muro ${smuro_label}, ${tsuelo_label} con ${tinterv_label}.
+
+Verificado conforme a: CTE DB HS1 · Real Decreto 314/2006 y modificaciones.`;
+}
+
+// ══════════ RENDER SOLUTIONS ══════════
+// Global store so onclick attrs don't need JSON.stringify (avoids quote conflicts)
+const SOLSTORE = {};
+
+function renderSols(sec,sols,grado,params){
+  const cont=document.getElementById('sols-'+sec);
+  cont.innerHTML='';
+  SOLSTORE[sec]={sols,params};
+  let lastGroup=null;
+  let solIdx=0;
+  sols.forEach((sol,i)=>{
+    // Extract group from description prefix [Con rev. exterior] / [Sin rev. exterior]
+    const groupMatch=sol.d.match(/^\[([^\]]+)\]/);
+    const group=groupMatch?groupMatch[1]:null;
+    const desc=sol.d.replace(/^\[[^\]]+\]\s*/,'');
+
+    // Insert group separator when group changes (fachadas only)
+    if(sec==='fachadas'&&group&&group!==lastGroup){
+      const sep=document.createElement('div');
+      sep.style.cssText='font-family:var(--mono);font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:10px 0 4px;border-top:'+(lastGroup?'1px solid var(--border)':'none')+';';
+      sep.textContent=group.toUpperCase();
+      cont.appendChild(sep);
+      lastGroup=group;
+    }
+
+    const badges=sol.c.map(c=>{
+      const letter=c[0];
+      return '<span class="cbadge b'+letter+'">'+c+'</span>';
+    }).join('');
+    const div=document.createElement('div');
+    div.className='sol';
+    div.id='sol-'+sec+'-'+sol.id;
+    div.innerHTML=
+      '<div class="sol-num">Solución '+String.fromCharCode(65+solIdx)+'</div>'+
+      '<div class="sol-comps">'+badges+'</div>'+
+      '<div class="sol-desc">'+desc+'</div>';
+    div.addEventListener('click',()=>selectSol(sec,sol.id));
+    cont.appendChild(div);
+    solIdx++;
+  });
+}
+
+function selectSol(sec,id){
+  const store=SOLSTORE[sec];
+  if(!store)return;
+  const sol=store.sols.find(s=>s.id===id);
+  if(!sol)return;
+  const comps=sol.c;
+  const params=store.params;
+
+  document.querySelectorAll('[id^="sol-'+sec+'-"]').forEach(e=>e.classList.remove('sel'));
+  const el=document.getElementById('sol-'+sec+'-'+id);
+  if(el)el.classList.add('sel');
+  S.selSol[sec]=id;
+
+  const compObj=sec==='fachadas'?COMP_FACHADAS:COMP_MUROS;
+
+  // Render legend
+  const legCard=document.getElementById(`leg-${sec}`);
+  const legCont=document.getElementById(`legcont-${sec}`);
+  legCard.style.display='block';
+  legCont.innerHTML='';
+  comps.forEach(c=>{
+    const comp=compObj[c];
+    if(!comp)return;
+    const letter=c[0];
+    legCont.innerHTML+=`
+      <div class="legitem">
+        <div class="legcode" style="color:${
+          {R:'#a83030',B:'#1a5fa8',C:'#0d7a5e',H:'#8a5c08',J:'#5a35b0',N:'#8a4010',I:'#1a5fa8',D:'#0d7a5e',P:'#5a35b0'}[letter]||'#666'
+        }">${comp.label}</div>
+        <div class="legt"><strong>${comp.name}</strong><p>${comp.desc}</p></div>
+      </div>
+    `;
+  });
+
+  // Show justification
+  document.getElementById(`jp-${sec}`).classList.add('vis');
+  genJust(sec,comps,params,compObj);
+}
+
+// ══════════ GENERATE JUSTIFICATION ══════════
+function genJust(sec,comps,params,compObj){
+  const date=new Date().toLocaleDateString('es-ES');
+  let txt='';
+
+  if(sec==='fachadas'){
+    const {zpluv,zeol,entorno,alt,gradoExp,grado}=params;
+    const altTxt=alt==='15'?'H ≤ 15 m':alt==='40'?'15 m < H ≤ 40 m':'H > 40 m';
+    const muniLine = S.fachadas.municipio
+      ? `  • Municipio / localización:         ${S.fachadas.municipio}${S.fachadas.provincia&&S.fachadas.provincia!==S.fachadas.municipio?' ('+S.fachadas.provincia+')':''}\n` : '';
+    txt=
+`JUSTIFICACIÓN NORMATIVA — CTE DB HS1 Protección frente a la humedad
+Fecha de verificación: ${date}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ELEMENTO: FACHADA
+Referencia normativa: CTE DB HS1 § 2.3 · Tablas 2.5, 2.6, 2.7
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DATOS DE PARTIDA (Apéndice B, CTE DB HS1)
+${muniLine}  • Zona pluviométrica de promedios:   ${zpluv}
+  • Zona eólica del municipio:         ${zeol}
+  • Clase de entorno:                  ${entorno}
+  • Altura del punto más alto:         ${altTxt}
+
+DETERMINACIÓN DEL GRADO DE EXPOSICIÓN AL VIENTO (Tabla 2.6)
+  Combinación ${zeol}·${entorno}·${altTxt} → Grado de exposición: ${gradoExp}
+
+DETERMINACIÓN DEL GRADO DE IMPERMEABILIDAD MÍNIMO (Tabla 2.5)
+  Zona pluviométrica ${zpluv} · Exposición ${gradoExp} → Grado mínimo: ${grado}
+
+SOLUCIÓN CONSTRUCTIVA ADOPTADA (Tabla 2.7)
+  Componentes: ${comps.join(' + ')}
+
+  Descripción de componentes:
+${comps.map(c=>{
+  const comp=compObj[c];
+  return comp?`  • [${comp.label}] ${comp.name}:\n    ${comp.desc.substring(0,120)}...`:`  • ${c}`;
+}).join('\n\n')}
+
+VERIFICACIÓN
+  La solución ${comps.join('+')} está incluida en la Tabla 2.7 del CTE DB HS1
+  para el grado de impermeabilidad ${grado}. Por tanto, la fachada cumple con
+  los requisitos de impermeabilización establecidos en la sección 2.3 del
+  Documento Básico HS1 "Protección frente a la humedad".
+
+Verificado conforme a: CTE DB HS1 · Real Decreto 314/2006 y modificaciones.`;
+  }
+  else if(sec==='muros'){
+    const {agua,permeab,tmuro,grado}=params;
+    const presAgua={baja:'baja (nivel freático > 2 m)',media:'media (nivel freático 1-2 m)',alta:'alta (nivel freático ≤ 1 m)'}[agua];
+    const permTxt=permeab==='alta'?'alta (Ks > 10⁻⁵ cm/s)':'baja (Ks < 10⁻⁵ cm/s)';
+    const murotxt={flexo:'flexorresistente (hormigón armado)',gravitatorio:'gravitatorio (fábrica)',pantalla:'pantalla (pilotes o continua)'}[tmuro];
+    txt=
+`JUSTIFICACIÓN NORMATIVA — CTE DB HS1 Protección frente a la humedad
+Fecha de verificación: ${date}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ELEMENTO: MURO EN CONTACTO CON EL TERRENO
+Referencia normativa: CTE DB HS1 § 2.2 · Tablas 2.1, 2.2, 2.3
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+DATOS DE PARTIDA
+  • Presencia de agua en el terreno: ${presAgua}
+  • Coeficiente de permeabilidad:    ${permTxt}
+  • Tipo de muro:                    ${murotxt}
+
+DETERMINACIÓN DEL GRADO DE IMPERMEABILIDAD MÍNIMO (Tabla 2.1)
+  Presencia ${agua} · Permeabilidad ${permeab} → Grado mínimo: ${grado}
+
+SOLUCIÓN CONSTRUCTIVA ADOPTADA (Tabla 2.2)
+  Componentes: ${comps.join(' + ')}
+
+  Descripción de componentes:
+${comps.map(c=>{
+  const comp=compObj[c];
+  return comp?`  • [${comp.label}] ${comp.name}:\n    ${comp.desc.substring(0,120)}...`:`  • ${c}`;
+}).join('\n\n')}
+
+VERIFICACIÓN
+  La solución ${comps.join('+')} está incluida en la Tabla 2.2 del CTE DB HS1
+  para el grado de impermeabilidad ${grado}. El muro cumple con los requisitos
+  establecidos en la sección 2.2 del Documento Básico HS1.
+
+Verificado conforme a: CTE DB HS1 · Real Decreto 314/2006 y modificaciones.`;
+  }
+
+  document.getElementById(`jt-${sec}`).textContent=txt;
+}
+
+// ══════════ COPY ══════════
+function copyJ(id,btn){
+  const text=document.getElementById(id).textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    const ckId='ck-'+id;
+    const ck=document.getElementById(ckId);
+    if(ck){ck.classList.add('show');setTimeout(()=>ck.classList.remove('show'),2000);}
+  });
+}
+
+// ══════════ REFERENCE PAGE INIT ══════════
+function initRefPage(){
+  // Full legend fachadas
+  const fl=document.getElementById('full-legend-fachadas');
+  if(fl){
+    fl.innerHTML='';
+    Object.entries(COMP_FACHADAS).forEach(([code,comp])=>{
+      const letter=code[0];
+      fl.innerHTML+=`
+        <div class="legitem">
+          <div class="legcode" style="color:${
+            {R:'#a83030',B:'#1a5fa8',C:'#0d7a5e',H:'#8a5c08',J:'#5a35b0',N:'#8a4010'}[letter]||'#666'
+          }">${comp.label}</div>
+          <div class="legt"><strong>${comp.name}</strong><p>${comp.desc.substring(0,90)}...</p></div>
+        </div>
+      `;
+    });
+  }
+
+  const fm=document.getElementById('full-legend-muros');
+  if(fm){
+    fm.innerHTML='';
+    Object.entries(COMP_MUROS).forEach(([code,comp])=>{
+      const letter=code[0];
+      fm.innerHTML+=`
+        <div class="legitem">
+          <div class="legcode" style="color:${
+            {I:'#1a5fa8',D:'#0d7a5e',P:'#5a35b0'}[letter]||'#666'
+          }">${comp.label}</div>
+          <div class="legt"><strong>${comp.name}</strong><p>${comp.desc.substring(0,90)}...</p></div>
+        </div>
+      `;
+    });
+  }
+
+  // Province grid
+  const provinces=[
+    ['A Coruña','IV','C'],['Álava/Araba','III','B'],['Albacete','III','A'],
+    ['Alicante','I','B'],['Almería','I','B'],['Asturias','IV','C'],
+    ['Ávila','III','A'],['Badajoz','III','A'],['Baleares','II','C'],
+    ['Barcelona','II','B'],['Burgos','III','A'],['Cáceres','III','A'],
+    ['Cádiz','III','C'],['Cantabria','IV','C'],['Castellón','II','B'],
+    ['Ciudad Real','III','A'],['Córdoba','III','A'],['Cuenca','III','A'],
+    ['Girona','II','B'],['Granada','II','A'],['Guadalajara','III','A'],
+    ['Guipúzcoa','IV','C'],['Huelva','III','B'],['Huesca','III','A'],
+    ['Jaén','III','A'],['La Rioja','III','A'],['Las Palmas','II','C'],
+    ['León','III','A'],['Lleida','II','A'],['Lugo','IV','C'],
+    ['Madrid','III','A'],['Málaga','II','B'],['Murcia','I','B'],
+    ['Navarra','III','B'],['Ourense','IV','B'],['Palencia','III','A'],
+    ['Pontevedra','IV','C'],['Salamanca','III','A'],['S.C.Tenerife','II','C'],
+    ['Segovia','III','A'],['Sevilla','III','B'],['Soria','III','A'],
+    ['Tarragona','II','B'],['Teruel','III','A'],['Toledo','III','A'],
+    ['Valencia','II','B'],['Valladolid','III','A'],['Vizcaya','IV','C'],
+    ['Zamora','III','A'],['Zaragoza','II','A']
+  ];
+
+  const pg=document.getElementById('province-grid');
+  if(pg){
+    pg.innerHTML='';
+    provinces.forEach(([name,pluv,eol])=>{
+      pg.innerHTML+=`
+        <div class="pitem">
+          <span class="pname">${name}</span>
+          <span>
+            <span class="pzone pz${pluv}">P${pluv}</span>
+            &nbsp;
+            <span class="pzone pe${'ABC'.indexOf(eol)+1}">E${eol}</span>
+          </span>
+        </div>
+      `;
+    });
+  }
+}
+
+// ══════════ BUILD SUMMARY (full document) ══════════
+function buildSummary(){
+  const cont=document.getElementById('sum-content');
+  const date=new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'});
+
+  const fac=S.fachadas;
+  const facSelId=S.selSol&&S.selSol.fachadas;
+  const facSel=facSelId&&SOLSTORE.fachadas?SOLSTORE.fachadas.sols.find(s=>s.id===facSelId):null;
+  const facDone=!!(fac.zpluv&&fac.zeol&&fac.entorno&&fac.altura);
+  const mur=S.muros;
+  const murSelId=S.selSol&&S.selSol.muros;
+  const murSel=murSelId&&SOLSTORE.muros?SOLSTORE.muros.sols.find(s=>s.id===murSelId):null;
+  const murDone=!!(mur.agua&&mur.permeab&&mur.tmuro);
+  const cub=S.cubiertas;
+  const cubDone=!!(cub.tcub&&cub.ucub&&cub.disp);
+  const sue=S.suelos;
+  const sueDone=!!(sue.sagua&&sue.spermeab&&sue.tsuelo);
+  const done=[facDone,murDone,cubDone,sueDone].filter(Boolean).length;
+
+  const getJust=id=>{const el=document.getElementById(id);return el?el.textContent.trim():'';};
+
+  const sections=[{label:'Fachadas',ok:facDone},{label:'Muros',ok:murDone},{label:'Cubiertas',ok:cubDone},{label:'Suelos',ok:sueDone}];
+  const dotsHtml=sections.map(s=>`<span style="display:inline-flex;align-items:center;gap:4px;margin-right:16px;"><span class="sum-dot ${s.ok?'dot-ok':'dot-pend'}"></span><span style="font-size:10px;color:${s.ok?'var(--green)':'var(--text3)'}">${s.label}</span></span>`).join('');
+
+  const drow=(lbl,val)=>`<tr><td>${lbl}</td><td>${val}</td></tr>`;
+
+  const gradeBoxes=items=>`<div class="sum-grade-row">${items.map(({num,lbl,ref,col})=>`
+    <div class="sum-grade-box" style="border-color:${col}">
+      <div class="sum-grade-num" style="color:${col}">${num}</div>
+      <div class="sum-grade-lbl"><strong>${lbl}</strong><small>${ref}</small></div>
+    </div>`).join('')}</div>`;
+
+  const compList=(comps,compObj)=>comps.map(c=>{
+    const comp=compObj[c];if(!comp)return'';
+    return`<div class="sum-comp-item"><div class="sum-comp-head"><span class="cbadge ${comp.color}">${comp.label}</span><strong>${comp.name}</strong></div><div class="sum-comp-desc">${comp.desc}</div></div>`;
+  }).join('');
+
+  const layerList=layers=>layers.map((l,i)=>`<div class="sum-layer-item"><div class="sum-layer-num">${l.n}</div><div class="sum-layer-bar" style="background:${l.color}"></div><div class="sum-layer-body"><div class="lcode">${l.code}</div><div class="lname">${l.name}</div><div class="ldesc">${l.desc}</div></div></div>${i<layers.length-1?'<div class="layer-arrow">\u2191</div>':''}`).join('');
+
+  const condList=conds=>conds.map(c=>`<div class="sum-cond-item"><div class="condcheck">\u2713</div><div><strong>${c.t}</strong><p>${c.d}</p></div></div>`).join('');
+
+  const justBlock=id=>{const txt=getJust(id);if(!txt)return'';return`<div class="sum-subsec"><div class="sum-subsec-title">Justificaci\u00f3n normativa generada</div><pre class="sum-just-pre">${txt}</pre></div>`;};
+
+  // ── FACHADAS ──
+  let facBody='';
+  if(facDone){
+    const key=`${fac.zeol}_${fac.entorno}`;
+    const row=EXP_VIENTO[key];const h=parseInt(fac.altura);
+    const gradoExp=h<=15?row[15]:h<=40?row[40]:row[99];
+    const grado=GRADO_FAC[fac.zpluv][gradoExp];
+    const altTxt=fac.altura==='15'?'H \u2264 15 m':fac.altura==='40'?'15 m < H \u2264 40 m':'H > 40 m';
+    facBody=`
+      <table class="sum-dtable">
+        ${fac.municipio?drow('Municipio',fac.municipio+(fac.provincia&&fac.provincia!==fac.municipio?' ('+fac.provincia+')'  :'')):''}
+        ${drow('Zona pluviom\u00e9trica','<strong>'+fac.zpluv+'</strong> \u2014 '+((ZONE_LABELS.pluv[fac.zpluv]&&ZONE_LABELS.pluv[fac.zpluv].short)||''))}
+        ${drow('Zona e\u00f3lica','<strong>'+fac.zeol+'</strong> \u2014 '+((ZONE_LABELS.eol[fac.zeol]&&ZONE_LABELS.eol[fac.zeol].short)||''))}
+        ${drow('Clase de entorno',fac.entorno)}
+        ${drow('Altura cerramiento',altTxt)}
+      </table>
+      ${gradeBoxes([
+        {num:gradoExp,lbl:'Grado de exposici\u00f3n al viento',ref:'Tabla 2.6 \u00b7 CTE DB HS1',col:'var(--accent)'},
+        {num:grado,lbl:'Grado de impermeabilidad m\u00ednimo',ref:'Tabla 2.5 \u00b7 CTE DB HS1',col:'var(--blue)'}
+      ])}
+      ${facSel?`<div class="sum-subsec"><div class="sum-subsec-title">Soluci\u00f3n constructiva adoptada \u00b7 Tabla 2.7</div><div style="font-size:12px;color:var(--text2);margin-bottom:10px;">${facSel.d}</div>${compList(facSel.c,COMP_FACHADAS)}</div>`:'<p class="sum-nodata" style="margin-top:10px">Ninguna soluci\u00f3n constructiva seleccionada.</p>'}
+      ${justBlock('jt-fachadas')}`;
+  } else { facBody='<p class="sum-nodata">Verificaci\u00f3n de fachadas no completada.</p>'; }
+
+  // ── MUROS ──
+  let murBody='';
+  if(murDone){
+    const grado=GRADO_MURO[mur.agua][mur.permeab];
+    const murotipo={flexo:'Flexorresistente (H.A.)',gravitatorio:'Gravitatorio (f\u00e1brica)',pantalla:'Pantalla'}[mur.tmuro];
+    const presAgua={baja:'Baja \u2014 nivel fre\u00e1tico > 2 m',media:'Media \u2014 nivel fre\u00e1tico 1\u20132 m',alta:'Alta \u2014 nivel fre\u00e1tico \u2264 1 m'}[mur.agua];
+    const permTxt=mur.permeab==='alta'?'Alta \u2014 Ks > 10\u207b\u2075 cm/s':'Baja \u2014 Ks < 10\u207b\u2075 cm/s';
+    murBody=`
+      <table class="sum-dtable">
+        ${drow('Tipo de muro',murotipo)}${drow('Presencia de agua',presAgua)}${drow('Permeabilidad terreno',permTxt)}
+      </table>
+      ${gradeBoxes([{num:grado,lbl:'Grado de impermeabilidad m\u00ednimo',ref:'Tabla 2.1 \u00b7 CTE DB HS1',col:'var(--blue)'}])}
+      ${murSel?`<div class="sum-subsec"><div class="sum-subsec-title">Soluci\u00f3n constructiva adoptada \u00b7 Tabla 2.2</div><div style="font-size:12px;color:var(--text2);margin-bottom:10px;">${murSel.d}</div>${compList(murSel.c,COMP_MUROS)}</div>`:'<p class="sum-nodata" style="margin-top:10px">Ninguna soluci\u00f3n constructiva seleccionada.</p>'}
+      ${justBlock('jt-muros')}`;
+  } else { murBody='<p class="sum-nodata">Verificaci\u00f3n de muros no completada.</p>'; }
+
+  // ── CUBIERTAS ──
+  let cubBody='';
+  if(cubDone){
+    let key='';
+    if(cub.tcub==='inclinada')key='inclinada-no-trans-conv';
+    else if(cub.ucub==='no-trans')key=`plana-no-trans-${cub.disp==='inv'?'inv':'conv'}`;
+    else if(cub.ucub==='trans-priv')key='plana-trans-priv-conv';
+    else if(cub.ucub==='trans-pub')key='plana-trans-priv-conv';
+    else if(cub.ucub==='jardin')key='plana-jardin-conv';
+    else key='plana-no-trans-conv';
+    const data=CUBIERTAS_DATA[key]||CUBIERTAS_DATA['plana-no-trans-conv'];
+    const ucubTxt={'no-trans':'No transitable','trans-priv':'Transitable peatonal privado','trans-pub':'Transitable peatonal p\u00fablico','jardin':'Ajardinada (cubierta verde)'}[cub.ucub]||cub.ucub;
+    cubBody=`
+      <table class="sum-dtable">
+        ${drow('Tipo de cubierta',cub.tcub==='plana'?'Plana':'Inclinada')}${drow('Uso previsto',ucubTxt)}
+        ${drow('Disposici\u00f3n impermeab.',cub.disp==='inv'?'Invertida':'Convencional')}
+        ${drow('Descripci\u00f3n',data.title)}${drow('Referencia normativa',data.ref)}
+      </table>
+      <div class="sum-subsec"><div class="sum-subsec-title">Composici\u00f3n de capas \u2014 de abajo a arriba</div>${layerList(data.layers)}</div>
+      <div class="sum-subsec"><div class="sum-subsec-title">Condiciones normativas clave</div>${condList(data.conds)}</div>
+      ${justBlock('jt-cubiertas')}`;
+  } else { cubBody='<p class="sum-nodata">Verificaci\u00f3n de cubiertas no completada.</p>'; }
+
+  // ── SUELOS ──
+  let sueBody='';
+  if(sueDone){
+    const grado=GRADO_SUELO[sue.sagua][sue.spermeab];
+    const presAgua={baja:'Baja \u2014 nivel fre\u00e1tico > 2 m',media:'Media \u2014 nivel fre\u00e1tico 1\u20132 m',alta:'Alta \u2014 nivel fre\u00e1tico \u2264 1 m'}[sue.sagua];
+    const permTxt=sue.spermeab==='alta'?'Alta \u2014 Ks > 10\u207b\u2075 cm/s':'Baja \u2014 Ks < 10\u207b\u2075 cm/s';
+    const tsueTxt={solera:'Solera apoyada sobre terreno',semis:'Semis\u00f3tano / suelo elevado',caviti:'Suelo con c\u00e1mara ventilada (encofrado perdido)'}[sue.tsuelo];
+    sueBody=`
+      <table class="sum-dtable">
+        ${drow('Tipo de suelo',tsueTxt)}${drow('Presencia de agua',presAgua)}${drow('Permeabilidad terreno',permTxt)}
+      </table>
+      ${gradeBoxes([{num:grado,lbl:'Grado de impermeabilidad m\u00ednimo',ref:'Tabla 2.3 \u00b7 CTE DB HS1',col:'var(--blue)'}])}
+      ${justBlock('jt-suelos')}`;
+  } else { sueBody='<p class="sum-nodata">Verificaci\u00f3n de suelos no completada.</p>'; }
+
+  cont.innerHTML=`
+    <div class="summary-header">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:2px;margin-bottom:6px;text-transform:uppercase;">Verificaci\u00f3n CTE DB HS1</div>
+        <h2>Protecci\u00f3n frente a la Humedad</h2>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text2);margin-top:6px;">Real Decreto 314/2006 y sus modificaciones${fac.municipio?' \u00b7 '+fac.municipio:''}</div>
+      </div>
+      <div class="smeta">Fecha: ${date}<br>Elementos verificados: ${done}/4<br><span style="color:var(--accent)">v2024</span></div>
+    </div>
+    <div class="sum-actions">
+      <button class="btn-print" onclick="window.print()">\uD83D\uDDB6 Imprimir / Guardar PDF</button>
+      <button class="btn-rtf" onclick="exportRTF()">\u2299 Exportar RTF</button>
+      <span style="font-family:var(--mono);font-size:10px;color:var(--text3);margin-left:6px;">${done} de 4 verificaciones completadas</span>
+    </div>
+    <div class="sum-progress">${dotsHtml}</div>
+    <div class="sum-section">
+      <div class="sum-sec-head"><span style="font-size:16px;">\u2B1A</span><span class="sum-sec-title">Fachadas \u00b7 HS1 \u00a7 2.3</span><span class="sum-sec-badge ${facDone?'sbadge-ok':'sbadge-pend'}">${facDone?'\u2713 VERIFICADO':'PENDIENTE'}</span></div>
+      <div class="sum-body">${facBody}</div>
+    </div>
+    <div class="sum-section">
+      <div class="sum-sec-head"><span style="font-size:16px;">\u25A4</span><span class="sum-sec-title">Muros en contacto con el terreno \u00b7 HS1 \u00a7 2.2</span><span class="sum-sec-badge ${murDone?'sbadge-ok':'sbadge-pend'}">${murDone?'\u2713 VERIFICADO':'PENDIENTE'}</span></div>
+      <div class="sum-body">${murBody}</div>
+    </div>
+    <div class="sum-section">
+      <div class="sum-sec-head"><span style="font-size:16px;">\u25B3</span><span class="sum-sec-title">Cubiertas \u00b7 HS1 \u00a7 2.4</span><span class="sum-sec-badge ${cubDone?'sbadge-ok':'sbadge-pend'}">${cubDone?'\u2713 VERIFICADO':'PENDIENTE'}</span></div>
+      <div class="sum-body">${cubBody}</div>
+    </div>
+    <div class="sum-section">
+      <div class="sum-sec-head"><span style="font-size:16px;">\u25AD</span><span class="sum-sec-title">Suelos en contacto con el terreno \u00b7 HS1 \u00a7 2.2.3</span><span class="sum-sec-badge ${sueDone?'sbadge-ok':'sbadge-pend'}">${sueDone?'\u2713 VERIFICADO':'PENDIENTE'}</span></div>
+      <div class="sum-body">${sueBody}</div>
+    </div>
+    <div class="sum-notice">Este documento ha sido generado autom\u00e1ticamente. La verificaci\u00f3n normativa queda bajo la responsabilidad del t\u00e9cnico redactor del proyecto. Referencia: CTE DB HS1 aprobado por Real Decreto 314/2006, con modificaciones posteriores.</div>
+    <div class="sum-footer">CTE DB HS1 \u00b7 Verificador de Cerramientos \u00b7 ${date}</div>`;
+}
+
+// ══════════ EXPORT RTF ══════════
+function exportRTF(){
+  const date=new Date().toLocaleDateString('es-ES',{day:'2-digit',month:'long',year:'numeric'});
+  const isoDate=new Date().toISOString().slice(0,10);
+
+  const fac=S.fachadas;
+  const facSelId=S.selSol&&S.selSol.fachadas;
+  const facSel=facSelId&&SOLSTORE.fachadas?SOLSTORE.fachadas.sols.find(s=>s.id===facSelId):null;
+  const facDone=!!(fac.zpluv&&fac.zeol&&fac.entorno&&fac.altura);
+  const mur=S.muros;
+  const murSelId=S.selSol&&S.selSol.muros;
+  const murSel=murSelId&&SOLSTORE.muros?SOLSTORE.muros.sols.find(s=>s.id===murSelId):null;
+  const murDone=!!(mur.agua&&mur.permeab&&mur.tmuro);
+  const cub=S.cubiertas;
+  const cubDone=!!(cub.tcub&&cub.ucub&&cub.disp);
+  const sue=S.suelos;
+  const sueDone=!!(sue.sagua&&sue.spermeab&&sue.tsuelo);
+
+  const getJust=id=>{const el=document.getElementById(id);return el?el.textContent.trim():'';};
+
+  // RTF escape: Latin-1 as \' hex, Unicode as \uN?
+  const e=s=>String(s||'')
+    .replace(/\\/g,'\\\\').replace(/\{/g,'\\{').replace(/\}/g,'\\}')
+    .replace(/[^\x09\x0A\x0D\x20-\x7E]/g,c=>{
+      const n=c.charCodeAt(0);
+      return n<=255?`\\'${n.toString(16).padStart(2,'0')}`:`\\u${n}?`;
+    });
+
+  // RTF data table row
+  const tr=(lbl,val)=>
+    `\\trowd\\trgaph108\\trrh260\n`+
+    `\\clcbpat6\\clbrdrl\\brdrw8\\brdrs\\clbrdrt\\brdrw8\\brdrs\\clbrdrb\\brdrw8\\brdrs\\clbrdrr\\brdrw8\\brdrs\\cellx2700\n`+
+    `\\clcbpat5\\clbrdrl\\brdrw8\\brdrs\\clbrdrt\\brdrw8\\brdrs\\clbrdrb\\brdrw8\\brdrs\\clbrdrr\\brdrw8\\brdrs\\cellx8640\n`+
+    `\\pard\\intbl\\f0\\fs17\\b\\cf8 ${e(lbl)}\\b0\\cell\n`+
+    `\\pard\\intbl\\f0\\fs19\\cf4 ${e(val)}\\cell\n\\row\n`;
+
+  // Section header (full-width colored banner)
+  const secH=(title,ref,ok)=>
+    `\\pard\\sb300\\sa0\n`+
+    `\\trowd\\trgaph108\\trrh400\n`+
+    `\\clcbpat1\\clbrdrl\\brdrw0\\brdrnone\\clbrdrt\\brdrw0\\brdrnone\\clbrdrb\\brdrw0\\brdrnone\\clbrdrr\\brdrw0\\brdrnone\\cellx6480\n`+
+    `\\clcbpat1\\clbrdrl\\brdrw0\\brdrnone\\clbrdrt\\brdrw0\\brdrnone\\clbrdrb\\brdrw0\\brdrnone\\clbrdrr\\brdrw0\\brdrnone\\cellx8640\n`+
+    `\\pard\\intbl\\f0\\fs22\\b\\cf5 ${e(title)}  \\b0\\fs16\\cf9 ${e(ref)}\\cell\n`+
+    `\\pard\\intbl\\f0\\fs17\\b\\cf${ok?'3':'10'} ${ok?'\\u10003? VERIFICADO':'PENDIENTE'}\\b0\\cell\n\\row\n\\pard\\sb0\\par\n`;
+
+  // Grade display
+  const grade=(num,lbl,ref)=>
+    `\\pard\\sb80\\sa20\\f0\\fs16\\cf8 ${e(lbl)}\\par\n`+
+    `\\pard\\sb0\\sa80\\f0\\fs52\\b\\cf2 ${e(String(num))}  \\f0\\fs16\\b0\\cf8 ${e(ref)}\\par\n`;
+
+  // Subsection title
+  const sub=t=>`\\pard\\sb200\\sa60\\f0\\fs16\\b\\cf8\\caps ${e(t)}\\b0\\caps0\\cf4\\par\n`;
+
+  // Component item
+  const comp=(label,name,desc,col)=>
+    `\\pard\\sb60\\sa0\\li180\\f0\\fs18\\b\\cf${col} [${e(label)}]\\b0\\cf4  ${e(name)}\\par\n`+
+    `\\pard\\sb0\\sa80\\li360\\f0\\fs15\\cf8 ${e(desc)}\\par\n`;
+
+  // Layer item
+  const layer=(n,code,name,desc)=>
+    `\\pard\\sb40\\sa0\\li180\\f0\\fs18\\b\\cf1 ${e(String(n))}. [${e(code)}] ${e(name)}\\b0\\par\n`+
+    `\\pard\\sb0\\sa60\\li360\\f0\\fs15\\cf8 ${e(desc)}\\par\n`;
+
+  // Condition item
+  const cond=(t,d)=>
+    `\\pard\\sb40\\sa0\\li180\\f0\\fs18\\b\\cf3 \\u10003?  ${e(t)}\\b0\\cf4\\par\n`+
+    `\\pard\\sb0\\sa60\\li360\\f0\\fs15\\cf8 ${e(d)}\\par\n`;
+
+  // Monospace block (justification text)
+  const mono=txt=>txt.split('\n').map(l=>`\\pard\\f1\\fs15\\cf4 ${e(l)}\\par\n`).join('');
+
+  // ── Build fachadas block ──
+  let facRtf='';
+  if(facDone){
+    const key=`${fac.zeol}_${fac.entorno}`;
+    const row=EXP_VIENTO[key];const h=parseInt(fac.altura);
+    const gradoExp=h<=15?row[15]:h<=40?row[40]:row[99];
+    const grado=GRADO_FAC[fac.zpluv][gradoExp];
+    const altTxt=fac.altura==='15'?'H \u2264 15 m':fac.altura==='40'?'15 m < H \u2264 40 m':'H > 40 m';
+    if(fac.municipio)facRtf+=tr('Municipio',fac.municipio+(fac.provincia&&fac.provincia!==fac.municipio?' ('+fac.provincia+')':''));
+    facRtf+=tr('Zona pluviom\u00e9trica',fac.zpluv+' \u2014 '+(ZONE_LABELS.pluv[fac.zpluv]||''));
+    facRtf+=tr('Zona e\u00f3lica',fac.zeol+' \u2014 '+(ZONE_LABELS.eol[fac.zeol]||''));
+    facRtf+=tr('Clase de entorno',fac.entorno);
+    facRtf+=tr('Altura cerramiento',altTxt);
+    facRtf+=`\\pard\\sb80\\par\n`;
+    facRtf+=grade(gradoExp,'Grado de exposici\u00f3n al viento','Tabla 2.6 \u00b7 CTE DB HS1');
+    facRtf+=grade(grado,'Grado de impermeabilidad m\u00ednimo','Tabla 2.5 \u00b7 CTE DB HS1');
+    if(facSel){
+      facRtf+=sub('Soluci\u00f3n constructiva adoptada \u00b7 Tabla 2.7');
+      facRtf+=`\\pard\\sb20\\sa40\\f0\\fs18\\cf4 ${e(facSel.d)}\\par\n`;
+      facRtf+=sub('Componentes seleccionados');
+      facSel.c.forEach(c=>{const cp=COMP_FACHADAS[c];if(cp)facRtf+=comp(cp.label,cp.name,cp.desc,2);});
+    }
+    const jt=getJust('jt-fachadas');
+    if(jt){facRtf+=sub('Justificaci\u00f3n normativa generada');facRtf+=mono(jt);}
+  } else {
+    facRtf=`\\pard\\f0\\fs18\\cf8\\i Verificaci\u00f3n de fachadas no completada.\\i0\\par\n`;
+  }
+
+  // ── Build muros block ──
+  let murRtf='';
+  if(murDone){
+    const grado=GRADO_MURO[mur.agua][mur.permeab];
+    const mt={flexo:'Flexorresistente (H.A.)',gravitatorio:'Gravitatorio (f\u00e1brica)',pantalla:'Pantalla'}[mur.tmuro];
+    const pa={baja:'Baja \u2014 nivel fre\u00e1tico > 2 m',media:'Media \u2014 nivel fre\u00e1tico 1\u20132 m',alta:'Alta \u2014 nivel fre\u00e1tico \u2264 1 m'}[mur.agua];
+    const pt=mur.permeab==='alta'?'Alta \u2014 Ks > 10\u207b\u2075 cm/s':'Baja \u2014 Ks < 10\u207b\u2075 cm/s';
+    murRtf+=tr('Tipo de muro',mt);murRtf+=tr('Presencia de agua',pa);murRtf+=tr('Permeabilidad terreno',pt);
+    murRtf+=`\\pard\\sb80\\par\n`;
+    murRtf+=grade(grado,'Grado de impermeabilidad m\u00ednimo','Tabla 2.1 \u00b7 CTE DB HS1');
+    if(murSel){
+      murRtf+=sub('Soluci\u00f3n constructiva adoptada \u00b7 Tabla 2.2');
+      murRtf+=`\\pard\\sb20\\sa40\\f0\\fs18\\cf4 ${e(murSel.d)}\\par\n`;
+      murRtf+=sub('Componentes seleccionados');
+      murSel.c.forEach(c=>{const cp=COMP_MUROS[c];if(cp)murRtf+=comp(cp.label,cp.name,cp.desc,2);});
+    }
+    const jt=getJust('jt-muros');
+    if(jt){murRtf+=sub('Justificaci\u00f3n normativa generada');murRtf+=mono(jt);}
+  } else {
+    murRtf=`\\pard\\f0\\fs18\\cf8\\i Verificaci\u00f3n de muros no completada.\\i0\\par\n`;
+  }
+
+  // ── Build cubiertas block ──
+  let cubRtf='';
+  if(cubDone){
+    let key='';
+    if(cub.tcub==='inclinada')key='inclinada-no-trans-conv';
+    else if(cub.ucub==='no-trans')key=`plana-no-trans-${cub.disp==='inv'?'inv':'conv'}`;
+    else if(cub.ucub==='trans-priv')key='plana-trans-priv-conv';
+    else if(cub.ucub==='trans-pub')key='plana-trans-priv-conv';
+    else if(cub.ucub==='jardin')key='plana-jardin-conv';
+    else key='plana-no-trans-conv';
+    const data=CUBIERTAS_DATA[key]||CUBIERTAS_DATA['plana-no-trans-conv'];
+    const ucubTxt={'no-trans':'No transitable','trans-priv':'Transitable peatonal privado','trans-pub':'Transitable peatonal p\u00fablico','jardin':'Ajardinada (cubierta verde)'}[cub.ucub]||cub.ucub;
+    cubRtf+=tr('Tipo de cubierta',cub.tcub==='plana'?'Plana':'Inclinada');
+    cubRtf+=tr('Uso previsto',ucubTxt);
+    cubRtf+=tr('Disposici\u00f3n impermeab.',cub.disp==='inv'?'Invertida':'Convencional');
+    cubRtf+=tr('Referencia normativa',data.ref);
+    cubRtf+=`\\pard\\sb80\\par\n`;
+    cubRtf+=sub('Composici\u00f3n de capas \u2014 de abajo a arriba');
+    data.layers.forEach(l=>cubRtf+=layer(l.n,l.code,l.name,l.desc));
+    cubRtf+=sub('Condiciones normativas clave');
+    data.conds.forEach(c=>cubRtf+=cond(c.t,c.d));
+    const jt=getJust('jt-cubiertas');
+    if(jt){cubRtf+=sub('Justificaci\u00f3n normativa generada');cubRtf+=mono(jt);}
+  } else {
+    cubRtf=`\\pard\\f0\\fs18\\cf8\\i Verificaci\u00f3n de cubiertas no completada.\\i0\\par\n`;
+  }
+
+  // ── Build suelos block ──
+  let sueRtf='';
+  if(sueDone){
+    const grado=GRADO_SUELO[sue.sagua][sue.spermeab];
+    const pa={baja:'Baja \u2014 nivel fre\u00e1tico > 2 m',media:'Media \u2014 nivel fre\u00e1tico 1\u20132 m',alta:'Alta \u2014 nivel fre\u00e1tico \u2264 1 m'}[sue.sagua];
+    const pt=sue.spermeab==='alta'?'Alta \u2014 Ks > 10\u207b\u2075 cm/s':'Baja \u2014 Ks < 10\u207b\u2075 cm/s';
+    const tt={solera:'Solera apoyada sobre terreno',semis:'Semis\u00f3tano / suelo elevado',caviti:'Suelo con c\u00e1mara ventilada (encofrado perdido)'}[sue.tsuelo];
+    sueRtf+=tr('Tipo de suelo',tt);sueRtf+=tr('Presencia de agua',pa);sueRtf+=tr('Permeabilidad terreno',pt);
+    sueRtf+=`\\pard\\sb80\\par\n`;
+    sueRtf+=grade(grado,'Grado de impermeabilidad m\u00ednimo','Tabla 2.3 \u00b7 CTE DB HS1');
+    const jt=getJust('jt-suelos');
+    if(jt){sueRtf+=sub('Justificaci\u00f3n normativa generada');sueRtf+=mono(jt);}
+  } else {
+    sueRtf=`\\pard\\f0\\fs18\\cf8\\i Verificaci\u00f3n de suelos no completada.\\i0\\par\n`;
+  }
+
+  // ── Assemble RTF ──
+  const muniStr=fac.municipio?` \\u183? ${e(fac.municipio)}`:'';
+  const rtf=`{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang3082
+{\\fonttbl{\\f0\\fswiss\\fcharset0 Arial;}{\\f1\\fmodern\\fcharset0 Courier New;}}
+{\\colortbl ;\\red192\\green122\\blue10;\\red37\\green112\\blue200;\\red21\\green160\\blue122;\\red26\\green37\\blue53;\\red255\\green255\\blue255;\\red238\\green241\\blue246;\\red208\\green216\\blue228;\\red90\\green111\\blue133;\\red180\\green70\\blue20;\\red150\\green100\\blue180;}
+\\widowctrl\\hyphauto\\paperw12240\\paperh15840\\margl1260\\margr1260\\margt1260\\margb1260
+
+\\trowd\\trgaph108\\trrh540
+\\clcbpat1\\cellx7300\\clcbpat1\\cellx8640
+\\pard\\intbl\\f0\\fs28\\b\\cf5 CTE DB HS1 \\emdash  Protecci\\'f3n frente a la Humedad\\b0\\cell
+\\pard\\intbl\\f0\\fs17\\cf5 ${e(date)}${muniStr}\\cell
+\\row
+\\pard\\sb60\\sa60\\f0\\fs16\\cf8 Real Decreto 314/2006 y sus modificaciones \\u183? Verificador de Cerramientos\\par
+
+${secH('Fachadas \u00b7 HS1 \u00a7 2.3','Tablas 2.5, 2.6, 2.7',facDone)}
+${facRtf}
+${secH('Muros en contacto con el terreno \u00b7 HS1 \u00a7 2.2','Tablas 2.1, 2.2, 2.3',murDone)}
+${murRtf}
+${secH('Cubiertas \u00b7 HS1 \u00a7 2.4','Tablas 2.10, 2.11, 2.12',cubDone)}
+${cubRtf}
+${secH('Suelos en contacto con el terreno \u00b7 HS1 \u00a7 2.2.3','Tablas 2.3, 2.4',sueDone)}
+${sueRtf}
+\\pard\\sb280\\sa60\\brdrb\\brdrw10\\brdrs\\f0\\fs15\\cf8 Este documento ha sido generado autom\\'e1ticamente a partir del verificador CTE DB HS1. La verificaci\\'f3n normativa queda bajo la responsabilidad del t\\'e9cnico redactor del proyecto. CTE DB HS1 aprobado por Real Decreto 314/2006, con modificaciones posteriores.\\par
+}`;
+
+  // Ensure every non-ASCII char is a \'xx RTF escape, then encode blob as latin-1 bytes
+  const rtfClean = rtf.replace(/[^\x00-\x7E]/g, c => {
+    const n = c.charCodeAt(0);
+    return n <= 255 ? `\\'${n.toString(16).padStart(2,'0')}` : `\\u${n}?`;
+  });
+  const bytes = new Uint8Array(rtfClean.length);
+  for(let i=0;i<rtfClean.length;i++) bytes[i]=rtfClean.charCodeAt(i)&0xFF;
+  const blob=new Blob([bytes],{type:'application/rtf'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`CTE_HS1_Verificacion_${isoDate}.rtf`;
+  document.body.appendChild(a);a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+
+// ══════════ PROVINCE → ZONES MAP (Apéndice B, CTE DB HS1) ══════════
+const PROV_ZONES = {
+  'a coruña':['IV','C'],'coruña':['IV','C'],
+  'álava':['III','B'],'araba':['III','B'],
+  'albacete':['III','A'],
+  'alicante':['I','B'],
+  'almería':['I','B'],'almeria':['I','B'],
+  'asturias':['IV','C'],
+  'ávila':['III','A'],'avila':['III','A'],
+  'badajoz':['III','A'],
+  'balears':['II','C'],'baleares':['II','C'],'illes balears':['II','C'],
+  'barcelona':['II','B'],
+  'burgos':['III','A'],
+  'cáceres':['III','A'],'caceres':['III','A'],
+  'cádiz':['III','C'],'cadiz':['III','C'],
+  'cantabria':['IV','C'],'santander':['IV','C'],
+  'castellón':['II','B'],'castellon':['II','B'],'castelló':['II','B'],
+  'ciudad real':['III','A'],
+  'córdoba':['III','A'],'cordoba':['III','A'],
+  'cuenca':['III','A'],
+  'girona':['II','B'],'gerona':['II','B'],
+  'granada':['II','A'],
+  'guadalajara':['III','A'],
+  'gipuzkoa':['IV','C'],'guipúzcoa':['IV','C'],'guipuzcoa':['IV','C'],
+  'huelva':['III','B'],
+  'huesca':['III','A'],
+  'jaén':['III','A'],'jaen':['III','A'],
+  'la rioja':['III','A'],'rioja':['III','A'],
+  'las palmas':['II','C'],
+  'león':['III','A'],'leon':['III','A'],
+  'lleida':['II','A'],'lérida':['II','A'],'lerida':['II','A'],
+  'lugo':['IV','C'],
+  'madrid':['III','A'],
+  'málaga':['II','B'],'malaga':['II','B'],
+  'murcia':['I','B'],
+  'navarra':['III','B'],'nafarroa':['III','B'],
+  'ourense':['IV','B'],'orense':['IV','B'],
+  'palencia':['III','A'],
+  'pontevedra':['IV','C'],
+  'salamanca':['III','A'],
+  'santa cruz de tenerife':['II','C'],'tenerife':['II','C'],
+  'segovia':['III','A'],
+  'sevilla':['III','B'],
+  'soria':['III','A'],
+  'tarragona':['II','B'],
+  'teruel':['III','A'],
+  'toledo':['III','A'],
+  'valencia':['II','B'],'valència':['II','B'],
+  'valladolid':['III','A'],
+  'bizkaia':['IV','C'],'vizcaya':['IV','C'],
+  'zamora':['III','A'],
+  'zaragoza':['II','A'],
+  'ceuta':['II','C'],
+  'melilla':['I','C']
+};
+
+const ZONE_LABELS = {
+  pluv:{
+    'I':  {short:'Zona pluviométrica I',   desc:'Precipitación media anual < 300 mm. Zonas muy áridas (sureste peninsular, Canarias orientales).'},
+    'II': {short:'Zona pluviométrica II',   desc:'Precipitación media anual entre 300 y 500 mm. Meseta interior y zona mediterránea.'},
+    'III':{short:'Zona pluviométrica III',  desc:'Precipitación media anual entre 500 y 700 mm. Zona de transición atlántico-mediterránea.'},
+    'IV': {short:'Zona pluviométrica IV',   desc:'Precipitación media anual entre 700 y 900 mm. Cornisa cantábrica interior, Galicia interior.'},
+    'V':  {short:'Zona pluviométrica V',    desc:'Precipitación media anual > 900 mm. Galicia, Asturias, costa cantábrica, Pirineos.'}
+  },
+  eol:{
+    'A':{short:'Zona eólica A', desc:'Viento moderado — interior peninsular, zonas protegidas por orografía.'},
+    'B':{short:'Zona eólica B', desc:'Viento moderado-alto — costas mediterráneas, sur y zonas de transición.'},
+    'C':{short:'Zona eólica C', desc:'Viento fuerte — costas atlánticas, gallegas y cantábricas, cimas montañosas.'}
+  }
+};
+
+// ══════════ LEAFLET MAP INIT ══════════
+let _map = null, _marker = null;
+
+function initMap(){
+  if(_map) return;
+  _map = L.map('map-leaflet',{zoomControl:true}).setView([40.4,-3.7],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom:18
+  }).addTo(_map);
+  _map.on('click',function(e){reverseGeocode(e.latlng.lat,e.latlng.lng);});
+}
+
+function placeMarker(lat,lng,label){
+  if(_marker) _map.removeLayer(_marker);
+  _marker = L.marker([lat,lng]).addTo(_map).bindPopup(label).openPopup();
+  _map.setView([lat,lng],10);
+}
+
+// ══════════ GEOCODING ══════════
+async function mapSearch(){
+  const q = document.getElementById('map-search').value.trim();
+  if(!q) return;
+  initMap();
+  document.getElementById('map-searching').style.display='block';
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q+', España')}&format=json&limit=1&countrycodes=es&accept-language=es`,
+      {headers:{'User-Agent':'CTE-HS1-Verificador/1.0'}});
+    const data = await r.json();
+    document.getElementById('map-searching').style.display='none';
+    if(!data||data.length===0){
+      showMapWarn('No se ha encontrado el municipio. Pruebe con el nombre de la provincia.');
+      return;
+    }
+    const {lat,lon,display_name}=data[0];
+    placeMarker(parseFloat(lat),parseFloat(lon),display_name);
+    reverseGeocode(parseFloat(lat),parseFloat(lon));
+  } catch(e){
+    document.getElementById('map-searching').style.display='none';
+    showMapWarn('Error de conexión al buscar. Compruebe su conexión a internet.');
+  }
+}
+
+async function reverseGeocode(lat,lng){
+  initMap();
+  document.getElementById('map-searching').textContent='Identificando provincia…';
+  document.getElementById('map-searching').style.display='block';
+  try{
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`,
+      {headers:{'User-Agent':'CTE-HS1-Verificador/1.0'}});
+    const data = await r.json();
+    document.getElementById('map-searching').style.display='none';
+    if(!data||!data.address){showMapWarn('No se pudo identificar la localización.');return;}
+    const addr = data.address;
+    // Try different address fields in order
+    const candidates = [
+      addr.province, addr.county, addr.state_district, addr.state,
+      addr.city, addr.town, addr.village
+    ].filter(Boolean);
+    let matched = null, matchedProv = null;
+
+    // Normalize helper: lowercase + strip accents
+    const norm = s => s.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/\bprovincia de\b/gi,'').replace(/\bprovince\b/gi,'').trim();
+
+    // Pre-build a normalized lookup map
+    const normMap = {};
+    for(const [k,v] of Object.entries(PROV_ZONES)){
+      normMap[norm(k)] = v;
+    }
+
+    for(const c of candidates){
+      const cn = norm(c);
+      // Exact match
+      if(normMap[cn]){matched=normMap[cn];matchedProv=c;break;}
+      // Partial match: candidate contains key or key contains candidate
+      for(const [nk,v] of Object.entries(normMap)){
+        if(cn.includes(nk)||nk.includes(cn)){matched=v;matchedProv=c;break;}
+      }
+      if(matched) break;
+    }
+    const locName = addr.city||addr.town||addr.village||addr.municipality||addr.county||'Localización seleccionada';
+    placeMarker(lat,lng,locName);
+    if(matched){
+      applyZones(matched[0],matched[1],locName,matchedProv);
+    } else {
+      showMapResult(locName,null,null);
+      showMapWarn(`No se ha podido asignar zona automáticamente para "${matchedProv||locName}". Consulte el Apéndice B del CTE DB HS1 y seleccione la zona manualmente en la tabla de referencia.`);
+    }
+  } catch(e){
+    document.getElementById('map-searching').style.display='none';
+    showMapWarn('Error al identificar la localización. Compruebe su conexión.');
+  }
+}
+
+function applyZones(zpluv, zeol, locName, provName){
+  // Update state
+  S.fachadas.zpluv = zpluv;
+  S.fachadas.zeol  = zeol;
+  S.fachadas.municipio = locName;
+  S.fachadas.provincia = provName;
+  showMapResult(locName,zpluv,zeol,provName);
+  hideMapWarn();
+  calcFachada();
+}
+
+function showMapResult(loc,zpluv,zeol,prov){
+  const el = document.getElementById('map-result');
+  el.style.display='block';
+  document.getElementById('mr-loc-text').textContent =
+    loc + (prov&&prov!==loc ? ' ('+prov+')' : '');
+  const pb = document.getElementById('mr-pluv');
+  const eb = document.getElementById('mr-eol');
+  const pd = document.getElementById('mr-pluv-desc');
+  const ed = document.getElementById('mr-eol-desc');
+  if(zpluv){
+    const zp=ZONE_LABELS.pluv[zpluv];
+    pb.textContent = 'P' + zpluv + ' — ' + (zp?zp.short:'');
+    if(zp){pd.textContent='↳ '+zp.desc;pd.style.display='block';}
+  } else {
+    pb.textContent='P —';
+    pd.style.display='none';
+  }
+  if(zeol){
+    const ze=ZONE_LABELS.eol[zeol];
+    eb.textContent = 'E' + zeol + ' — ' + (ze?ze.short:'');
+    if(ze){ed.textContent='↳ '+ze.desc;ed.style.display='block';}
+  } else {
+    eb.textContent='E —';
+    ed.style.display='none';
+  }
+}
+function showMapWarn(msg){
+  const w=document.getElementById('mr-warn');
+  w.style.display='block';w.textContent='⚠ '+msg;
+  document.getElementById('map-result').style.display='block';
+}
+function hideMapWarn(){
+  document.getElementById('mr-warn').style.display='none';
+}
+
+// Init map when fachadas tab is shown — patch nav clicks directly
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Init map on load with a delay so the container has rendered dimensions
+  setTimeout(()=>{ initMap(); if(_map) _map.invalidateSize(); }, 200);
+
+  document.querySelectorAll('.ntab').forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      if(tab.textContent.includes('Fachadas')){
+        setTimeout(()=>{ initMap(); if(_map) _map.invalidateSize(); }, 60);
+      }
+    });
+  });
+});
+
+// ══════════ FACHADAS CALC (map-based) ══════════
+function calcFachada(){
+  const {zpluv,zeol,entorno}=S.fachadas;
+  const alt=document.getElementById('sel-alt').value;
+  S.fachadas.altura=alt;
+  if(!zpluv||!zeol||!entorno||!alt) return;
+  const key=`${zeol}_${entorno}`;
+  const row=EXP_VIENTO[key];
+  const h=parseInt(alt);
+  const gradoExp=h<=15?row[15]:h<=40?row[40]:row[99];
+  const ediv=document.getElementById('div-exp');
+  const edisp=document.getElementById('disp-exp');
+  ediv.style.display='block';
+  edisp.textContent=`Grado de exposición al viento: ${gradoExp} · Zona ${zeol}·${entorno}·H${alt==='15'?'≤15':alt==='40'?'≤40':'>40'}m`;
+  const grado=GRADO_FAC[zpluv][gradoExp];
+  document.getElementById('nores-fachadas').style.display='none';
+  document.getElementById('rp-fachadas').style.display='block';
+  document.getElementById('gnum-fachadas').textContent=grado;
+  document.getElementById('gparam-fachadas').textContent=
+    `Zona pluviométrica ${zpluv} · Exposición viento ${gradoExp} · Eólica ${zeol} · Entorno ${entorno}`;
+  renderSols('fachadas',SOLS_FAC[grado]||[],grado,
+    {zpluv,zeol,entorno,alt,gradoExp,grado});
+}
+
+// Init
+initRefPage();
+</script>
+</body>
+</html>
